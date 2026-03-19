@@ -12,19 +12,18 @@ Een native terminal die naadloos integreert met SOUL — zodat Claude Code, de A
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Rebranding: package name `com.soul.terminal`, app naam "SOUL Terminal" — Validated in Phase 1: Foundation
+- [x] Custom launcher icon en UI theming (SOUL branding) — Validated in Phase 1: Foundation
+- [x] Flutter module embedding (FlutterFragment naast terminal) — Validated in Phase 3: Flutter Integration
+- [x] Pigeon bridge interface (Flutter ↔ Java communicatie) — Validated in Phase 3: Flutter Integration
+- [x] CI/CD: gecombineerde build pipeline (terminal + Flutter module) — Validated in Phase 3: Flutter Integration
+- [x] Eliminatie van cmd-proxy via native Pigeon bridge — Validated in Phase 3: Flutter Integration
+- [x] Terminal features: Kitty keyboard protocol, OSC9 notifications, command palette — Validated in Phase 4: Terminal Enhancements
 
 ### Active
 
-- [ ] Rebranding: package name `com.soul.terminal`, app naam "SOUL Terminal"
-- [ ] Custom launcher icon en UI theming (SOUL branding)
 - [ ] Eigen bootstrap pipeline (packages gebouwd met nieuw prefix)
 - [ ] Eigen apt repository voor custom packages
-- [ ] Flutter module embedding (FlutterFragment naast terminal)
-- [ ] Pigeon bridge interface (Flutter ↔ Kotlin communicatie)
-- [ ] Terminal features: Kitty keyboard protocol, OSC9 notifications, command palette
-- [ ] CI/CD: gecombineerde build pipeline (terminal + Flutter module)
-- [ ] Eliminatie van cmd-proxy via native Pigeon bridge
 
 ### Out of Scope
 
@@ -54,9 +53,9 @@ Een native terminal die naadloos integreert met SOUL — zodat Claude Code, de A
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Termux + FlutterFragment (optie B) | Native terminal performance, geen jank, Claude Code werkt out-of-the-box | — Pending |
+| Termux + FlutterFragment (optie B) | Native terminal performance, geen jank, Claude Code werkt out-of-the-box | ✓ Validated Phase 3 |
 | Eigen bootstrap i.p.v. Termux repos | Package name wijziging vereist herbouw van alle packages | — Pending |
-| Pigeon bridge i.p.v. cmd-proxy | In-process communicatie, geen HTTP/token overhead, veiliger | — Pending |
+| Pigeon bridge i.p.v. cmd-proxy | In-process communicatie, geen HTTP/token overhead, veiliger | ✓ Validated Phase 3 |
 
 ---
-*Last updated: 2026-03-19 after initialization*
+*Last updated: 2026-03-19 after Phase 3 completion — Flutter module + Pigeon bridge integrated*

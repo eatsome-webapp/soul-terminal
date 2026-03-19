@@ -1,0 +1,24 @@
+name: flutter_module
+description: SOUL Terminal Flutter module
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  pigeon: ^22.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+module:
+  androidX: true
+  androidPackage: com.soul.terminal.flutter_module
+  iosBundleIdentifier: com.soul.terminal.flutterModule

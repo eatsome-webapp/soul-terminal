@@ -1,0 +1,11 @@
+.dart_tool/
+.packages
+.pub/
+.android/
+.ios/
+build/
+*.iml
+.metadata
+
+# Pigeon-generated files are source files, not build artifacts — commit them
+!lib/generated/*.g.dart

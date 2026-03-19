@@ -9,24 +9,24 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Rebranding
 
-- [ ] **REBR-01**: App draait met package name `com.soul.terminal` (applicationId gewijzigd)
-- [ ] **REBR-02**: App toont naam "SOUL Terminal" in launcher en app info
-- [ ] **REBR-03**: Custom launcher icon met SOUL branding
-- [ ] **REBR-04**: UI theming aangepast aan SOUL kleurschema
-- [ ] **REBR-05**: sharedUserId verwijderd (geen plugin compat nodig)
-- [ ] **REBR-06**: targetSdk verhoogd naar minimaal 34 (Play Store vereiste)
+- [x] **REBR-01**: App draait met package name `com.soul.terminal` (applicationId gewijzigd)
+- [x] **REBR-02**: App toont naam "SOUL Terminal" in launcher en app info
+- [x] **REBR-03**: Custom launcher icon met SOUL branding
+- [x] **REBR-04**: UI theming aangepast aan SOUL kleurschema
+- [x] **REBR-05**: sharedUserId verwijderd (geen plugin compat nodig)
+- [x] **REBR-06**: targetSdk verhoogd naar minimaal 34 (Play Store vereiste)
 
 ### Bootstrap
 
-- [ ] **BOOT-01**: Fork van termux-packages met `com.soul.terminal` prefix in properties.sh
-- [ ] **BOOT-02**: Bootstrap packages gebouwd voor aarch64 via Docker cross-compilatie
-- [ ] **BOOT-03**: Bootstrap checksums bijgewerkt in app/build.gradle
-- [ ] **BOOT-04**: Eigen apt repository opgezet (GitHub Releases of CDN)
-- [ ] **BOOT-05**: `pkg install` werkt correct met eigen repository
+- [x] **BOOT-01**: Fork van termux-packages met `com.soul.terminal` prefix in properties.sh
+- [x] **BOOT-02**: Bootstrap packages gebouwd voor aarch64 via Docker cross-compilatie
+- [x] **BOOT-03**: Bootstrap checksums bijgewerkt in app/build.gradle
+- [x] **BOOT-04**: Eigen apt repository opgezet (GitHub Releases of CDN)
+- [ ] **BOOT-05**: `pkg install` werkt correct met eigen repository — device test pending
 
 ### Flutter Module
 
-- [ ] **FLUT-01**: Flutter module aangemaakt als subdirectory (`flutter_module/`)
+- [x] **FLUT-01**: Flutter module aangemaakt als subdirectory (`flutter_module/`)
 - [ ] **FLUT-02**: FlutterEngine singleton pre-warmed in Application.onCreate()
 - [ ] **FLUT-03**: FlutterFragment geïntegreerd in TermuxActivity met toggle
 - [ ] **FLUT-04**: GeneratedPluginRegistrant.registerWith() correct aangeroepen
@@ -34,7 +34,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Pigeon Bridge
 
-- [ ] **PIGB-01**: Pigeon schema gedefinieerd (TerminalBridge, SoulBridge, SystemBridge)
+- [x] **PIGB-01**: Pigeon schema gedefinieerd (TerminalBridge, SoulBridge, SystemBridge)
 - [ ] **PIGB-02**: TerminalBridge: Flutter kan commando's uitvoeren in terminal
 - [ ] **PIGB-03**: SoulBridge: Host pusht terminal output naar Flutter (debounced, max 10/sec)
 - [ ] **PIGB-04**: Bidirectionele communicatie werkt betrouwbaar
@@ -42,16 +42,16 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### CI/CD
 
-- [ ] **CICD-01**: GitHub Actions workflow bouwt debug APK automatisch
-- [ ] **CICD-02**: Release signing via GitHub Secrets
-- [ ] **CICD-03**: Twee-stage build: Flutter module eerst, dan Gradle assembleRelease
-- [ ] **CICD-04**: Bootstrap build als aparte workflow (zeldzaam, handmatig te triggeren)
+- [x] **CICD-01**: GitHub Actions workflow bouwt debug APK automatisch
+- [x] **CICD-02**: Release signing via GitHub Secrets
+- [x] **CICD-03**: Twee-stage build: Flutter module eerst, dan Gradle assembleRelease
+- [x] **CICD-04**: Bootstrap build als aparte workflow (zeldzaam, handmatig te triggeren) ✓ (02-A)
 
 ### Terminal Features
 
-- [ ] **TERM-01**: Kitty keyboard protocol ondersteuning in terminal-emulator
-- [ ] **TERM-02**: OSC9 desktop notifications (terminal → Android notificatie)
-- [ ] **TERM-03**: Command palette met fuzzy search (sessies, commands, history)
+- [x] **TERM-01**: Kitty keyboard protocol ondersteuning in terminal-emulator
+- [x] **TERM-02**: OSC9 desktop notifications (terminal → Android notificatie)
+- [x] **TERM-03**: Command palette met fuzzy search (sessies, commands, history)
 
 ## v2 Requirements
 
@@ -98,17 +98,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REBR-01 | 1 | Not Started |
-| REBR-02 | 1 | Not Started |
-| REBR-03 | 1 | Not Started |
-| REBR-04 | 1 | Not Started |
-| REBR-05 | 1 | Not Started |
-| REBR-06 | 1 | Not Started |
-| BOOT-01 | 2 | Not Started |
-| BOOT-02 | 2 | Not Started |
-| BOOT-03 | 2 | Not Started |
-| BOOT-04 | 2 | Not Started |
-| BOOT-05 | 2 | Not Started |
+| REBR-01 | 1 | Complete |
+| REBR-02 | 1 | Complete |
+| REBR-03 | 1 | Complete |
+| REBR-04 | 1 | Complete |
+| REBR-05 | 1 | Complete |
+| REBR-06 | 1 | Complete |
+| BOOT-01 | 2 | Complete |
+| BOOT-02 | 2 | Complete |
+| BOOT-03 | 2 | Complete |
+| BOOT-04 | 2 | Complete |
+| BOOT-05 | 2 | Pending device test |
 | FLUT-01 | 3 | Not Started |
 | FLUT-02 | 3 | Not Started |
 | FLUT-03 | 3 | Not Started |
@@ -119,10 +119,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PIGB-03 | 3 | Not Started |
 | PIGB-04 | 3 | Not Started |
 | PIGB-05 | 3 | Not Started |
-| CICD-01 | 1 | Not Started |
-| CICD-02 | 1 | Not Started |
+| CICD-01 | 1 | Complete |
+| CICD-02 | 1 | Complete |
 | CICD-03 | 3 | Not Started |
-| CICD-04 | 2 | Not Started |
+| CICD-04 | 2 | Complete |
 | TERM-01 | 4 | Not Started |
 | TERM-02 | 4 | Not Started |
 | TERM-03 | 4 | Not Started |

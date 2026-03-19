@@ -1,15 +1,12 @@
 {
-  "mode": "yolo",
-  "granularity": "coarse",
-  "parallelization": true,
-  "commit_docs": true,
-  "model_profile": "quality",
+  "model_profile": "balanced",
   "workflow": {
+    "commit_docs": true,
     "research": true,
-    "plan_check": true,
+    "plan_checker": true,
     "verifier": true,
-    "nyquist_validation": true,
-    "auto_advance": true,
+    "parallelization": true,
+    "branching_strategy": "none",
     "_auto_chain_active": true
   }
 }
