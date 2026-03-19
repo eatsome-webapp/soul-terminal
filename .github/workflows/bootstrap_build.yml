@@ -1,0 +1,95 @@
+name: Bootstrap Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: "Release version tag (e.g., 2026.03.20-r1+soul-terminal)"
+        required: true
+        type: string
+
+jobs:
+  build-bootstrap:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Clone termux-packages
+        uses: actions/checkout@v4
+        with:
+          repository: termux/termux-packages
+          path: termux-packages
+
+      - name: Patch package name to com.soul.terminal
+        working-directory: termux-packages
+        run: |
+          sed -i 's/^TERMUX_APP__PACKAGE_NAME=.*/TERMUX_APP__PACKAGE_NAME="com.soul.terminal"/' scripts/properties.sh
+          grep TERMUX_APP__PACKAGE_NAME scripts/properties.sh
+
+      - name: Cache built packages
+        uses: actions/cache@v4
+        with:
+          path: termux-packages/output/
+          key: bootstrap-debs-${{ hashFiles('termux-packages/packages/**') }}
+          restore-keys: bootstrap-debs-
+
+      - name: Build bootstrap packages via Docker
+        working-directory: termux-packages
+        run: |
+          docker run --rm \
+            -v "$PWD:/home/builder/termux-packages" \
+            -w /home/builder/termux-packages \
+            ghcr.io/termux/package-builder \
+            bash -c "./build-package.sh -a aarch64 -I \
+              apt bash command-not-found dash dpkg gawk grep \
+              less procps psmisc sed tar \
+              termux-exec termux-keyring termux-tools"
+
+      - name: Assemble bootstrap zip
+        working-directory: termux-packages
+        run: |
+          docker run --rm \
+            -v "$PWD:/home/builder/termux-packages" \
+            -w /home/builder/termux-packages \
+            ghcr.io/termux/package-builder \
+            bash -c "./scripts/generate-bootstraps.sh --architectures aarch64"
+          mv bootstrap-aarch64.zip ../
+
+      - name: Compute SHA-256
+        id: checksum
+        run: |
+          CHECKSUM=$(sha256sum bootstrap-aarch64.zip | cut -d' ' -f1)
+          echo "sha256=$CHECKSUM" >> "$GITHUB_OUTPUT"
+          echo "Bootstrap aarch64 SHA-256: $CHECKSUM"
+
+      - name: Import GPG key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.SOUL_GPG_PRIVATE_KEY }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+
+      - name: Sign bootstrap zip
+        run: gpg --batch --yes --detach-sign --armor bootstrap-aarch64.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "bootstrap-${{ github.event.inputs.version_tag }}"
+          name: "Bootstrap ${{ github.event.inputs.version_tag }}"
+          body: |
+            Bootstrap packages voor SOUL Terminal (com.soul.terminal)
+            Architectuur: aarch64
+            SHA-256: ${{ steps.checksum.outputs.sha256 }}
+          files: |
+            bootstrap-aarch64.zip
+            bootstrap-aarch64.zip.asc
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Output checksum for app integration
+        run: |
+          echo "============================================"
+          echo "UPDATE app/build.gradle met:"
+          echo "  version: \"${{ github.event.inputs.version_tag }}\""
+          echo "  checksum: \"${{ steps.checksum.outputs.sha256 }}\""
+          echo "============================================"
