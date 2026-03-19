@@ -335,7 +335,7 @@ public class TerminalBridgeApi {
 
     /** Called when terminal output changes (debounced, max 10/sec). */
     public void onTerminalOutput(
-        @NonNull String outputArg, @NonNull Reply<Void> callback) {
+        @NonNull String outputArg, @NonNull Reply<Object> callback) {
       BasicMessageChannel<Object> channel =
           new BasicMessageChannel<>(
               binaryMessenger,
@@ -360,7 +360,7 @@ public class TerminalBridgeApi {
 
     /** Called when the active session changes. */
     public void onSessionChanged(
-        @NonNull SessionInfo infoArg, @NonNull Reply<Void> callback) {
+        @NonNull SessionInfo infoArg, @NonNull Reply<Object> callback) {
       BasicMessageChannel<Object> channel =
           new BasicMessageChannel<>(
               binaryMessenger,

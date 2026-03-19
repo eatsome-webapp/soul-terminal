@@ -3,7 +3,7 @@ package com.termux.bridge;
 import androidx.annotation.NonNull;
 
 import com.termux.app.TermuxService;
-import com.termux.shared.shell.TermuxSession;
+import com.termux.shared.termux.shell.command.runner.terminal.TermuxSession;
 import com.termux.shared.logger.Logger;
 import com.termux.terminal.TerminalSession;
 
