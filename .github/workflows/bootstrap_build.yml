@@ -33,10 +33,17 @@ jobs:
           key: bootstrap-debs-${{ hashFiles('termux-packages/packages/**') }}
           restore-keys: bootstrap-debs-
 
+      - name: Enable FUSE on host
+        run: |
+          sudo apt-get install -y fuse3
+          sudo modprobe fuse || true
+          ls -la /dev/fuse
+
       - name: Build bootstrap packages via Docker
         working-directory: termux-packages
         run: |
-          docker run --rm \
+          docker run --rm --privileged \
+            --device /dev/fuse \
             -v "$PWD:/home/builder/termux-packages" \
             -w /home/builder/termux-packages \
             ghcr.io/termux/package-builder \
@@ -48,7 +55,8 @@ jobs:
       - name: Assemble bootstrap zip
         working-directory: termux-packages
         run: |
-          docker run --rm \
+          docker run --rm --privileged \
+            --device /dev/fuse \
             -v "$PWD:/home/builder/termux-packages" \
             -w /home/builder/termux-packages \
             ghcr.io/termux/package-builder \
