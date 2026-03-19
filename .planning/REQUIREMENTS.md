@@ -98,12 +98,39 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmapper) | | |
+| REBR-01 | 1 | Not Started |
+| REBR-02 | 1 | Not Started |
+| REBR-03 | 1 | Not Started |
+| REBR-04 | 1 | Not Started |
+| REBR-05 | 1 | Not Started |
+| REBR-06 | 1 | Not Started |
+| BOOT-01 | 2 | Not Started |
+| BOOT-02 | 2 | Not Started |
+| BOOT-03 | 2 | Not Started |
+| BOOT-04 | 2 | Not Started |
+| BOOT-05 | 2 | Not Started |
+| FLUT-01 | 3 | Not Started |
+| FLUT-02 | 3 | Not Started |
+| FLUT-03 | 3 | Not Started |
+| FLUT-04 | 3 | Not Started |
+| FLUT-05 | 3 | Not Started |
+| PIGB-01 | 3 | Not Started |
+| PIGB-02 | 3 | Not Started |
+| PIGB-03 | 3 | Not Started |
+| PIGB-04 | 3 | Not Started |
+| PIGB-05 | 3 | Not Started |
+| CICD-01 | 1 | Not Started |
+| CICD-02 | 1 | Not Started |
+| CICD-03 | 3 | Not Started |
+| CICD-04 | 2 | Not Started |
+| TERM-01 | 4 | Not Started |
+| TERM-02 | 4 | Not Started |
+| TERM-03 | 4 | Not Started |
 
 **Coverage:**
-- v1 requirements: 25 total
-- Mapped to phases: 0
-- Unmapped: 25
+- v1 requirements: 28 total
+- Mapped to phases: 28
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-19*
