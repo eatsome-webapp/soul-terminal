@@ -259,7 +259,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         try {
             // Start the {@link TermuxService} and make it run regardless of who is bound to it
             Intent serviceIntent = new Intent(this, TermuxService.class);
-            startService(serviceIntent);
+            ContextCompat.startForegroundService(this, serviceIntent);
 
             // Attempt to bind to the service, this will call the {@link #onServiceConnected(ComponentName, IBinder)}
             // callback if it succeeds.
