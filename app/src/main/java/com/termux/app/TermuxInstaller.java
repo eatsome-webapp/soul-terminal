@@ -28,6 +28,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -210,6 +212,14 @@ final class TermuxInstaller {
                         Os.symlink(symlink.first, symlink.second);
                     }
 
+                    // Fix hardcoded /data/data/com.termux paths in bootstrap scripts and configs
+                    String defaultPrefix = "/data/data/com.termux";
+                    String actualPrefix = TermuxConstants.TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR_PATH;
+                    if (!defaultPrefix.equals(actualPrefix)) {
+                        Logger.logInfo(LOG_TAG, "Fixing bootstrap paths: " + defaultPrefix + " -> " + actualPrefix);
+                        fixupBootstrapPaths(TERMUX_STAGING_PREFIX_DIR, defaultPrefix, actualPrefix);
+                    }
+
                     Logger.logInfo(LOG_TAG, "Moving termux prefix staging to prefix directory.");
 
                     if (!TERMUX_STAGING_PREFIX_DIR.renameTo(TERMUX_PREFIX_DIR)) {
@@ -382,5 +392,38 @@ final class TermuxInstaller {
     }
 
     public static native byte[] getZip();
+
+    /**
+     * Replace hardcoded /data/data/com.termux paths with the actual app data path
+     * in all text files (scripts, configs) within the bootstrap staging directory.
+     * Binary files (ELF, .so) are skipped to avoid corruption.
+     */
+    private static void fixupBootstrapPaths(File dir, String oldPrefix, String newPrefix) {
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File file : files) {
+            if (file.isDirectory()) {
+                fixupBootstrapPaths(file, oldPrefix, newPrefix);
+            } else if (file.isFile()) {
+                try {
+                    byte[] bytes = Files.readAllBytes(file.toPath());
+                    if (bytes.length == 0) continue;
+                    // Skip binary files by checking for null bytes in the first 512 bytes
+                    boolean isBinary = false;
+                    int checkLen = Math.min(bytes.length, 512);
+                    for (int i = 0; i < checkLen; i++) {
+                        if (bytes[i] == 0) { isBinary = true; break; }
+                    }
+                    if (isBinary) continue;
+                    String content = new String(bytes, StandardCharsets.UTF_8);
+                    if (content.contains(oldPrefix)) {
+                        content = content.replace(oldPrefix, newPrefix);
+                        Files.write(file.toPath(), content.getBytes(StandardCharsets.UTF_8));
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+    }
 
 }
