@@ -5,7 +5,7 @@
 Een fork van Termux (de Android terminal emulator) die we ombouwen tot de terminal-laag van SOUL — onze AI co-founder app. Het idee: één APK die zowel een werkende terminal is als een Flutter-based AI interface bevat. De terminal draait native (Java), de AI-kant draait in Flutter via een embedded FlutterFragment.
 
 **Repo:** `eatsome-webapp/soul-terminal` (public fork van termux/termux-app)
-**Werkdirectory:** `~/soul-terminal-sync` (NIET `~/soul-terminal` — die is een verouderde subdirectory in het soul-app monorepo, zie "Wat ging er mis" hieronder)
+**Werkdirectory:** `~/soul-terminal` (NIET `~/soul-terminal` — die is een verouderde subdirectory in het soul-app monorepo, zie "Wat ging er mis" hieronder)
 
 ## Wat ging er mis
 
@@ -16,7 +16,7 @@ Er waren TWEE kopieën van soul-terminal:
 GSD agents hebben 58 feature-commits (Flutter integration, Pigeon bridges, Kitty keyboard, OSC9 notifications, command palette) geschreven in de **monorepo subdirectory**. Die code is nooit naar het echte GitHub repo gepusht. De twee repo's hadden ook verschillende upstream-versies — de monorepo gebruikte termux-app v0.118.1, het GitHub repo heeft de nieuwste upstream.
 
 **Vandaag gefixt:**
-- Aparte clone gemaakt (`~/soul-terminal-sync`)
+- Aparte clone gemaakt (`~/soul-terminal`)
 - 17 nieuwe bestanden (flutter_module, bridge classes) direct gekopieerd
 - 16 bestaande bestanden handmatig geport (features toegevoegd aan nieuwere upstream code)
 - Flutter inclusie conditioneel gemaakt in settings.gradle en build.gradle
@@ -85,7 +85,7 @@ Alle errors zijn Flutter-import gerelateerd. Geen andere compile issues.
 
 ```bash
 # Werkdirectory
-cd ~/soul-terminal-sync
+cd ~/soul-terminal
 
 # Remote
 git remote -v
@@ -143,7 +143,7 @@ soul-terminal (Java/Android)
 
 ## Niet vergeten
 
-- **`~/soul-terminal`** (in monorepo) is VEROUDERD — gebruik `~/soul-terminal-sync`
+- **`~/soul-terminal`** (in monorepo) is VEROUDERD — gebruik `~/soul-terminal`
 - De monorepo `~/soul-terminal/` subdir moet later opgeruimd worden
 - soul-terminal GitHub repo branch = `master`, NIET `main`
 - Nooit lokaal bouwen — altijd GitHub Actions

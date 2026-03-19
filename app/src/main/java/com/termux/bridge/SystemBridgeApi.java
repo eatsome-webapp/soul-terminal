@@ -295,7 +295,7 @@ public class SystemBridgeApi {
    *
    * <p>Generated interface from Pigeon that represents a handler of messages from Java.
    */
-  public interface SystemBridgeApi {
+  public interface HostApi {
     /** Get device hardware and OS information. */
     @NonNull
     DeviceInfo getDeviceInfo();
@@ -304,23 +304,23 @@ public class SystemBridgeApi {
     @NonNull
     PackageInfo getPackageInfo();
 
-    /** The codec used by SystemBridgeApi. */
+    /** The codec used by HostApi. */
     static @NonNull MessageCodec<Object> getCodec() {
       return PigeonCodec.INSTANCE;
     }
 
     /**
-     * Sets up an instance of `SystemBridgeApi` to handle messages through the `binaryMessenger`.
+     * Sets up an instance of `HostApi` to handle messages through the `binaryMessenger`.
      */
     static void setUp(
-        @NonNull BinaryMessenger binaryMessenger, @Nullable SystemBridgeApi api) {
+        @NonNull BinaryMessenger binaryMessenger, @Nullable HostApi api) {
       setUp(binaryMessenger, "", api);
     }
 
     static void setUp(
         @NonNull BinaryMessenger binaryMessenger,
         @NonNull String messageChannelSuffix,
-        @Nullable SystemBridgeApi api) {
+        @Nullable HostApi api) {
       messageChannelSuffix = messageChannelSuffix.isEmpty() ? "" : "." + messageChannelSuffix;
       {
         BasicMessageChannel<Object> channel =

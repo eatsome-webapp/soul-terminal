@@ -171,7 +171,7 @@ public class TerminalBridgeApi {
    *
    * <p>Generated interface from Pigeon that represents a handler of messages from Flutter.
    */
-  public interface TerminalBridgeApi {
+  public interface HostApi {
     /** Execute a command in the active terminal session. */
     void executeCommand(@NonNull String command);
 
@@ -187,23 +187,23 @@ public class TerminalBridgeApi {
     @NonNull
     List<SessionInfo> listSessions();
 
-    /** The codec used by TerminalBridgeApi. */
+    /** The codec used by HostApi. */
     static @NonNull MessageCodec<Object> getCodec() {
       return PigeonCodec.INSTANCE;
     }
 
     /**
-     * Sets up an instance of `TerminalBridgeApi` to handle messages through the `binaryMessenger`.
+     * Sets up an instance of `HostApi` to handle messages through the `binaryMessenger`.
      */
     static void setUp(
-        @NonNull BinaryMessenger binaryMessenger, @Nullable TerminalBridgeApi api) {
+        @NonNull BinaryMessenger binaryMessenger, @Nullable HostApi api) {
       setUp(binaryMessenger, "", api);
     }
 
     static void setUp(
         @NonNull BinaryMessenger binaryMessenger,
         @NonNull String messageChannelSuffix,
-        @Nullable TerminalBridgeApi api) {
+        @Nullable HostApi api) {
       messageChannelSuffix = messageChannelSuffix.isEmpty() ? "" : "." + messageChannelSuffix;
       {
         BasicMessageChannel<Object> channel =
