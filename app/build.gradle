@@ -41,8 +41,14 @@ android {
 
         implementation project(":terminal-view")
         implementation project(":termux-shared")
-        // Flutter module — only available when flutter_module is built
-        if (findProject(':flutter') != null) {
+        // Flutter embedding — use engine JAR from Flutter SDK (available in CI via flutter-action)
+        // Falls back to :flutter project if include_flutter.groovy is available (local dev with Flutter SDK)
+        def flutterRoot = System.getenv("FLUTTER_ROOT")
+        def flutterEngineJar = flutterRoot ?
+            new File("${flutterRoot}/bin/cache/artifacts/engine/android-arm64/flutter.jar") : null
+        if (flutterEngineJar?.exists()) {
+            implementation files(flutterEngineJar.absolutePath)
+        } else if (findProject(':flutter') != null) {
             implementation project(':flutter')
         }
     }

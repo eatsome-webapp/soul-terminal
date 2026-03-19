@@ -31,6 +31,9 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Flutter precache Android engine
+        run: flutter precache --android
+
       - name: Flutter pub get
         run: |
           cd flutter_module
