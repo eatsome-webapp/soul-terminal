@@ -25,6 +25,8 @@ jobs:
         run: |
           sed -i 's/^TERMUX_APP__PACKAGE_NAME=.*/TERMUX_APP__PACKAGE_NAME="com.soul.terminal"/' scripts/properties.sh
           grep TERMUX_APP__PACKAGE_NAME scripts/properties.sh
+          # Fix upstream bug: profile.d directory not created before write (line 268)
+          sed -i '/01-termux-bootstrap-second-stage-fallback\.sh/i\  mkdir -p "${BOOTSTRAP_ROOTFS}/${TERMUX__PREFIX__PROFILE_D_DIR}"' scripts/generate-bootstraps.sh
 
       - name: Cache built packages
         uses: actions/cache@v4
