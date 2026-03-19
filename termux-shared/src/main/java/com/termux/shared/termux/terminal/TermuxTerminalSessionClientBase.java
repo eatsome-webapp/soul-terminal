@@ -45,6 +45,10 @@ public class TermuxTerminalSessionClientBase implements TerminalSessionClient {
     }
 
     @Override
+    public void onDesktopNotification(@NonNull TerminalSession session, String body) {
+    }
+
+    @Override
     public void setTerminalShellPid(@NonNull TerminalSession session, int pid) {
     }
 

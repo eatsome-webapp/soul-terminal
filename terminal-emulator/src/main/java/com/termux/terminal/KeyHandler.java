@@ -370,4 +370,88 @@ public final class KeyHandler {
         }
         return start + (";" + modifier) + lastChar;
     }
+
+    /**
+     * Get Kitty keyboard protocol encoded escape sequence for the given key.
+     *
+     * @param keyCode  Android KeyEvent keyCode
+     * @param keyMode  Bitmask of KEYMOD_SHIFT, KEYMOD_CTRL, KEYMOD_ALT
+     * @param eventType 1=press (default), 2=repeat, 3=release
+     * @param kittyFlags Current Kitty mode flags (bit 0=disambiguate, bit 1=report events)
+     * @return The escape sequence string, or null if this key should fall through to standard handling
+     */
+    public static String getKittyCode(int keyCode, int keyMode, int eventType, int kittyFlags) {
+        if (kittyFlags == 0) return null;
+
+        int unicode = mapKeyCodeToKittyNumber(keyCode);
+        if (unicode == 0) return null;
+
+        // Calculate Kitty modifier value: shift=1, alt=2, ctrl=4 (then +1 for parameter)
+        int kittyMod = 0;
+        if ((keyMode & KEYMOD_SHIFT) != 0) kittyMod |= 1;
+        if ((keyMode & KEYMOD_ALT) != 0) kittyMod |= 2;
+        if ((keyMode & KEYMOD_CTRL) != 0) kittyMod |= 4;
+        int modParam = kittyMod + 1; // Kitty spec: modifier parameter = bitmask + 1
+
+        boolean reportEvents = (kittyFlags & 0x02) != 0;
+
+        // Build the CSI sequence
+        // Format: CSI unicode-key-code ; modifiers:event-type u
+        char terminator = 'u';
+
+        StringBuilder sb = new StringBuilder("\033[");
+        sb.append(unicode);
+
+        boolean hasModifier = modParam > 1;
+        boolean hasEvent = reportEvents && eventType > 1;
+
+        if (hasModifier || hasEvent) {
+            sb.append(';');
+            sb.append(modParam);
+            if (hasEvent) {
+                sb.append(':');
+                sb.append(eventType);
+            }
+        }
+        sb.append(terminator);
+
+        return sb.toString();
+    }
+
+    /**
+     * Map Android keyCode to Kitty keyboard protocol key number.
+     * Returns the Unicode codepoint for printable keys, or the Kitty functional key number.
+     * Returns 0 if the key is not mapped.
+     */
+    private static int mapKeyCodeToKittyNumber(int keyCode) {
+        switch (keyCode) {
+            case KEYCODE_ESCAPE: return 27;
+            case KEYCODE_ENTER: return 13;
+            case KEYCODE_TAB: return 9;
+            case KEYCODE_DEL: return 127; // Backspace
+            case KEYCODE_INSERT: return 2;
+            case KEYCODE_FORWARD_DEL: return 3; // Delete
+            case KEYCODE_DPAD_LEFT: return 57419;
+            case KEYCODE_DPAD_RIGHT: return 57421;
+            case KEYCODE_DPAD_UP: return 57416;
+            case KEYCODE_DPAD_DOWN: return 57424;
+            case KEYCODE_PAGE_UP: return 57425;
+            case KEYCODE_PAGE_DOWN: return 57426;
+            case KEYCODE_MOVE_HOME: return 57415;
+            case KEYCODE_MOVE_END: return 57423;
+            case KEYCODE_F1: return 57364;
+            case KEYCODE_F2: return 57365;
+            case KEYCODE_F3: return 57366;
+            case KEYCODE_F4: return 57367;
+            case KEYCODE_F5: return 57368;
+            case KEYCODE_F6: return 57369;
+            case KEYCODE_F7: return 57370;
+            case KEYCODE_F8: return 57371;
+            case KEYCODE_F9: return 57372;
+            case KEYCODE_F10: return 57373;
+            case KEYCODE_F11: return 57374;
+            case KEYCODE_F12: return 57375;
+            default: return 0;
+        }
+    }
 }

@@ -79,6 +79,8 @@ public final class TerminalEmulator {
     private static final int ESC_CSI_SINGLE_QUOTE = 18;
     /** Escape processing: CSI ! */
     private static final int ESC_CSI_EXCLAMATION = 19;
+    /** Escape processing: CSI = (Kitty keyboard protocol set) */
+    private static final int ESC_CSI_EQUALS = 24;
     /** Escape processing: "ESC _" or Application Program Command (APC). */
     private static final int ESC_APC = 20;
     /** Escape processing: "ESC _" or Application Program Command (APC), followed by Escape. */
@@ -159,6 +161,9 @@ public final class TerminalEmulator {
 
     /** The terminal cursor styles. */
     private int mCursorStyle = DEFAULT_TERMINAL_CURSOR_STYLE;
+
+    /** Kitty keyboard protocol mode flags. Bit 0 = disambiguate (mode 1), bit 1 = report event types (mode 2). */
+    private int mKittyKeyboardMode = 0;
 
 
     /** The normal screen buffer. Stores the characters that appear on the screen of the emulated terminal. */
@@ -481,6 +486,11 @@ public final class TerminalEmulator {
         return isDecsetInternalBitSet(DECSET_BIT_APPLICATION_CURSOR_KEYS);
     }
 
+    /** Returns the current Kitty keyboard protocol mode flags. 0 = disabled. */
+    public int getKittyKeyboardMode() {
+        return mKittyKeyboardMode;
+    }
+
     /** If mouse events are being sent as escape codes to the terminal. */
     public boolean isMouseTrackingActive() {
         return isDecsetInternalBitSet(DECSET_BIT_MOUSE_TRACKING_PRESS_RELEASE) || isDecsetInternalBitSet(DECSET_BIT_MOUSE_TRACKING_BUTTON_EVENT);
@@ -678,6 +688,16 @@ public final class TerminalEmulator {
                         break;
                     case ESC_CSI_BIGGERTHAN:
                         doCsiBiggerThan(b);
+                        break;
+                    case ESC_CSI_EQUALS:
+                        if (b == 'u') {
+                            // CSI = flags u -- set Kitty keyboard mode flags
+                            int flags = getArg0(0);
+                            mKittyKeyboardMode = flags & 0x03; // Only support bits 0 and 1 (modes 1+2)
+                            finishSequence();
+                        } else {
+                            parseArg(b);
+                        }
                         break;
                     case ESC_CSI_DOLLAR:
                         boolean originMode = isDecsetInternalBitSet(DECSET_BIT_ORIGIN_MODE);
@@ -1178,6 +1198,10 @@ public final class TerminalEmulator {
             case '$':
                 continueSequence(ESC_CSI_QUESTIONMARK_ARG_DOLLAR);
                 return;
+            case 'u':
+                // CSI ? u -- query Kitty keyboard mode flags
+                mSession.write("\033[?" + mKittyKeyboardMode + "u");
+                break;
             default:
                 parseArg(b);
         }
@@ -1356,6 +1380,16 @@ public final class TerminalEmulator {
                 // some special control character cases, e.g., Control-Space to make a NUL.
                 // (2) enables this feature for keys including the exceptions listed.
                 Logger.logError(mClient, LOG_TAG, "(ignored) CSI > MODIFY RESOURCE: " + getArg0(-1) + " to " + getArg1(-1));
+                break;
+            case 'u':
+                // CSI > u -- reset/pop Kitty keyboard mode flags (simplified: just reset to 0)
+                mKittyKeyboardMode = 0;
+                break;
+            case 'q':
+                // CSI > 0 q -- XTVERSION query
+                if (getArg0(0) == 0) {
+                    mSession.write("\033P>|SOUL Terminal 1.0\033\\");
+                }
                 break;
             default:
                 parseArg(b);
@@ -1702,8 +1736,10 @@ public final class TerminalEmulator {
                 continueSequence(ESC_CSI_BIGGERTHAN);
                 break;
             case '<': // "Esc [ <" -- start of a private parameter byte
-            case '=': // "Esc [ =" -- start of a private parameter byte
                 continueSequence(ESC_CSI_UNSUPPORTED_PARAMETER_BYTE);
+                break;
+            case '=': // "Esc [ =" -- Kitty keyboard protocol set mode
+                continueSequence(ESC_CSI_EQUALS);
                 break;
             case '`': // Horizontal position absolute (HPA - http://www.vt100.net/docs/vt510-rm/HPA).
                 setCursorColRespectingOriginMode(getArg0(1) - 1);
@@ -2070,6 +2106,11 @@ public final class TerminalEmulator {
                         return;
                     }
                     if (endOfInput) break;
+                }
+                break;
+            case 9: // OSC 9 -- Desktop notification. Format: \033]9;body\007
+                if (!textParameter.isEmpty()) {
+                    mSession.onDesktopNotification(textParameter);
                 }
                 break;
             case 10: // Set foreground color.
@@ -2565,6 +2606,7 @@ public final class TerminalEmulator {
 
         mColors.reset();
         mSession.onColorsChanged();
+        mKittyKeyboardMode = 0;
     }
 
     public String getSelectedText(int x1, int y1, int x2, int y2) {

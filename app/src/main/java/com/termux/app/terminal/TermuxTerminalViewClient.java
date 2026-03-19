@@ -244,7 +244,15 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
         if (keyCode == KeyEvent.KEYCODE_ENTER && !currentSession.isRunning()) {
             mTermuxTerminalSessionActivityClient.removeFinishedSession(currentSession);
             return true;
-        } else if (!mActivity.getProperties().areHardwareKeyboardShortcutsDisabled() &&
+        }
+
+        // Command palette: Ctrl+Shift+P
+        if (e.isCtrlPressed() && e.isShiftPressed() && keyCode == KeyEvent.KEYCODE_P) {
+            mActivity.showCommandPalette();
+            return true;
+        }
+
+        if (!mActivity.getProperties().areHardwareKeyboardShortcutsDisabled() &&
             e.isCtrlPressed() && e.isAltPressed()) {
             // Get the unmodified code point:
             int unicodeChar = e.getUnicodeChar(0);

@@ -26,6 +26,8 @@ public interface TerminalSessionClient {
 
     void onTerminalCursorStateChange(boolean state);
 
+    void onDesktopNotification(@NonNull TerminalSession session, String body);
+
     void setTerminalShellPid(@NonNull TerminalSession session, int pid);
 
 

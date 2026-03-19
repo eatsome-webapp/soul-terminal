@@ -60,13 +60,25 @@ import com.termux.terminal.TerminalSessionClient;
 import com.termux.view.TerminalView;
 import com.termux.view.TerminalViewClient;
 
+import android.text.Editable;
+import android.text.TextWatcher;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager.widget.ViewPager;
 
-import java.util.Arrays;
+import com.termux.app.terminal.CommandPaletteAdapter;
+import com.termux.shared.termux.shell.command.runner.terminal.TermuxSession;
+
+import io.flutter.embedding.android.FlutterFragment;
+import io.flutter.embedding.engine.FlutterEngine;
+import io.flutter.embedding.engine.FlutterEngineCache;
 
 /**
  * A terminal emulator activity.
@@ -176,6 +188,12 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
     private float mTerminalToolbarDefaultHeight;
 
+    /** Whether the Flutter view is currently visible. */
+    private boolean mIsFlutterVisible = false;
+
+    /** Tag for the FlutterFragment in FragmentManager. */
+    private static final String FLUTTER_FRAGMENT_TAG = "flutter_fragment";
+
 
     private static final int CONTEXT_MENU_SELECT_URL_ID = 0;
     private static final int CONTEXT_MENU_SHARE_TRANSCRIPT_ID = 1;
@@ -226,6 +244,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         }
 
         setMargins();
+        setupFlutterFragment();
 
         mTermuxActivityRootView = findViewById(R.id.activity_termux_root_view);
         mTermuxActivityRootView.setActivity(this);
@@ -251,6 +270,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         setNewSessionButtonView();
 
         setToggleKeyboardView();
+
+        setSoulToggleButtonView();
 
         registerForContextMenu(mTerminalView);
 
@@ -428,6 +449,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         // Update the {@link TerminalSession} and {@link TerminalEmulator} clients.
         mTermuxService.setTermuxTerminalSessionClient(mTermuxTerminalSessionActivityClient);
+
+        // Register Pigeon bridges with FlutterEngine (when flutter_module is available)
+        setupPigeonBridges();
     }
 
     @Override
@@ -595,14 +619,179 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         });
     }
 
+    private void setSoulToggleButtonView() {
+        findViewById(R.id.toggle_soul_button).setOnClickListener(v -> {
+            getDrawer().closeDrawers();
+            toggleFlutterView();
+        });
+    }
 
+
+
+    private void setupFlutterFragment() {
+        if (FlutterEngineCache.getInstance().contains(TermuxApplication.FLUTTER_ENGINE_ID)) {
+            FlutterFragment flutterFragment = FlutterFragment
+                .withCachedEngine(TermuxApplication.FLUTTER_ENGINE_ID)
+                .shouldAttachEngineToActivity(true)
+                .build();
+
+            getSupportFragmentManager()
+                .beginTransaction()
+                .add(R.id.flutter_container, flutterFragment, FLUTTER_FRAGMENT_TAG)
+                .commit();
+
+            Logger.logDebug(LOG_TAG, "FlutterFragment added to flutter_container");
+        } else {
+            Logger.logWarn(LOG_TAG, "FlutterEngine not yet cached, FlutterFragment not added");
+        }
+    }
+
+    /**
+     * Toggle between terminal view and Flutter view.
+     * Terminal processes continue running when Flutter is visible.
+     */
+    public void toggleFlutterView() {
+        mIsFlutterVisible = !mIsFlutterVisible;
+
+        View terminalContainer = findViewById(R.id.activity_termux_root_relative_layout);
+        View flutterContainer = findViewById(R.id.flutter_container);
+
+        if (mIsFlutterVisible) {
+            terminalContainer.setVisibility(View.GONE);
+            flutterContainer.setVisibility(View.VISIBLE);
+        } else {
+            flutterContainer.setVisibility(View.GONE);
+            terminalContainer.setVisibility(View.VISIBLE);
+            // Refocus terminal view when switching back
+            if (mTerminalView != null) {
+                mTerminalView.requestFocus();
+            }
+        }
+
+        Logger.logDebug(LOG_TAG, "Flutter view visible: " + mIsFlutterVisible);
+    }
+
+    /**
+     * Whether the Flutter view is currently shown.
+     */
+    public boolean isFlutterVisible() {
+        return mIsFlutterVisible;
+    }
+
+    private void setupPigeonBridges() {
+        FlutterEngine flutterEngine = FlutterEngineCache.getInstance()
+            .get(TermuxApplication.FLUTTER_ENGINE_ID);
+
+        if (flutterEngine == null || mTermuxService == null) {
+            Logger.logWarn(LOG_TAG, "Cannot setup Pigeon bridges: engine or service is null");
+            return;
+        }
+
+        // Pigeon bridge registration will be added when flutter_module is available
+        Logger.logDebug(LOG_TAG, "Pigeon bridges setup placeholder (flutter_module not yet integrated)");
+    }
+
+    public void showCommandPalette() {
+        if (mTermuxService == null) return;
+
+        List<CommandPaletteAdapter.PaletteItem> items = new ArrayList<>();
+
+        // Add sessions
+        List<TermuxSession> sessions = mTermuxService.getTermuxSessions();
+        for (int i = 0; i < sessions.size(); i++) {
+            final int sessionIndex = i;
+            TerminalSession termSession = sessions.get(i).getTerminalSession();
+            String name = termSession.mSessionName;
+            if (name == null || name.isEmpty()) {
+                name = "Session " + (i + 1);
+            }
+            items.add(new CommandPaletteAdapter.PaletteItem(
+                name,
+                "Switch to session",
+                () -> mTermuxTerminalSessionActivityClient.switchToSession(sessionIndex)
+            ));
+        }
+
+        // Add built-in actions
+        items.add(new CommandPaletteAdapter.PaletteItem(
+            "New session",
+            "Create a new terminal session",
+            () -> mTermuxTerminalSessionActivityClient.addNewSession(false, null)
+        ));
+
+        items.add(new CommandPaletteAdapter.PaletteItem(
+            "Kill current session",
+            "Close the current terminal session",
+            () -> {
+                TerminalSession current = getCurrentSession();
+                if (current != null) {
+                    current.finishIfRunning();
+                }
+            }
+        ));
+
+        items.add(new CommandPaletteAdapter.PaletteItem(
+            "Rename session",
+            "Rename the current terminal session",
+            () -> {
+                TerminalSession current = getCurrentSession();
+                if (current != null) {
+                    mTermuxTerminalSessionActivityClient.renameSession(current);
+                }
+            }
+        ));
+
+        items.add(new CommandPaletteAdapter.PaletteItem(
+            "Toggle Flutter view",
+            "Show or hide the Flutter view",
+            () -> toggleFlutterView()
+        ));
+
+        // Build dialog
+        View dialogView = getLayoutInflater().inflate(R.layout.command_palette_dialog, null);
+        EditText searchInput = dialogView.findViewById(R.id.command_palette_search);
+        ListView listView = dialogView.findViewById(R.id.command_palette_list);
+
+        CommandPaletteAdapter adapter = new CommandPaletteAdapter(items);
+        listView.setAdapter(adapter);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setTitle("Command Palette")
+            .setView(dialogView)
+            .setNegativeButton(android.R.string.cancel, null)
+            .create();
+
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            CommandPaletteAdapter.PaletteItem item = adapter.getItem(position);
+            dialog.dismiss();
+            item.action.run();
+        });
+
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                adapter.filter(s.toString());
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        dialog.show();
+
+        // Focus the search input and show keyboard
+        searchInput.requestFocus();
+    }
 
 
 
     @SuppressLint("RtlHardcoded")
     @Override
     public void onBackPressed() {
-        if (getDrawer().isDrawerOpen(Gravity.LEFT)) {
+        if (mIsFlutterVisible) {
+            toggleFlutterView();
+        } else if (getDrawer().isDrawerOpen(Gravity.LEFT)) {
             getDrawer().closeDrawers();
         } else {
             finishActivityIfNotFinishing();

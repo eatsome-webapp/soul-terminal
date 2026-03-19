@@ -2,6 +2,12 @@ package com.termux.app;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
+
+import io.flutter.embedding.engine.FlutterEngine;
+import io.flutter.embedding.engine.FlutterEngineCache;
+import io.flutter.embedding.engine.dart.DartExecutor;
 
 import com.termux.BuildConfig;
 import com.termux.shared.errors.Error;
@@ -18,6 +24,8 @@ import com.termux.shared.termux.shell.TermuxShellManager;
 import com.termux.shared.termux.theme.TermuxThemeUtils;
 
 public class TermuxApplication extends Application {
+
+    public static final String FLUTTER_ENGINE_ID = "soul_flutter_engine";
 
     private static final String LOG_TAG = "TermuxApplication";
 
@@ -71,6 +79,27 @@ public class TermuxApplication extends Application {
         if (isTermuxFilesDirectoryAccessible) {
             TermuxShellEnvironment.writeEnvironmentToFile(this);
         }
+
+        // Pre-warm FlutterEngine on background thread
+        preWarmFlutterEngine();
+    }
+
+    private void preWarmFlutterEngine() {
+        new Thread(() -> {
+            try {
+                FlutterEngine flutterEngine = new FlutterEngine(TermuxApplication.this);
+                // executeDartEntrypoint must run on main thread
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    flutterEngine.getDartExecutor().executeDartEntrypoint(
+                        DartExecutor.DartEntrypoint.createDefault()
+                    );
+                    FlutterEngineCache.getInstance().put(FLUTTER_ENGINE_ID, flutterEngine);
+                    Logger.logDebug(LOG_TAG, "FlutterEngine pre-warmed and cached");
+                });
+            } catch (Exception e) {
+                Logger.logError(LOG_TAG, "Failed to pre-warm FlutterEngine: " + e.getMessage());
+            }
+        }).start();
     }
 
     public static void setLogConfig(Context context) {

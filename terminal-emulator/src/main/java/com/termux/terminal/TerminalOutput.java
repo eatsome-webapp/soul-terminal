@@ -29,4 +29,7 @@ public abstract class TerminalOutput {
 
     public abstract void onColorsChanged();
 
+    /** Called when an OSC 9 desktop notification escape sequence is received. */
+    public abstract void onDesktopNotification(String body);
+
 }

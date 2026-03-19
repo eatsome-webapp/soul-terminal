@@ -803,6 +803,30 @@ public final class TerminalView extends View {
             return true;
         }
 
+        // Kitty keyboard protocol: encode printable chars with modifiers as CSI codepoint ; mod u
+        if (mTermSession != null) {
+            TerminalEmulator termForKitty = mTermSession.getEmulator();
+            if (termForKitty != null && (termForKitty.getKittyKeyboardMode() & 0x01) != 0) {
+                int unicodeChar = event.getUnicodeChar(0); // Unmodified character
+                if (unicodeChar > 0 && unicodeChar != event.getUnicodeChar(event.getMetaState())) {
+                    // Character is modified -- encode with Kitty protocol
+                    int kittyKeyMod = 0;
+                    if (event.isAltPressed()) kittyKeyMod |= KeyHandler.KEYMOD_ALT;
+                    if (event.isShiftPressed()) kittyKeyMod |= KeyHandler.KEYMOD_SHIFT;
+                    if (event.isCtrlPressed()) kittyKeyMod |= KeyHandler.KEYMOD_CTRL;
+                    int kittyMod = 0;
+                    if ((kittyKeyMod & KeyHandler.KEYMOD_SHIFT) != 0) kittyMod |= 1;
+                    if ((kittyKeyMod & KeyHandler.KEYMOD_ALT) != 0) kittyMod |= 2;
+                    if ((kittyKeyMod & KeyHandler.KEYMOD_CTRL) != 0) kittyMod |= 4;
+                    if (kittyMod > 0) {
+                        String seq = "\033[" + unicodeChar + ";" + (kittyMod + 1) + "u";
+                        mTermSession.write(seq);
+                        return true;
+                    }
+                }
+            }
+        }
+
         // Clear Ctrl since we handle that ourselves:
         int bitsToClear = KeyEvent.META_CTRL_MASK;
         if (rightAltDownFromEvent) {
@@ -918,6 +942,17 @@ public final class TerminalView extends View {
             return true;
 
         TerminalEmulator term = mTermSession.getEmulator();
+
+        // Try Kitty keyboard protocol encoding first
+        int kittyMode = term.getKittyKeyboardMode();
+        if (kittyMode > 0) {
+            String kittyCode = KeyHandler.getKittyCode(keyCode, keyMod, 1, kittyMode);
+            if (kittyCode != null) {
+                mTermSession.write(kittyCode);
+                return true;
+            }
+        }
+
         String code = KeyHandler.getCode(keyCode, keyMod, term.isCursorKeysApplicationMode(), term.isKeypadApplicationMode());
         if (code == null) return false;
         mTermSession.write(code);
@@ -966,6 +1001,22 @@ public final class TerminalView extends View {
         } else if (event.isSystem()) {
             // Let system key events through.
             return super.onKeyUp(keyCode, event);
+        }
+
+        // Send Kitty key release event if mode 2 (report event types) is active
+        if (mTermSession != null) {
+            TerminalEmulator term = mTermSession.getEmulator();
+            if (term != null && (term.getKittyKeyboardMode() & 0x02) != 0) {
+                int keyMod = 0;
+                if (event.isAltPressed()) keyMod |= KeyHandler.KEYMOD_ALT;
+                if (event.isShiftPressed()) keyMod |= KeyHandler.KEYMOD_SHIFT;
+                if (event.isCtrlPressed()) keyMod |= KeyHandler.KEYMOD_CTRL;
+                String kittyCode = KeyHandler.getKittyCode(keyCode, keyMod, 3, term.getKittyKeyboardMode());
+                if (kittyCode != null) {
+                    mTermSession.write(kittyCode);
+                    return true;
+                }
+            }
         }
 
         return true;

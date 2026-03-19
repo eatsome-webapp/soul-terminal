@@ -848,6 +848,13 @@ public final class TermuxConstants {
     /** Termux app unique notification id used by {@link TERMUX_APP.TERMUX_SERVICE} */
     public static final int TERMUX_APP_NOTIFICATION_ID = 1337;
 
+    /** Notification channel for OSC 9 terminal desktop notifications. */
+    public static final String TERMUX_TERMINAL_NOTIFICATION_CHANNEL_ID = "terminal_desktop_notifications";
+    /** Display name for the terminal notification channel. */
+    public static final String TERMUX_TERMINAL_NOTIFICATION_CHANNEL_NAME = "Terminal Notifications";
+    /** Base notification ID for OSC 9 notifications. Each session adds its index to this base. */
+    public static final int TERMUX_TERMINAL_NOTIFICATION_ID_BASE = 2000;
+
     /** Termux app notification channel id used by {@link TERMUX_APP.RUN_COMMAND_SERVICE} */
     public static final String TERMUX_RUN_COMMAND_NOTIFICATION_CHANNEL_ID = "termux_run_command_notification_channel";
     /** Termux app notification channel name used by {@link TERMUX_APP.RUN_COMMAND_SERVICE} */

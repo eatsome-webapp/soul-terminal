@@ -285,6 +285,11 @@ public final class TerminalSession extends TerminalOutput {
     }
 
     @Override
+    public void onDesktopNotification(String body) {
+        mClient.onDesktopNotification(this, body);
+    }
+
+    @Override
     public void onColorsChanged() {
         mClient.onColorsChanged(this);
     }

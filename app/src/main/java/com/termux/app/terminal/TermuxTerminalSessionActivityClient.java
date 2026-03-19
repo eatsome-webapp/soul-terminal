@@ -3,15 +3,20 @@ package com.termux.app.terminal;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.media.AudioAttributes;
 import android.media.SoundPool;
 import android.text.TextUtils;
 import android.widget.ListView;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,6 +32,7 @@ import com.termux.app.TermuxService;
 import com.termux.shared.termux.settings.properties.TermuxPropertyConstants;
 import com.termux.shared.termux.terminal.io.BellHandler;
 import com.termux.shared.logger.Logger;
+import com.termux.shared.notification.NotificationUtils;
 import com.termux.terminal.TerminalColors;
 import com.termux.terminal.TerminalSession;
 import com.termux.terminal.TerminalSessionClient;
@@ -49,6 +55,11 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
     private int mBellSoundId;
 
     private static final String LOG_TAG = "TermuxTerminalSessionActivityClient";
+
+    /** Rate limiting: last notification timestamp per session. */
+    private final ConcurrentHashMap<TerminalSession, Long> mLastNotificationTime = new ConcurrentHashMap<>();
+    private static final long NOTIFICATION_RATE_LIMIT_MS = 3000;
+    private boolean mNotificationChannelCreated = false;
 
     public TermuxTerminalSessionActivityClient(TermuxActivity activity) {
         this.mActivity = activity;
@@ -178,6 +189,8 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
                 removeFinishedSession(finishedSession);
             }
         }
+
+        mLastNotificationTime.remove(finishedSession);
     }
 
     @Override
@@ -212,6 +225,72 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
             case TermuxPropertyConstants.IVALUE_BELL_BEHAVIOUR_IGNORE:
                 // Ignore the bell character.
                 break;
+        }
+    }
+
+    @Override
+    public void onDesktopNotification(@NonNull TerminalSession session, String body) {
+        if (body == null || body.isEmpty()) return;
+
+        // Rate limiting: max 1 notification per 3 seconds per session
+        long now = System.currentTimeMillis();
+        Long lastTime = mLastNotificationTime.get(session);
+        if (lastTime != null && (now - lastTime) < NOTIFICATION_RATE_LIMIT_MS) {
+            return;
+        }
+        mLastNotificationTime.put(session, now);
+
+        // Ensure notification channel exists (idempotent)
+        if (!mNotificationChannelCreated) {
+            NotificationUtils.setupNotificationChannel(
+                mActivity,
+                TermuxConstants.TERMUX_TERMINAL_NOTIFICATION_CHANNEL_ID,
+                TermuxConstants.TERMUX_TERMINAL_NOTIFICATION_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_DEFAULT
+            );
+            mNotificationChannelCreated = true;
+        }
+
+        // Determine session name
+        String sessionName = session.mSessionName;
+        if (sessionName == null || sessionName.isEmpty()) {
+            sessionName = "Terminal";
+        }
+
+        // Find session index for notification ID and grouping
+        int sessionIndex = 0;
+        if (mActivity.getTermuxService() != null) {
+            java.util.List<TermuxSession> sessions = mActivity.getTermuxService().getTermuxSessions();
+            for (int i = 0; i < sessions.size(); i++) {
+                if (sessions.get(i).getTerminalSession() == session) {
+                    sessionIndex = i;
+                    break;
+                }
+            }
+        }
+
+        int notificationId = TermuxConstants.TERMUX_TERMINAL_NOTIFICATION_ID_BASE + sessionIndex;
+
+        // PendingIntent to open app and switch to session
+        Intent intent = TermuxActivity.newInstance(mActivity);
+        intent.putExtra("session_index", sessionIndex);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+            mActivity, notificationId, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        android.app.Notification.Builder builder = new android.app.Notification.Builder(
+                mActivity, TermuxConstants.TERMUX_TERMINAL_NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(sessionName)
+            .setContentText(body)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setGroup("terminal_osc9_" + sessionIndex);
+
+        NotificationManager manager = (NotificationManager) mActivity.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) {
+            manager.notify(notificationId, builder.build());
         }
     }
 
