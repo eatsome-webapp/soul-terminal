@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.net.Uri;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.annotation.Nullable;
 
 import com.termux.shared.data.IntentUtils;
@@ -81,7 +82,7 @@ public class SystemEventReceiver extends BroadcastReceiver {
         intentFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
         intentFilter.addAction(Intent.ACTION_PACKAGE_REPLACED);
         intentFilter.addDataScheme("package");
-        context.registerReceiver(getInstance(), intentFilter);
+        ContextCompat.registerReceiver(context, getInstance(), intentFilter, ContextCompat.RECEIVER_EXPORTED);
     }
 
     public synchronized static void unregisterPackageUpdateEvents(@NonNull Context context) {
