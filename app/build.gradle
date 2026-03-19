@@ -41,7 +41,10 @@ android {
 
         implementation project(":terminal-view")
         implementation project(":termux-shared")
-        implementation project(':flutter')
+        // Flutter module — only available when flutter_module is built
+        if (findProject(':flutter') != null) {
+            implementation project(':flutter')
+        }
     }
 
     defaultConfig {

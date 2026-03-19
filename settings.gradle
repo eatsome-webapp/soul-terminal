@@ -1,5 +1,8 @@
 include ':app', ':termux-shared', ':terminal-emulator', ':terminal-view'
 
-// Flutter module source inclusion
-setBinding(new Binding([gradle: this]))
-evaluate(new File(settingsDir, 'flutter_module/.android/include_flutter.groovy'))
+// Flutter module source inclusion (conditional — only when flutter_module is built)
+def flutterInclude = new File(settingsDir, 'flutter_module/.android/include_flutter.groovy')
+if (flutterInclude.exists()) {
+    setBinding(new Binding([gradle: this]))
+    evaluate(flutterInclude)
+}
