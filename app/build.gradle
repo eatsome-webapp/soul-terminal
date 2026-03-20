@@ -242,8 +242,8 @@ clean {
 
 task downloadBootstraps() {
     doLast {
-        def version = "2026.03.19-r1+soul-terminal"
-        downloadBootstrap("aarch64", "3b3a19d8111fca244c6cf76376b589d7a56aa41df54de9272b7590f83538b9ce", version)
+        def version = "2026.03.20-r1+soul-terminal"
+        downloadBootstrap("aarch64", "47f4d10ec11bae7a56115d04197a5c6bdb7b5ba2b7ed9760e4ae177df5cb6da6", version)
     }
 }
 
