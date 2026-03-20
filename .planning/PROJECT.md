@@ -22,8 +22,14 @@ Een native terminal die naadloos integreert met SOUL — zodat Claude Code, de A
 
 ### Active
 
-- [ ] Eigen bootstrap pipeline (packages gebouwd met nieuw prefix)
-- [ ] Eigen apt repository voor custom packages
+- [ ] Terminal quick wins: scrollback 20k, Claude Code extra keys, SOUL kleurthema
+- [ ] Flutter module embedding als hoofdscherm
+- [ ] Pigeon bridge: terminal/sessie/output APIs
+- [ ] Bottom sheet terminal (Flutter boven, terminal schuift omhoog)
+- [ ] Session management UI (tab bar in sheet)
+- [ ] SOUL terminal awareness (AI kan terminal gebruiken)
+- [ ] Onboarding flow (eerste start → werkende dev environment)
+- [ ] UX polish (path tap-copy, native permission dialogs, landscape)
 
 ### Out of Scope
 
@@ -31,6 +37,19 @@ Een native terminal die naadloos integreert met SOUL — zodat Claude Code, de A
 - Eigen terminal emulator library — we gebruiken Termux's terminal-emulator/terminal-view
 - Multi-device sync — lokaal-eerst
 - Plugin apps (Termux:Float, Termux:API etc.) — niet nodig in v1
+
+## Current Milestone: v1.1 Van terminal naar AI coding omgeving
+
+**Goal:** SOUL Terminal transformeren van een rebranded Termux naar een volwaardige AI coding omgeving — Flutter als hoofdscherm, terminal als bottom sheet, SOUL kan zelfstandig terminal gebruiken, en een onboarding flow die nieuwe gebruikers meteen productief maakt.
+
+**Target features:**
+- Terminal quick wins (scrollback, extra keys, kleurthema)
+- Flutter module als hoofdscherm met bottom sheet terminal
+- Pigeon bridge voor type-safe Flutter ↔ terminal communicatie
+- Session management met tab bar
+- SOUL terminal awareness (AI stuurt terminal aan)
+- Onboarding flow voor eerste start
+- UX polish voor open source lancering
 
 ## Context
 
@@ -58,4 +77,4 @@ Een native terminal die naadloos integreert met SOUL — zodat Claude Code, de A
 | Pigeon bridge i.p.v. cmd-proxy | In-process communicatie, geen HTTP/token overhead, veiliger | ✓ Validated Phase 3 |
 
 ---
-*Last updated: 2026-03-19 after Phase 3 completion — Flutter module + Pigeon bridge integrated*
+*Last updated: 2026-03-20 after milestone v1.1 started — van terminal naar AI coding omgeving*
