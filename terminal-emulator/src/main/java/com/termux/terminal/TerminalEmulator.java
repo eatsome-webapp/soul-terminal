@@ -148,7 +148,7 @@ public final class TerminalEmulator {
     /** The number of terminal transcript rows that can be scrolled back to. */
     public static final int TERMINAL_TRANSCRIPT_ROWS_MIN = 100;
     public static final int TERMINAL_TRANSCRIPT_ROWS_MAX = 50000;
-    public static final int DEFAULT_TERMINAL_TRANSCRIPT_ROWS = 2000;
+    public static final int DEFAULT_TERMINAL_TRANSCRIPT_ROWS = 20000;
 
 
     /* The supported terminal cursor styles. */
