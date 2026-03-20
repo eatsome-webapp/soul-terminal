@@ -30,11 +30,48 @@ jobs:
           # 2. Fix profile.d dir not created before write
           sed -i '/chmod 700.*BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE/a\\n\tmkdir -p "${BOOTSTRAP_ROOTFS}/${TERMUX__PREFIX__PROFILE_D_DIR}"' scripts/generate-bootstraps.sh
 
-          # 3. After packages are extracted (com.termux paths) and second-stage files are added
-          #    (com.soul.terminal paths), merge everything under com.termux and symlink back.
-          #    Packages extract to com.termux/files/usr, second-stage goes to com.soul.terminal/files/usr.
-          #    We need create_bootstrap_archive to find both via com.soul.terminal path.
-          sed -i '/create_bootstrap_archive "\$package_arch"/i\\n\t# Merge second-stage files into com.termux tree, then symlink com.soul.terminal -> com.termux\n\tif [ -d "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" ]; then\n\t\t# Copy second-stage files from com.soul.terminal into com.termux tree\n\t\tif [ -d "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr" ] && [ ! -L "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr" ]; then\n\t\t\tcp -a "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr/." "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr/"\n\t\t\trm -rf "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr"\n\t\t\techo "[*] Merged second-stage files into com.termux tree"\n\t\tfi\n\t\t# Create symlink so create_bootstrap_archive finds everything\n\t\tmkdir -p "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files"\n\t\tln -sfn "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr"\n\t\techo "[*] Symlinked com.soul.terminal/files/usr -> com.termux/files/usr"\n\tfi' scripts/generate-bootstraps.sh
+          # 3. Create helper script for path remapping
+          cat > scripts/soul-remap.sh << 'REMAP_EOF'
+          #!/bin/bash
+          # Called from generate-bootstraps.sh just before create_bootstrap_archive.
+          # At this point:
+          #   - Packages extracted to ${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr/
+          #   - Second-stage files in ${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr/
+          # We need to merge everything and replace com.termux references.
+
+          TERMUX_TREE="${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr"
+          SOUL_TREE="${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr"
+
+          if [ ! -d "$TERMUX_TREE" ]; then
+              echo "[!] com.termux tree not found, skipping remap"
+              return 0
+          fi
+
+          # Step 1: Merge second-stage files into com.termux tree
+          if [ -d "$SOUL_TREE" ] && [ ! -L "$SOUL_TREE" ]; then
+              cp -a "$SOUL_TREE/." "$TERMUX_TREE/"
+              rm -rf "$SOUL_TREE"
+              echo "[*] Merged second-stage files into com.termux tree"
+          fi
+
+          # Step 2: Replace com.termux with com.soul.terminal in text files
+          echo "[*] Replacing com.termux references in text files..."
+          REPLACED=0
+          while IFS= read -r f; do
+              sed -i 's|com\.termux|com.soul.terminal|g' "$f"
+              REPLACED=$((REPLACED + 1))
+          done < <(grep -rIl 'com\.termux' "$TERMUX_TREE" 2>/dev/null)
+          echo "[*] Replaced com.termux in $REPLACED text files"
+
+          # Step 3: Symlink com.soul.terminal -> com.termux so create_bootstrap_archive finds everything
+          mkdir -p "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files"
+          ln -sfn "$TERMUX_TREE" "$SOUL_TREE"
+          echo "[*] Symlinked com.soul.terminal/files/usr -> com.termux/files/usr"
+          REMAP_EOF
+          chmod +x scripts/soul-remap.sh
+
+          # 4. Insert call to remap script before create_bootstrap_archive
+          sed -i '/create_bootstrap_archive "\$package_arch"/i\\n\tsource scripts/soul-remap.sh' scripts/generate-bootstraps.sh
 
           echo "All patches applied"
 
@@ -65,6 +102,8 @@ jobs:
           unzip -p bootstrap-aarch64.zip SYMLINKS.txt | wc -l
           echo "=== Zip entry count ==="
           unzip -l bootstrap-aarch64.zip | tail -1
+          echo "=== Check for remaining com.termux references in SYMLINKS.txt ==="
+          unzip -p bootstrap-aarch64.zip SYMLINKS.txt | grep -c 'com\.termux' || echo "0 (clean)"
 
       - name: Compute SHA-256
         id: checksum
