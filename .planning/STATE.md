@@ -1,15 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Van terminal naar AI coding omgeving
-status: active
-stopped_at: null
-last_updated: "2026-03-20T00:00:00.000Z"
+milestone: v1.0
+milestone_name: — Foundation
+status: unknown
+last_updated: "2026-03-20T21:42:20.665Z"
 progress:
-  total_phases: 7
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 11
+  completed_phases: 4
+  total_plans: 17
+  completed_plans: 16
 ---
 
 # Project State
@@ -19,14 +18,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Een native terminal die naadloos integreert met SOUL — terminal + AI brain in één app.
-**Current focus:** Phase 5 — Terminal Quick Wins (eerste fase van v1.1)
+**Current focus:** Phase 05 — terminal-quick-wins
 
 ## Current Position
 
-Phase: 5 — Terminal Quick Wins
-Plan: —
-Status: Not started
-Last activity: 2026-03-20 — Roadmap v1.1 created (7 phases, 47 requirements)
+Phase: 05 (terminal-quick-wins) — COMPLETE
+Plan: 1 of 1 — complete (2026-03-20)
+Resume: .planning/phases/05-terminal-quick-wins/05-01-SUMMARY.md
 
 ## v1.1 Phase Overview
 
@@ -43,6 +41,7 @@ Last activity: 2026-03-20 — Roadmap v1.1 created (7 phases, 47 requirements)
 ## Accumulated Context
 
 ### From v1.0
+
 - Pigeon interface nesting: outer class is container, interface genest, setUp() statisch
 - android.nonTransitiveRClass=false — bestaande code gebruikt cross-module R class referenties
 - android.defaults.buildfeatures.buildconfig=true — AGP 8.x compatibility
@@ -53,6 +52,7 @@ Last activity: 2026-03-20 — Roadmap v1.1 created (7 phases, 47 requirements)
 - Bootstrap: moderne format (2025+), geen SYMLINKS.txt, arm64-v8a only
 
 ### From v1.1 Research
+
 - `windowSoftInputMode="adjustPan"` + `ViewCompat.setOnApplyWindowInsetsListener` voor IME in BottomSheet (CP-1)
 - Dedicated `BottomSheetDragHandleView` + `NestedScrollingChild3` in TerminalView voor touch conflict (CP-2)
 - HyperOS detectie bij onboarding voor Xiaomi battery/autostart instructies (CP-3)
