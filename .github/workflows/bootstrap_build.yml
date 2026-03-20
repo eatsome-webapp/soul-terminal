@@ -55,6 +55,7 @@ jobs:
           fi
 
           # Step 2: Replace com.termux with com.soul.terminal in text files
+          # (TermuxInstaller.java also does this on-device, but doing it here too for safety)
           echo "[*] Replacing com.termux references in text files..."
           REPLACED=0
           while IFS= read -r f; do
@@ -63,7 +64,27 @@ jobs:
           done < <(grep -rIl 'com\.termux' "$TERMUX_TREE" 2>/dev/null)
           echo "[*] Replaced com.termux in $REPLACED text files"
 
-          # Step 3: Symlink com.soul.terminal -> com.termux so create_bootstrap_archive finds everything
+          # Step 3: Binary-patch ELF files with same-length path substitution
+          # /data/data/com.termux/files/usr = 31 chars
+          # /data/data/com.soul.terminal/tu = 31 chars (exact same length!)
+          # On device, TermuxInstaller creates symlink: /tu -> files/usr
+          OLD_PREFIX="/data/data/com.termux/files/usr"
+          NEW_PREFIX="/data/data/com.soul.terminal/tu"
+          echo "[*] Binary-patching ELF files: $OLD_PREFIX -> $NEW_PREFIX"
+          PATCHED=0
+          while IFS= read -r -d '' f; do
+              # Check for ELF magic bytes
+              if head -c4 "$f" | grep -q $'\x7fELF'; then
+                  if grep -q "$OLD_PREFIX" "$f" 2>/dev/null; then
+                      # Use perl for safe binary replacement (same length, no byte shift)
+                      perl -pi -e "s|\Q$OLD_PREFIX\E|$NEW_PREFIX|g" "$f"
+                      PATCHED=$((PATCHED + 1))
+                  fi
+              fi
+          done < <(find "$TERMUX_TREE" -type f -print0)
+          echo "[*] Binary-patched $PATCHED ELF files"
+
+          # Step 4: Symlink com.soul.terminal -> com.termux so create_bootstrap_archive finds everything
           mkdir -p "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files"
           ln -sfn "$TERMUX_TREE" "$SOUL_TREE"
           echo "[*] Symlinked com.soul.terminal/files/usr -> com.termux/files/usr"

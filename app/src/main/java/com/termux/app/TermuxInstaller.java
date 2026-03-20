@@ -228,6 +228,22 @@ final class TermuxInstaller {
 
                     Logger.logInfo(LOG_TAG, "Bootstrap packages installed successfully.");
 
+                    // Create /tu symlink for binary compatibility.
+                    // Pre-built Termux binaries have /data/data/com.termux/files/usr (31 chars)
+                    // hardcoded. Bootstrap build patches these to /data/data/com.soul.terminal/tu
+                    // (same 31 chars). This symlink makes that path resolve correctly.
+                    if (!"com.termux".equals(TermuxConstants.TERMUX_PACKAGE_NAME)) {
+                        File compatSymlink = new File(TermuxConstants.TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR_PATH, "tu");
+                        if (!compatSymlink.exists()) {
+                            try {
+                                Os.symlink("files/usr", compatSymlink.getAbsolutePath());
+                                Logger.logInfo(LOG_TAG, "Created binary compat symlink: " + compatSymlink.getAbsolutePath() + " -> files/usr");
+                            } catch (Exception e) {
+                                Logger.logError(LOG_TAG, "Failed to create compat symlink: " + e.getMessage());
+                            }
+                        }
+                    }
+
                     // Recreate env file since termux prefix was wiped earlier
                     TermuxShellEnvironment.writeEnvironmentToFile(activity);
 
