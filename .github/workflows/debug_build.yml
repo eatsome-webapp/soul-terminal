@@ -39,6 +39,11 @@ jobs:
           cd flutter_module
           flutter pub get
 
+      - name: Flutter codegen (build_runner)
+        run: |
+          cd flutter_module
+          dart run build_runner build --delete-conflicting-outputs
+
       - name: Debug Flutter module setup
         run: |
           echo "=== flutter_module/.android contents ==="
