@@ -56,6 +56,18 @@ jobs:
               less procps psmisc sed tar \
               termux-exec termux-keyring termux-tools"
 
+      - name: Create local APT repository
+        working-directory: termux-packages
+        run: |
+          # Build a local apt repo from the compiled .deb files so generate-bootstraps.sh
+          # uses our com.soul.terminal packages instead of downloading com.termux ones
+          sudo apt-get install -y dpkg-dev
+          mkdir -p output/dists/stable/main/binary-aarch64
+          cd output
+          dpkg-scanpackages --arch aarch64 . > dists/stable/main/binary-aarch64/Packages
+          echo "Local repo created with $(grep -c '^Package:' dists/stable/main/binary-aarch64/Packages) packages"
+          cat dists/stable/main/binary-aarch64/Packages | head -20
+
       - name: Assemble bootstrap zip
         working-directory: termux-packages
         run: |
@@ -64,7 +76,7 @@ jobs:
             -v "$PWD:/home/builder/termux-packages" \
             -w /home/builder/termux-packages \
             ghcr.io/termux/package-builder \
-            bash -c "./scripts/generate-bootstraps.sh --architectures aarch64"
+            bash -c "./scripts/generate-bootstraps.sh --architectures aarch64 --repository file:///home/builder/termux-packages/output"
           mv bootstrap-aarch64.zip ../
 
       - name: Compute SHA-256
