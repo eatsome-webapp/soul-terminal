@@ -242,6 +242,17 @@ final class TermuxInstaller {
                                 Logger.logError(LOG_TAG, "Failed to create compat symlink: " + e.getMessage());
                             }
                         }
+
+                        // Create apt cache directory (apt binary has com.termux cache path compiled in,
+                        // 99soul-paths.conf overrides it but the directory must exist)
+                        File aptCacheDir = new File(TermuxConstants.TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR_PATH, "cache/apt/archives/partial");
+                        if (!aptCacheDir.exists()) {
+                            aptCacheDir.mkdirs();
+                        }
+                        File aptLogDir = new File(TermuxConstants.TERMUX_INTERNAL_PRIVATE_APP_DATA_DIR_PATH, "cache/apt/log");
+                        if (!aptLogDir.exists()) {
+                            aptLogDir.mkdirs();
+                        }
                     }
 
                     // Recreate env file since termux prefix was wiped earlier

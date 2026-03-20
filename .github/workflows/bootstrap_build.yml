@@ -97,13 +97,15 @@ jobs:
           done < <(find "$TERMUX_TREE" -type f -print0)
           echo "[*] Binary-patched $PATCHED ELF files"
 
-          # Step 4: Fix apt keyring paths for binary compatibility
-          # apt binary uses /tu prefix, but config files use /files/usr prefix.
-          # Explicitly tell apt where to find keyrings using the direct path.
+          # Step 4: Fix apt paths hardcoded with com.termux in the binary.
+          # The binary-patch only covers /data/data/com.termux/files/usr (31 chars).
+          # Other compiled-in paths (cache dir, keyring) need config overrides.
           mkdir -p "$TERMUX_TREE/etc/apt/apt.conf.d"
           cat > "$TERMUX_TREE/etc/apt/apt.conf.d/99soul-paths.conf" << APTCONF
+          Dir::Cache "/data/data/com.soul.terminal/cache/apt";
           Dir::Etc::trusted "/data/data/com.soul.terminal/files/usr/etc/apt/trusted.gpg";
           Dir::Etc::trustedparts "/data/data/com.soul.terminal/files/usr/etc/apt/trusted.gpg.d";
+          Dir::Log "/data/data/com.soul.terminal/cache/apt/log";
           APTCONF
           echo "[*] APT keyring files:"
           ls -la "$TERMUX_TREE/etc/apt/trusted.gpg.d/" 2>/dev/null || echo "  (none found)"
