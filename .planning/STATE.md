@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-stopped_at: Completed 06-04-PLAN.md
-last_updated: "2026-03-20T22:29:33.659Z"
+stopped_at: Completed 06-03-PLAN.md
+last_updated: "2026-03-20T22:41:38.289Z"
 progress:
   total_phases: 11
   completed_phases: 5
   total_plans: 22
-  completed_plans: 20
+  completed_plans: 21
 ---
 
 # Project State
@@ -68,10 +68,18 @@ Plan: 4 of 5
 ### From 06-01 (Code Copy & Dependency Merge)
 
 - soul_core package is dode code (lege library stub, nul imports) — niet gekopieerd
-- pigeon: ^22.7.0 retained als runtime dep (Pigeon generated code in lib/generated/ heeft het nodig)
 - objectbox.g.dart op lib/ root — correct voor relative import vanuit main.dart
+
+### From 06-03 (ProviderScope & Main.dart Refactoring)
+
+- pigeon moved to dev_dependencies en upgraded ^22.7.0 → ^26.2.3 (generated files importeren pigeon niet runtime)
+- StateProvider verwijderd in flutter_riverpod v3 — gebruik NotifierProvider<XNotifier, State>
+- objectBoxStoreProvider = NotifierProvider<ObjectBoxStoreNotifier, Store?> — null start, setStore() na async init
+- SoulInitWidget loading screen guards alle ObjectBox consumers totdat store klaar is
+- PigeonBridgeHandler.init() registreert SoulBridgeApi vroeg in _initializeApp() voor UI load
+- build_runner vereist na schema wijzigingen — soul_database.g.dart was out-of-sync
 
 ## Session
 
-- **Stopped at:** Completed 06-04-PLAN.md
+- **Stopped at:** Completed 06-03-PLAN.md
 - **Resume file:** None
