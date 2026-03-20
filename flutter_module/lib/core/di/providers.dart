@@ -146,12 +146,16 @@ final claudeServiceProvider = Provider<ClaudeService>((ref) {
 
 // --- ObjectBox ---
 
-/// ObjectBox Store -- must be overridden at app startup with actual Store instance.
-/// Use: ProviderScope(overrides: [objectBoxStoreProvider.overrideWithValue(store)])
-final objectBoxStoreProvider = Provider<Store>((ref) {
-  throw UnimplementedError(
-    'ObjectBox Store must be provided via ProviderScope override',
-  );
+/// ObjectBox Store -- starts as null, set by SoulInitWidget after async init.
+/// Use [objectBoxStoreReadyProvider] in providers that require a non-null Store.
+final objectBoxStoreProvider = StateProvider<Store?>((ref) => null);
+
+/// Non-null store provider — only use after initialization is confirmed complete.
+/// Throws if accessed before store is ready (guarded by SoulInitWidget).
+final objectBoxStoreReadyProvider = Provider<Store>((ref) {
+  final store = ref.watch(objectBoxStoreProvider);
+  if (store == null) throw StateError('ObjectBox store not yet initialized');
+  return store;
 });
 
 // --- Memory Services ---
@@ -166,7 +170,7 @@ final embeddingServiceProvider = Provider<EmbeddingService>((ref) {
 
 /// ObjectBox vector store for semantic search.
 final vectorStoreProvider = Provider<VectorStore>((ref) {
-  final store = ref.watch(objectBoxStoreProvider);
+  final store = ref.watch(objectBoxStoreReadyProvider);
   return VectorStore(store: store);
 });
 
