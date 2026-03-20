@@ -109,12 +109,58 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| — | — | — |
+| TERM-04 | Phase 5 — Terminal Quick Wins | Pending |
+| TERM-05 | Phase 5 — Terminal Quick Wins | Pending |
+| TERM-06 | Phase 5 — Terminal Quick Wins | Pending |
+| TERM-07 | Phase 5 — Terminal Quick Wins | Pending |
+| MERG-01 | Phase 6 — App Merge | Pending |
+| MERG-02 | Phase 6 — App Merge | Pending |
+| MERG-03 | Phase 6 — App Merge | Pending |
+| MERG-04 | Phase 6 — App Merge | Pending |
+| MERG-05 | Phase 6 — App Merge | Pending |
+| MERG-06 | Phase 6 — App Merge | Pending |
+| MERG-07 | Phase 6 — App Merge | Pending |
+| MERG-08 | Phase 6 — App Merge | Pending |
+| MERG-09 | Phase 6 — App Merge | Pending |
+| LAYT-01 | Phase 7 — Bottom Sheet Layout | Pending |
+| LAYT-02 | Phase 7 — Bottom Sheet Layout | Pending |
+| LAYT-03 | Phase 7 — Bottom Sheet Layout | Pending |
+| LAYT-04 | Phase 7 — Bottom Sheet Layout | Pending |
+| LAYT-05 | Phase 7 — Bottom Sheet Layout | Pending |
+| LAYT-06 | Phase 7 — Bottom Sheet Layout | Pending |
+| SESS-01 | Phase 8 — Session Management | Pending |
+| SESS-02 | Phase 8 — Session Management | Pending |
+| SESS-03 | Phase 8 — Session Management | Pending |
+| SESS-04 | Phase 8 — Session Management | Pending |
+| SESS-05 | Phase 8 — Session Management | Pending |
+| SESS-06 | Phase 8 — Session Management | Pending |
+| AWAR-01 | Phase 9 — SOUL Terminal Awareness | Pending |
+| AWAR-02 | Phase 9 — SOUL Terminal Awareness | Pending |
+| AWAR-03 | Phase 9 — SOUL Terminal Awareness | Pending |
+| AWAR-04 | Phase 9 — SOUL Terminal Awareness | Pending |
+| AWAR-05 | Phase 9 — SOUL Terminal Awareness | Pending |
+| AWAR-06 | Phase 9 — SOUL Terminal Awareness | Pending |
+| AWAR-07 | Phase 9 — SOUL Terminal Awareness | Pending |
+| AWAR-08 | Phase 9 — SOUL Terminal Awareness | Pending |
+| ONBR-01 | Phase 10 — Onboarding Flow | Pending |
+| ONBR-02 | Phase 10 — Onboarding Flow | Pending |
+| ONBR-03 | Phase 10 — Onboarding Flow | Pending |
+| ONBR-04 | Phase 10 — Onboarding Flow | Pending |
+| ONBR-05 | Phase 10 — Onboarding Flow | Pending |
+| ONBR-06 | Phase 10 — Onboarding Flow | Pending |
+| ONBR-07 | Phase 10 — Onboarding Flow | Pending |
+| UXPL-01 | Phase 11 — UX Polish | Pending |
+| UXPL-02 | Phase 11 — UX Polish | Pending |
+| UXPL-03 | Phase 11 — UX Polish | Pending |
+| UXPL-04 | Phase 11 — UX Polish | Pending |
+| UXPL-05 | Phase 11 — UX Polish | Pending |
+| UXPL-06 | Phase 11 — UX Polish | Pending |
+| UXPL-07 | Phase 11 — UX Polish | Pending |
 
 **Coverage:**
 - v1.1 requirements: 47 total
-- Mapped to phases: 0
-- Unmapped: 47
+- Mapped to phases: 47
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-20*

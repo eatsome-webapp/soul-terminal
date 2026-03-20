@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Van terminal naar AI coding omgeving
-status: unknown
+status: active
 stopped_at: null
 last_updated: "2026-03-20T00:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 7
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -19,14 +19,26 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Een native terminal die naadloos integreert met SOUL — terminal + AI brain in één app.
-**Current focus:** Defining requirements for v1.1
+**Current focus:** Phase 5 — Terminal Quick Wins (eerste fase van v1.1)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 5 — Terminal Quick Wins
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-20 — Milestone v1.1 started
+Status: Not started
+Last activity: 2026-03-20 — Roadmap v1.1 created (7 phases, 47 requirements)
+
+## v1.1 Phase Overview
+
+| # | Phase | Status | Requirements |
+|---|-------|--------|-------------|
+| 5 | Terminal Quick Wins | Pending | TERM-04..07 (4) |
+| 6 | App Merge | Pending | MERG-01..09 (9) |
+| 7 | Bottom Sheet Layout | Pending | LAYT-01..06 (6) |
+| 8 | Session Management | Pending | SESS-01..06 (6) |
+| 9 | SOUL Terminal Awareness | Pending | AWAR-01..08 (8) |
+| 10 | Onboarding Flow | Pending | ONBR-01..07 (7) |
+| 11 | UX Polish | Pending | UXPL-01..07 (7) |
 
 ## Accumulated Context
 
@@ -39,3 +51,16 @@ Last activity: 2026-03-20 — Milestone v1.1 started
 - ListView + BaseAdapter (niet RecyclerView) — geen androidx.recyclerview dependency
 - TermuxSession is com.termux.shared.shell.TermuxSession
 - Bootstrap: moderne format (2025+), geen SYMLINKS.txt, arm64-v8a only
+
+### From v1.1 Research
+- `windowSoftInputMode="adjustPan"` + `ViewCompat.setOnApplyWindowInsetsListener` voor IME in BottomSheet (CP-1)
+- Dedicated `BottomSheetDragHandleView` + `NestedScrollingChild3` in TerminalView voor touch conflict (CP-2)
+- HyperOS detectie bij onboarding voor Xiaomi battery/autostart instructies (CP-3)
+- `Handler(Looper.getMainLooper()).post{}` wrapper voor Pigeon calls vanuit PTY reader thread (CP-4)
+- OSC 133 `\033]133;D\007` voor commando-klaar detectie, configureren via onboarding (CP-5)
+- Security: gestructureerde command API (`runCommand(executable, args[])`) vóór AI→terminal live (SM-1)
+- AWAR-05 whitelist moet geïmplementeerd zijn vóór AWAR-01/02 live gaan
+- `ViewPager2:1.1.0` voor sessie-tabs (vervangt deprecated ViewPager v1)
+- `datastore-preferences:1.1.5` voor API key opslag (EncryptedSharedPreferences is deprecated)
+- `RenderEffect` blur API 31+ — al beschikbaar in bestaande dependencies
+- ProviderScope refactoring (MERG-04) is de zwaarste merge taak
