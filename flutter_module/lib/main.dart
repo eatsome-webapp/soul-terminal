@@ -1,199 +1,176 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logger/logger.dart';
-import 'core/di/providers.dart';
-import 'core/router/app_router.dart';
-import 'core/sentry_config.dart';
-import 'core/theme/soul_theme.dart';
-import 'objectbox.g.dart';
-import 'services/auth/api_key_service.dart';
-import 'services/vessels/openclaw/openclaw_client.dart';
-import 'services/vessels/openclaw/openclaw_config.dart';
+import 'package:flutter_module/generated/terminal_bridge.g.dart';
+import 'package:flutter_module/generated/system_bridge.g.dart';
 
-final _logger = Logger();
+void main() => runApp(const SoulTerminalApp());
 
-void main() {
-  final container = ProviderContainer();
-
-  SentryConfig.init(
-    appRunner: () async {
-      runApp(
-        UncontrolledProviderScope(
-          container: container,
-          child: const SoulInitWidget(),
-        ),
-      );
-    },
-  );
-}
-
-/// Root widget that shows a loading screen while async initialization completes,
-/// then transitions to the full SOUL app once ready.
-class SoulInitWidget extends StatefulWidget {
-  const SoulInitWidget({super.key});
+class SoulTerminalApp extends StatelessWidget {
+  const SoulTerminalApp({super.key});
 
   @override
-  State<SoulInitWidget> createState() => _SoulInitWidgetState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'SOUL Terminal',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF6C63FF),
+          brightness: Brightness.dark,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF0F0F23),
+        useMaterial3: true,
+      ),
+      home: const BridgeTestScreen(),
+    );
+  }
 }
 
-class _SoulInitWidgetState extends State<SoulInitWidget> {
-  String? _initialLocation;
-  bool _initComplete = false;
+class BridgeTestScreen extends StatefulWidget {
+  const BridgeTestScreen({super.key});
+
+  @override
+  State<BridgeTestScreen> createState() => _BridgeTestScreenState();
+}
+
+class _BridgeTestScreenState extends State<BridgeTestScreen>
+    implements SoulBridgeApi {
+  final TextEditingController _commandController = TextEditingController();
+  final List<String> _outputLines = [];
+  bool _bridgeConnected = false;
+
+  final TerminalBridgeApi _terminalBridge = TerminalBridgeApi();
+  final SystemBridgeApi _systemBridge = SystemBridgeApi();
 
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    SoulBridgeApi.setUp(this);
+    _checkBridgeConnection();
   }
 
-  Future<void> _initializeApp() async {
-    final container = ProviderScope.containerOf(context, listen: false);
+  @override
+  void dispose() {
+    SoulBridgeApi.setUp(null);
+    _commandController.dispose();
+    super.dispose();
+  }
 
-    // Initialize bridge handler early so Java-side calls are handled
-    // even before the full SOUL UI has loaded.
-    container.read(pigeonBridgeHandlerProvider);
+  // SoulBridgeApi implementation — called from host (Java) side
+  @override
+  void onTerminalOutput(String output) {
+    setState(() {
+      _outputLines.clear();
+      _outputLines.addAll(output.split('\n'));
+    });
+  }
 
-    // 1. Open ObjectBox store
-    final store = await openStore();
-    container.read(objectBoxStoreProvider.notifier).setStore(store);
-    _logger.i('ObjectBox store initialized');
+  @override
+  void onSessionChanged(SessionInfo info) {
+    setState(() {
+      _outputLines.add('[Session changed: ${info.name}]');
+    });
+  }
 
-    // 2. Load Anthropic API key
-    final apiKeyService = ApiKeyService();
-    final savedKey = await apiKeyService.getAnthropicKey() ?? '';
-    if (savedKey.isNotEmpty) {
-      container.read(apiKeyNotifierProvider.notifier).setKey(savedKey);
-      _logger.i('API key loaded from secure storage');
-    }
-
-    // 3. Initialize OpenClaw client (non-fatal)
+  Future<void> _checkBridgeConnection() async {
     try {
-      final hasOpenClaw = await apiKeyService.hasOpenClawCredentials();
-      if (hasOpenClaw) {
-        final host = await apiKeyService.getOpenClawHost();
-        final token = await apiKeyService.getOpenClawToken();
-        final useTls = await apiKeyService.getOpenClawUseTls();
-        final config = OpenClawConfig(
-          host: host!,
-          port: useTls ? 443 : 18789,
-          token: token!,
-          useTls: useTls,
-        );
-        final client = OpenClawClient(config: config);
-        await client.connect();
-        container.read(vesselManagerProvider).setOpenClawClient(client);
-        _logger.i('OpenClaw client initialized: ${config.baseUrl}');
-      }
-    } catch (error) {
-      _logger.e('Failed to initialize OpenClaw client: $error');
-    }
-
-    // 4. Initialize notification service (non-fatal)
-    try {
-      final notificationService =
-          container.read(localNotificationServiceProvider);
-      await notificationService.initialize();
-      _logger.i('Local notification service initialized');
-    } catch (error) {
-      _logger.e('Failed to initialize notification service: $error');
-    }
-
-    // 5. Initialize foreground service (non-fatal)
-    try {
-      final serviceManager = container.read(foregroundServiceManagerProvider);
-      serviceManager.initialize();
-      await serviceManager.startService();
-      _logger.i('Foreground service started');
-    } catch (error) {
-      _logger.e('Failed to start foreground service: $error');
-    }
-
-    // 6. Determine initial route
-    String initialLocation;
-    try {
-      final projectDao = container.read(projectDaoProvider);
-      final activeProject = await projectDao.getActiveProject();
-      final hasProjects = activeProject != null;
-      initialLocation =
-          (hasProjects && savedKey.isNotEmpty) ? '/' : '/chat/new';
-    } catch (error) {
-      _logger.e('Failed to check projects: $error');
-      initialLocation = '/chat/new';
-    }
-
-    if (mounted) {
+      await _systemBridge.getDeviceInfo();
       setState(() {
-        _initialLocation = initialLocation;
-        _initComplete = true;
+        _bridgeConnected = true;
+      });
+    } catch (e) {
+      setState(() {
+        _bridgeConnected = false;
+      });
+    }
+  }
+
+  Future<void> _executeCommand() async {
+    final command = _commandController.text.trim();
+    if (command.isEmpty) return;
+
+    setState(() {
+      _outputLines.add('> $command');
+    });
+    _commandController.clear();
+
+    try {
+      await _terminalBridge.executeCommand(command);
+    } catch (e) {
+      setState(() {
+        _outputLines.add('[Error: $e]');
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_initComplete) {
-      return const _SoulLoadingScreen();
-    }
-    return SoulApp(initialLocation: _initialLocation!);
-  }
-}
-
-/// Branded loading screen shown during async initialization.
-class _SoulLoadingScreen extends StatelessWidget {
-  const _SoulLoadingScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: const Color(0xFF0F0F23),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'SOUL',
-                style: TextStyle(
-                  color: const Color(0xFF6C63FF),
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 8,
-                ),
-              ),
-              const SizedBox(height: 32),
-              const CircularProgressIndicator(
-                color: Color(0xFF6C63FF),
-              ),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('SOUL Bridge Test'),
+        backgroundColor: const Color(0xFF1A1A2E),
+        actions: [
+          Icon(
+            _bridgeConnected ? Icons.link : Icons.link_off,
+            color: _bridgeConnected
+                ? const Color(0xFF00D9FF)
+                : Colors.grey,
           ),
-        ),
+          const SizedBox(width: 16),
+        ],
       ),
-    );
-  }
-}
-
-class SoulApp extends StatefulWidget {
-  final String initialLocation;
-
-  const SoulApp({super.key, required this.initialLocation});
-
-  @override
-  State<SoulApp> createState() => _SoulAppState();
-}
-
-class _SoulAppState extends State<SoulApp> {
-  late final _router = createAppRouter(initialLocation: widget.initialLocation);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'SOUL',
-      theme: SoulTheme.light(null),
-      darkTheme: SoulTheme.dark(null),
-      themeMode: ThemeMode.dark,
-      routerConfig: _router,
-      debugShowCheckedModeBanner: false,
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(8),
+              itemCount: _outputLines.length,
+              itemBuilder: (context, index) {
+                return Text(
+                  _outputLines[index],
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 14,
+                    color: Colors.white70,
+                  ),
+                );
+              },
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(8),
+            color: const Color(0xFF16213E),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _commandController,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      color: Colors.white,
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: 'Enter command...',
+                      hintStyle: TextStyle(color: Colors.white38),
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                    ),
+                    onSubmitted: (_) => _executeCommand(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: _executeCommand,
+                  icon: const Icon(Icons.send),
+                  color: const Color(0xFF6C63FF),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -31,11 +31,6 @@ jobs:
           cd flutter_module
           flutter pub get
 
-      - name: Flutter codegen (build_runner)
-        run: |
-          cd flutter_module
-          dart run build_runner build --delete-conflicting-outputs
-
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -56,8 +51,6 @@ jobs:
           STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY || '' }}
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN || '' }}
         run: |
           exit_on_error() { echo "$1"; exit 1; }
 
@@ -75,21 +68,6 @@ jobs:
 
           export TERMUX_APP_VERSION_NAME="${RELEASE_VERSION_NAME/v/}"
           export TERMUX_APK_VERSION_TAG="$APK_VERSION_TAG"
-
-          # Pass dart-defines to Flutter module via EXTRA_DART_DEFINES (base64-encoded, comma-separated)
-          DART_DEFINES_LIST=()
-          [ -n "$VOYAGE_API_KEY" ] && DART_DEFINES_LIST+=("VOYAGE_API_KEY=$VOYAGE_API_KEY")
-          [ -n "$SENTRY_DSN" ] && DART_DEFINES_LIST+=("SENTRY_DSN=$SENTRY_DSN")
-          if [ ${#DART_DEFINES_LIST[@]} -gt 0 ]; then
-            ENCODED_PARTS=()
-            for define in "${DART_DEFINES_LIST[@]}"; do
-              ENCODED_PARTS+=("$(echo -n "$define" | base64 -w0)")
-            done
-            export EXTRA_DART_DEFINES="$(IFS=','; echo "${ENCODED_PARTS[*]}")"
-            echo "dart-define: passing ${#DART_DEFINES_LIST[@]} define(s) to Flutter module"
-          else
-            echo "dart-define: no secrets configured, building with empty fallbacks"
-          fi
 
           if ! ./gradlew assembleRelease; then
             exit_on_error "Build failed for '$APK_VERSION_TAG' build."

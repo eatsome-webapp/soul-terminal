@@ -3,13 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-stopped_at: Completed 06-05-PLAN.md
-last_updated: "2026-03-20T22:53:52.937Z"
+last_updated: "2026-03-20T21:48:15.703Z"
 progress:
   total_phases: 11
-  completed_phases: 6
-  total_plans: 22
-  completed_plans: 22
+  completed_phases: 5
+  total_plans: 17
+  completed_plans: 17
 ---
 
 # Project State
@@ -19,12 +18,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Een native terminal die naadloos integreert met SOUL — terminal + AI brain in één app.
-**Current focus:** Phase 07 — bottom-sheet-layout
+**Current focus:** Phase 05 — terminal-quick-wins
 
 ## Current Position
 
-Phase: 06 (app-merge) — COMPLETE (5/5 plans)
-Next: Phase 07 (bottom-sheet-layout)
+Phase: 05 (terminal-quick-wins) — COMPLETE
+Plan: 1 of 1 — complete (2026-03-20)
+Resume: .planning/phases/05-terminal-quick-wins/05-01-SUMMARY.md
 
 ## v1.1 Phase Overview
 
@@ -64,28 +64,3 @@ Next: Phase 07 (bottom-sheet-layout)
 - `datastore-preferences:1.1.5` voor API key opslag (EncryptedSharedPreferences is deprecated)
 - `RenderEffect` blur API 31+ — al beschikbaar in bestaande dependencies
 - ProviderScope refactoring (MERG-04) is de zwaarste merge taak
-
-### From 06-01 (Code Copy & Dependency Merge)
-
-- soul_core package is dode code (lege library stub, nul imports) — niet gekopieerd
-- objectbox.g.dart op lib/ root — correct voor relative import vanuit main.dart
-
-### From 06-05 (CI/CD Update)
-
-- EXTRA_DART_DEFINES env var (base64-encoded, comma-separated) voor dart-define in add-to-app builds
-- build_runner altijd na flutter pub get in CI, vóór Gradle build
-- Secrets optioneel: build slaagt zonder VOYAGE_API_KEY/SENTRY_DSN (empty string fallback)
-
-### From 06-03 (ProviderScope & Main.dart Refactoring)
-
-- pigeon moved to dev_dependencies en upgraded ^22.7.0 → ^26.2.3 (generated files importeren pigeon niet runtime)
-- StateProvider verwijderd in flutter_riverpod v3 — gebruik NotifierProvider<XNotifier, State>
-- objectBoxStoreProvider = NotifierProvider<ObjectBoxStoreNotifier, Store?> — null start, setStore() na async init
-- SoulInitWidget loading screen guards alle ObjectBox consumers totdat store klaar is
-- PigeonBridgeHandler.init() registreert SoulBridgeApi vroeg in _initializeApp() voor UI load
-- build_runner vereist na schema wijzigingen — soul_database.g.dart was out-of-sync
-
-## Session
-
-- **Stopped at:** Completed 06-05-PLAN.md
-- **Resume file:** None
