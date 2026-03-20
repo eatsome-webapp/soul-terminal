@@ -31,8 +31,8 @@ jobs:
           sed -i '/chmod 700.*BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE/a\\n\tmkdir -p "${BOOTSTRAP_ROOTFS}/${TERMUX__PREFIX__PROFILE_D_DIR}"' scripts/generate-bootstraps.sh
 
           # 3. After packages are extracted (com.termux paths), symlink to com.soul.terminal
-          #    This preserves all symlinks inside usr/ (mv can lose them)
-          sed -i '/add_termux_bootstrap_second_stage_files/i\\n\t# Symlink com.termux -> com.soul.terminal so create_bootstrap_archive finds everything\n\tif [ -d "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" ] && [ ! -e "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal" ]; then\n\t\tmkdir -p "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files"\n\t\tln -sfn "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr"\n\t\techo "[*] Symlinked com.soul.terminal/files/usr -> com.termux/files/usr"\n\tfi' scripts/generate-bootstraps.sh
+          #    Match the function CALL (with "$package_arch" arg), not the definition (with "() {")
+          sed -i '/create_bootstrap_archive "\$package_arch"/i\\n\t# Symlink com.termux -> com.soul.terminal so create_bootstrap_archive finds everything\n\tif [ -d "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" ] && [ ! -e "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal" ]; then\n\t\tmkdir -p "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files"\n\t\tln -sfn "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr"\n\t\techo "[*] Symlinked com.soul.terminal/files/usr -> com.termux/files/usr"\n\tfi' scripts/generate-bootstraps.sh
 
           echo "All patches applied"
 
