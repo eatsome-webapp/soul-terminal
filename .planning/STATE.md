@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-stopped_at: Completed 06-03-PLAN.md
-last_updated: "2026-03-20T22:41:38.289Z"
+stopped_at: Completed 06-05-PLAN.md
+last_updated: "2026-03-20T22:53:52.937Z"
 progress:
   total_phases: 11
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 22
-  completed_plans: 21
+  completed_plans: 22
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Een native terminal die naadloos integreert met SOUL — terminal + AI brain in één app.
-**Current focus:** Phase 06 — app-merge
+**Current focus:** Phase 07 — bottom-sheet-layout
 
 ## Current Position
 
-Phase: 06 (app-merge) — EXECUTING
-Plan: 4 of 5
+Phase: 06 (app-merge) — COMPLETE (5/5 plans)
+Next: Phase 07 (bottom-sheet-layout)
 
 ## v1.1 Phase Overview
 
@@ -70,6 +70,12 @@ Plan: 4 of 5
 - soul_core package is dode code (lege library stub, nul imports) — niet gekopieerd
 - objectbox.g.dart op lib/ root — correct voor relative import vanuit main.dart
 
+### From 06-05 (CI/CD Update)
+
+- EXTRA_DART_DEFINES env var (base64-encoded, comma-separated) voor dart-define in add-to-app builds
+- build_runner altijd na flutter pub get in CI, vóór Gradle build
+- Secrets optioneel: build slaagt zonder VOYAGE_API_KEY/SENTRY_DSN (empty string fallback)
+
 ### From 06-03 (ProviderScope & Main.dart Refactoring)
 
 - pigeon moved to dev_dependencies en upgraded ^22.7.0 → ^26.2.3 (generated files importeren pigeon niet runtime)
@@ -81,5 +87,5 @@ Plan: 4 of 5
 
 ## Session
 
-- **Stopped at:** Completed 06-03-PLAN.md
+- **Stopped at:** Completed 06-05-PLAN.md
 - **Resume file:** None
