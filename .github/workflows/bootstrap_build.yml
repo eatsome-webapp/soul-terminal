@@ -75,12 +75,14 @@ jobs:
           echo "Bootstrap aarch64 SHA-256: $CHECKSUM"
 
       - name: Import GPG key
+        if: ${{ secrets.SOUL_GPG_PRIVATE_KEY != '' }}
         env:
           GPG_PRIVATE_KEY: ${{ secrets.SOUL_GPG_PRIVATE_KEY }}
         run: |
           echo "$GPG_PRIVATE_KEY" | gpg --batch --import
 
       - name: Sign bootstrap zip
+        if: ${{ secrets.SOUL_GPG_PRIVATE_KEY != '' }}
         run: gpg --batch --yes --detach-sign --armor bootstrap-aarch64.zip
 
       - name: Create GitHub Release
@@ -95,6 +97,7 @@ jobs:
           files: |
             bootstrap-aarch64.zip
             bootstrap-aarch64.zip.asc
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
