@@ -55,7 +55,7 @@ class _SoulInitWidgetState extends State<SoulInitWidget> {
 
     // 1. Open ObjectBox store
     final store = await openStore();
-    container.read(objectBoxStoreProvider.notifier).state = store;
+    container.read(objectBoxStoreProvider.notifier).setStore(store);
     _logger.i('ObjectBox store initialized');
 
     // 2. Load Anthropic API key

@@ -4437,7 +4437,7 @@ class AuditLogCompanion extends UpdateCompanion<AuditLogData> {
 }
 
 class InterventionStates extends Table
-    with TableInfo<InterventionStates, InterventionState> {
+    with TableInfo<InterventionStates, InterventionRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -4589,7 +4589,7 @@ class InterventionStates extends Table
   static const String $name = 'intervention_states';
   @override
   VerificationContext validateIntegrity(
-    Insertable<InterventionState> instance, {
+    Insertable<InterventionRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -4700,9 +4700,9 @@ class InterventionStates extends Table
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  InterventionState map(Map<String, dynamic> data, {String? tablePrefix}) {
+  InterventionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return InterventionState(
+    return InterventionRow(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -4763,8 +4763,7 @@ class InterventionStates extends Table
   bool get dontWriteConstraints => true;
 }
 
-class InterventionState extends DataClass
-    implements Insertable<InterventionState> {
+class InterventionRow extends DataClass implements Insertable<InterventionRow> {
   final String id;
   final String type;
   final String level;
@@ -4777,7 +4776,7 @@ class InterventionState extends DataClass
   final int? level3SentAt;
   final int? resolvedAt;
   final String? relatedEntityId;
-  const InterventionState({
+  const InterventionRow({
     required this.id,
     required this.type,
     required this.level,
@@ -4854,12 +4853,12 @@ class InterventionState extends DataClass
     );
   }
 
-  factory InterventionState.fromJson(
+  factory InterventionRow.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return InterventionState(
+    return InterventionRow(
       id: serializer.fromJson<String>(json['id']),
       type: serializer.fromJson<String>(json['type']),
       level: serializer.fromJson<String>(json['level']),
@@ -4897,7 +4896,7 @@ class InterventionState extends DataClass
     };
   }
 
-  InterventionState copyWith({
+  InterventionRow copyWith({
     String? id,
     String? type,
     String? level,
@@ -4910,7 +4909,7 @@ class InterventionState extends DataClass
     Value<int?> level3SentAt = const Value.absent(),
     Value<int?> resolvedAt = const Value.absent(),
     Value<String?> relatedEntityId = const Value.absent(),
-  }) => InterventionState(
+  }) => InterventionRow(
     id: id ?? this.id,
     type: type ?? this.type,
     level: level ?? this.level,
@@ -4930,8 +4929,8 @@ class InterventionState extends DataClass
         ? relatedEntityId.value
         : this.relatedEntityId,
   );
-  InterventionState copyWithCompanion(InterventionStatesCompanion data) {
-    return InterventionState(
+  InterventionRow copyWithCompanion(InterventionStatesCompanion data) {
+    return InterventionRow(
       id: data.id.present ? data.id.value : this.id,
       type: data.type.present ? data.type.value : this.type,
       level: data.level.present ? data.level.value : this.level,
@@ -4967,7 +4966,7 @@ class InterventionState extends DataClass
 
   @override
   String toString() {
-    return (StringBuffer('InterventionState(')
+    return (StringBuffer('InterventionRow(')
           ..write('id: $id, ')
           ..write('type: $type, ')
           ..write('level: $level, ')
@@ -5002,7 +5001,7 @@ class InterventionState extends DataClass
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is InterventionState &&
+      (other is InterventionRow &&
           other.id == this.id &&
           other.type == this.type &&
           other.level == this.level &&
@@ -5017,7 +5016,7 @@ class InterventionState extends DataClass
           other.relatedEntityId == this.relatedEntityId);
 }
 
-class InterventionStatesCompanion extends UpdateCompanion<InterventionState> {
+class InterventionStatesCompanion extends UpdateCompanion<InterventionRow> {
   final Value<String> id;
   final Value<String> type;
   final Value<String> level;
@@ -5065,7 +5064,7 @@ class InterventionStatesCompanion extends UpdateCompanion<InterventionState> {
        level = Value(level),
        triggerDescription = Value(triggerDescription),
        detectedAt = Value(detectedAt);
-  static Insertable<InterventionState> custom({
+  static Insertable<InterventionRow> custom({
     Expression<String>? id,
     Expression<String>? type,
     Expression<String>? level,
@@ -5784,6 +5783,17 @@ class Settings extends Table with TableInfo<Settings, Setting> {
     requiredDuringInsert: false,
     $customConstraints: 'NOT NULL PRIMARY KEY AUTOINCREMENT',
   );
+  static const VerificationMeta _settingKeyMeta = const VerificationMeta(
+    'settingKey',
+  );
+  late final GeneratedColumn<String> settingKey = GeneratedColumn<String>(
+    'setting_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL UNIQUE',
+  );
   static const VerificationMeta _valueMeta = const VerificationMeta('value');
   late final GeneratedColumn<String> value = GeneratedColumn<String>(
     'value',
@@ -5805,7 +5815,7 @@ class Settings extends Table with TableInfo<Settings, Setting> {
     $customConstraints: 'NOT NULL',
   );
   @override
-  List<GeneratedColumn> get $columns => [id, value, updatedAt];
+  List<GeneratedColumn> get $columns => [id, settingKey, value, updatedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -5820,6 +5830,14 @@ class Settings extends Table with TableInfo<Settings, Setting> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('setting_key')) {
+      context.handle(
+        _settingKeyMeta,
+        settingKey.isAcceptableOrUnknown(data['setting_key']!, _settingKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_settingKeyMeta);
     }
     if (data.containsKey('value')) {
       context.handle(
@@ -5850,6 +5868,10 @@ class Settings extends Table with TableInfo<Settings, Setting> {
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      settingKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}setting_key'],
+      )!,
       value: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}value'],
@@ -5872,10 +5894,12 @@ class Settings extends Table with TableInfo<Settings, Setting> {
 
 class Setting extends DataClass implements Insertable<Setting> {
   final int id;
+  final String settingKey;
   final String value;
   final int updatedAt;
   const Setting({
     required this.id,
+    required this.settingKey,
     required this.value,
     required this.updatedAt,
   });
@@ -5883,6 +5907,7 @@ class Setting extends DataClass implements Insertable<Setting> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    map['setting_key'] = Variable<String>(settingKey);
     map['value'] = Variable<String>(value);
     map['updated_at'] = Variable<int>(updatedAt);
     return map;
@@ -5891,6 +5916,7 @@ class Setting extends DataClass implements Insertable<Setting> {
   SettingsCompanion toCompanion(bool nullToAbsent) {
     return SettingsCompanion(
       id: Value(id),
+      settingKey: Value(settingKey),
       value: Value(value),
       updatedAt: Value(updatedAt),
     );
@@ -5903,6 +5929,7 @@ class Setting extends DataClass implements Insertable<Setting> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Setting(
       id: serializer.fromJson<int>(json['id']),
+      settingKey: serializer.fromJson<String>(json['setting_key']),
       value: serializer.fromJson<String>(json['value']),
       updatedAt: serializer.fromJson<int>(json['updated_at']),
     );
@@ -5912,19 +5939,29 @@ class Setting extends DataClass implements Insertable<Setting> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'setting_key': serializer.toJson<String>(settingKey),
       'value': serializer.toJson<String>(value),
       'updated_at': serializer.toJson<int>(updatedAt),
     };
   }
 
-  Setting copyWith({int? id, String? value, int? updatedAt}) => Setting(
+  Setting copyWith({
+    int? id,
+    String? settingKey,
+    String? value,
+    int? updatedAt,
+  }) => Setting(
     id: id ?? this.id,
+    settingKey: settingKey ?? this.settingKey,
     value: value ?? this.value,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   Setting copyWithCompanion(SettingsCompanion data) {
     return Setting(
       id: data.id.present ? data.id.value : this.id,
+      settingKey: data.settingKey.present
+          ? data.settingKey.value
+          : this.settingKey,
       value: data.value.present ? data.value.value : this.value,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -5934,6 +5971,7 @@ class Setting extends DataClass implements Insertable<Setting> {
   String toString() {
     return (StringBuffer('Setting(')
           ..write('id: $id, ')
+          ..write('settingKey: $settingKey, ')
           ..write('value: $value, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -5941,38 +5979,45 @@ class Setting extends DataClass implements Insertable<Setting> {
   }
 
   @override
-  int get hashCode => Object.hash(id, value, updatedAt);
+  int get hashCode => Object.hash(id, settingKey, value, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Setting &&
           other.id == this.id &&
+          other.settingKey == this.settingKey &&
           other.value == this.value &&
           other.updatedAt == this.updatedAt);
 }
 
 class SettingsCompanion extends UpdateCompanion<Setting> {
   final Value<int> id;
+  final Value<String> settingKey;
   final Value<String> value;
   final Value<int> updatedAt;
   const SettingsCompanion({
     this.id = const Value.absent(),
+    this.settingKey = const Value.absent(),
     this.value = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
   SettingsCompanion.insert({
     this.id = const Value.absent(),
+    required String settingKey,
     required String value,
     required int updatedAt,
-  }) : value = Value(value),
+  }) : settingKey = Value(settingKey),
+       value = Value(value),
        updatedAt = Value(updatedAt);
   static Insertable<Setting> custom({
     Expression<int>? id,
+    Expression<String>? settingKey,
     Expression<String>? value,
     Expression<int>? updatedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (settingKey != null) 'setting_key': settingKey,
       if (value != null) 'value': value,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -5980,11 +6025,13 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
 
   SettingsCompanion copyWith({
     Value<int>? id,
+    Value<String>? settingKey,
     Value<String>? value,
     Value<int>? updatedAt,
   }) {
     return SettingsCompanion(
       id: id ?? this.id,
+      settingKey: settingKey ?? this.settingKey,
       value: value ?? this.value,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -5995,6 +6042,9 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (settingKey.present) {
+      map['setting_key'] = Variable<String>(settingKey.value);
     }
     if (value.present) {
       map['value'] = Variable<String>(value.value);
@@ -6009,6 +6059,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
   String toString() {
     return (StringBuffer('SettingsCompanion(')
           ..write('id: $id, ')
+          ..write('settingKey: $settingKey, ')
           ..write('value: $value, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -8456,6 +8507,428 @@ class CachedContactsCompanion extends UpdateCompanion<CachedContact> {
           ..write('emails: $emails, ')
           ..write('lastSynced: $lastSynced, ')
           ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class VesselTools extends Table with TableInfo<VesselTools, VesselTool> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  VesselTools(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL PRIMARY KEY AUTOINCREMENT',
+  );
+  static const VerificationMeta _vesselIdMeta = const VerificationMeta(
+    'vesselId',
+  );
+  late final GeneratedColumn<String> vesselId = GeneratedColumn<String>(
+    'vessel_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _toolNameMeta = const VerificationMeta(
+    'toolName',
+  );
+  late final GeneratedColumn<String> toolName = GeneratedColumn<String>(
+    'tool_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _capabilityGroupMeta = const VerificationMeta(
+    'capabilityGroup',
+  );
+  late final GeneratedColumn<String> capabilityGroup = GeneratedColumn<String>(
+    'capability_group',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _cachedAtMeta = const VerificationMeta(
+    'cachedAt',
+  );
+  late final GeneratedColumn<int> cachedAt = GeneratedColumn<int>(
+    'cached_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    vesselId,
+    toolName,
+    description,
+    capabilityGroup,
+    cachedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'vessel_tools';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<VesselTool> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('vessel_id')) {
+      context.handle(
+        _vesselIdMeta,
+        vesselId.isAcceptableOrUnknown(data['vessel_id']!, _vesselIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_vesselIdMeta);
+    }
+    if (data.containsKey('tool_name')) {
+      context.handle(
+        _toolNameMeta,
+        toolName.isAcceptableOrUnknown(data['tool_name']!, _toolNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_toolNameMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('capability_group')) {
+      context.handle(
+        _capabilityGroupMeta,
+        capabilityGroup.isAcceptableOrUnknown(
+          data['capability_group']!,
+          _capabilityGroupMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_capabilityGroupMeta);
+    }
+    if (data.containsKey('cached_at')) {
+      context.handle(
+        _cachedAtMeta,
+        cachedAt.isAcceptableOrUnknown(data['cached_at']!, _cachedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cachedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {vesselId, toolName},
+  ];
+  @override
+  VesselTool map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VesselTool(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      vesselId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vessel_id'],
+      )!,
+      toolName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tool_name'],
+      )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
+      capabilityGroup: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}capability_group'],
+      )!,
+      cachedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cached_at'],
+      )!,
+    );
+  }
+
+  @override
+  VesselTools createAlias(String alias) {
+    return VesselTools(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const ['UNIQUE(vessel_id, tool_name)'];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class VesselTool extends DataClass implements Insertable<VesselTool> {
+  final int id;
+  final String vesselId;
+  final String toolName;
+  final String? description;
+  final String capabilityGroup;
+  final int cachedAt;
+  const VesselTool({
+    required this.id,
+    required this.vesselId,
+    required this.toolName,
+    this.description,
+    required this.capabilityGroup,
+    required this.cachedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['vessel_id'] = Variable<String>(vesselId);
+    map['tool_name'] = Variable<String>(toolName);
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
+    map['capability_group'] = Variable<String>(capabilityGroup);
+    map['cached_at'] = Variable<int>(cachedAt);
+    return map;
+  }
+
+  VesselToolsCompanion toCompanion(bool nullToAbsent) {
+    return VesselToolsCompanion(
+      id: Value(id),
+      vesselId: Value(vesselId),
+      toolName: Value(toolName),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
+      capabilityGroup: Value(capabilityGroup),
+      cachedAt: Value(cachedAt),
+    );
+  }
+
+  factory VesselTool.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VesselTool(
+      id: serializer.fromJson<int>(json['id']),
+      vesselId: serializer.fromJson<String>(json['vessel_id']),
+      toolName: serializer.fromJson<String>(json['tool_name']),
+      description: serializer.fromJson<String?>(json['description']),
+      capabilityGroup: serializer.fromJson<String>(json['capability_group']),
+      cachedAt: serializer.fromJson<int>(json['cached_at']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'vessel_id': serializer.toJson<String>(vesselId),
+      'tool_name': serializer.toJson<String>(toolName),
+      'description': serializer.toJson<String?>(description),
+      'capability_group': serializer.toJson<String>(capabilityGroup),
+      'cached_at': serializer.toJson<int>(cachedAt),
+    };
+  }
+
+  VesselTool copyWith({
+    int? id,
+    String? vesselId,
+    String? toolName,
+    Value<String?> description = const Value.absent(),
+    String? capabilityGroup,
+    int? cachedAt,
+  }) => VesselTool(
+    id: id ?? this.id,
+    vesselId: vesselId ?? this.vesselId,
+    toolName: toolName ?? this.toolName,
+    description: description.present ? description.value : this.description,
+    capabilityGroup: capabilityGroup ?? this.capabilityGroup,
+    cachedAt: cachedAt ?? this.cachedAt,
+  );
+  VesselTool copyWithCompanion(VesselToolsCompanion data) {
+    return VesselTool(
+      id: data.id.present ? data.id.value : this.id,
+      vesselId: data.vesselId.present ? data.vesselId.value : this.vesselId,
+      toolName: data.toolName.present ? data.toolName.value : this.toolName,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+      capabilityGroup: data.capabilityGroup.present
+          ? data.capabilityGroup.value
+          : this.capabilityGroup,
+      cachedAt: data.cachedAt.present ? data.cachedAt.value : this.cachedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VesselTool(')
+          ..write('id: $id, ')
+          ..write('vesselId: $vesselId, ')
+          ..write('toolName: $toolName, ')
+          ..write('description: $description, ')
+          ..write('capabilityGroup: $capabilityGroup, ')
+          ..write('cachedAt: $cachedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    vesselId,
+    toolName,
+    description,
+    capabilityGroup,
+    cachedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VesselTool &&
+          other.id == this.id &&
+          other.vesselId == this.vesselId &&
+          other.toolName == this.toolName &&
+          other.description == this.description &&
+          other.capabilityGroup == this.capabilityGroup &&
+          other.cachedAt == this.cachedAt);
+}
+
+class VesselToolsCompanion extends UpdateCompanion<VesselTool> {
+  final Value<int> id;
+  final Value<String> vesselId;
+  final Value<String> toolName;
+  final Value<String?> description;
+  final Value<String> capabilityGroup;
+  final Value<int> cachedAt;
+  const VesselToolsCompanion({
+    this.id = const Value.absent(),
+    this.vesselId = const Value.absent(),
+    this.toolName = const Value.absent(),
+    this.description = const Value.absent(),
+    this.capabilityGroup = const Value.absent(),
+    this.cachedAt = const Value.absent(),
+  });
+  VesselToolsCompanion.insert({
+    this.id = const Value.absent(),
+    required String vesselId,
+    required String toolName,
+    this.description = const Value.absent(),
+    required String capabilityGroup,
+    required int cachedAt,
+  }) : vesselId = Value(vesselId),
+       toolName = Value(toolName),
+       capabilityGroup = Value(capabilityGroup),
+       cachedAt = Value(cachedAt);
+  static Insertable<VesselTool> custom({
+    Expression<int>? id,
+    Expression<String>? vesselId,
+    Expression<String>? toolName,
+    Expression<String>? description,
+    Expression<String>? capabilityGroup,
+    Expression<int>? cachedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (vesselId != null) 'vessel_id': vesselId,
+      if (toolName != null) 'tool_name': toolName,
+      if (description != null) 'description': description,
+      if (capabilityGroup != null) 'capability_group': capabilityGroup,
+      if (cachedAt != null) 'cached_at': cachedAt,
+    });
+  }
+
+  VesselToolsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? vesselId,
+    Value<String>? toolName,
+    Value<String?>? description,
+    Value<String>? capabilityGroup,
+    Value<int>? cachedAt,
+  }) {
+    return VesselToolsCompanion(
+      id: id ?? this.id,
+      vesselId: vesselId ?? this.vesselId,
+      toolName: toolName ?? this.toolName,
+      description: description ?? this.description,
+      capabilityGroup: capabilityGroup ?? this.capabilityGroup,
+      cachedAt: cachedAt ?? this.cachedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (vesselId.present) {
+      map['vessel_id'] = Variable<String>(vesselId.value);
+    }
+    if (toolName.present) {
+      map['tool_name'] = Variable<String>(toolName.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (capabilityGroup.present) {
+      map['capability_group'] = Variable<String>(capabilityGroup.value);
+    }
+    if (cachedAt.present) {
+      map['cached_at'] = Variable<int>(cachedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VesselToolsCompanion(')
+          ..write('id: $id, ')
+          ..write('vesselId: $vesselId, ')
+          ..write('toolName: $toolName, ')
+          ..write('description: $description, ')
+          ..write('capabilityGroup: $capabilityGroup, ')
+          ..write('cachedAt: $cachedAt')
           ..write(')'))
         .toString();
   }
@@ -12728,6 +13201,7 @@ abstract class _$SoulDatabase extends GeneratedDatabase {
     this,
   );
   late final CachedContacts cachedContacts = CachedContacts(this);
+  late final VesselTools vesselTools = VesselTools(this);
   late final VesselTasks vesselTasks = VesselTasks(this);
   late final VesselConfigs vesselConfigs = VesselConfigs(this);
   late final ProfileTraits profileTraits = ProfileTraits(this);
@@ -12852,7 +13326,7 @@ abstract class _$SoulDatabase extends GeneratedDatabase {
     );
   }
 
-  Selectable<InterventionState> activeInterventions() {
+  Selectable<InterventionRow> activeInterventions() {
     return customSelect(
       'SELECT * FROM intervention_states WHERE level != \'resolved\' AND level != \'inactive\' ORDER BY detected_at DESC',
       variables: [],
@@ -12860,7 +13334,7 @@ abstract class _$SoulDatabase extends GeneratedDatabase {
     ).asyncMap(interventionStates.mapFromRow);
   }
 
-  Selectable<InterventionState> interventionById(String id) {
+  Selectable<InterventionRow> interventionById(String id) {
     return customSelect(
       'SELECT * FROM intervention_states WHERE id = ?1',
       variables: [Variable<String>(id)],
@@ -12868,12 +13342,37 @@ abstract class _$SoulDatabase extends GeneratedDatabase {
     ).asyncMap(interventionStates.mapFromRow);
   }
 
-  Selectable<InterventionState> interventionsOlderThan(int cutoff) {
+  Selectable<InterventionRow> interventionsOlderThan(int cutoff) {
     return customSelect(
       'SELECT * FROM intervention_states WHERE detected_at < ?1',
       variables: [Variable<int>(cutoff)],
       readsFrom: {interventionStates},
     ).asyncMap(interventionStates.mapFromRow);
+  }
+
+  Selectable<VesselTool> toolsByVesselId(String vesselId) {
+    return customSelect(
+      'SELECT * FROM vessel_tools WHERE vessel_id = ?1 ORDER BY capability_group',
+      variables: [Variable<String>(vesselId)],
+      readsFrom: {vesselTools},
+    ).asyncMap(vesselTools.mapFromRow);
+  }
+
+  Selectable<String> capabilityGroupsByVesselId(String vesselId) {
+    return customSelect(
+      'SELECT DISTINCT capability_group FROM vessel_tools WHERE vessel_id = ?1',
+      variables: [Variable<String>(vesselId)],
+      readsFrom: {vesselTools},
+    ).map((QueryRow row) => row.read<String>('capability_group'));
+  }
+
+  Future<int> deleteByVesselId(String vesselId) {
+    return customUpdate(
+      'DELETE FROM vessel_tools WHERE vessel_id = ?1',
+      variables: [Variable<String>(vesselId)],
+      updates: {vesselTools},
+      updateKind: UpdateKind.delete,
+    );
   }
 
   Selectable<VesselTask> recentVesselTasks(int limit) {
@@ -13117,6 +13616,7 @@ abstract class _$SoulDatabase extends GeneratedDatabase {
     monitoredNotifications,
     cachedCalendarEvents,
     cachedContacts,
+    vesselTools,
     vesselTasks,
     vesselConfigs,
     profileTraits,
@@ -15627,21 +16127,17 @@ class $InterventionStatesTableManager
         RootTableManager<
           _$SoulDatabase,
           InterventionStates,
-          InterventionState,
+          InterventionRow,
           $InterventionStatesFilterComposer,
           $InterventionStatesOrderingComposer,
           $InterventionStatesAnnotationComposer,
           $InterventionStatesCreateCompanionBuilder,
           $InterventionStatesUpdateCompanionBuilder,
           (
-            InterventionState,
-            BaseReferences<
-              _$SoulDatabase,
-              InterventionStates,
-              InterventionState
-            >,
+            InterventionRow,
+            BaseReferences<_$SoulDatabase, InterventionStates, InterventionRow>,
           ),
-          InterventionState,
+          InterventionRow,
           PrefetchHooks Function()
         > {
   $InterventionStatesTableManager(_$SoulDatabase db, InterventionStates table)
@@ -15727,17 +16223,17 @@ typedef $InterventionStatesProcessedTableManager =
     ProcessedTableManager<
       _$SoulDatabase,
       InterventionStates,
-      InterventionState,
+      InterventionRow,
       $InterventionStatesFilterComposer,
       $InterventionStatesOrderingComposer,
       $InterventionStatesAnnotationComposer,
       $InterventionStatesCreateCompanionBuilder,
       $InterventionStatesUpdateCompanionBuilder,
       (
-        InterventionState,
-        BaseReferences<_$SoulDatabase, InterventionStates, InterventionState>,
+        InterventionRow,
+        BaseReferences<_$SoulDatabase, InterventionStates, InterventionRow>,
       ),
-      InterventionState,
+      InterventionRow,
       PrefetchHooks Function()
     >;
 typedef $ApiUsageCreateCompanionBuilder =
@@ -16017,12 +16513,14 @@ typedef $ApiUsageProcessedTableManager =
 typedef $SettingsCreateCompanionBuilder =
     SettingsCompanion Function({
       Value<int> id,
+      required String settingKey,
       required String value,
       required int updatedAt,
     });
 typedef $SettingsUpdateCompanionBuilder =
     SettingsCompanion Function({
       Value<int> id,
+      Value<String> settingKey,
       Value<String> value,
       Value<int> updatedAt,
     });
@@ -16037,6 +16535,11 @@ class $SettingsFilterComposer extends Composer<_$SoulDatabase, Settings> {
   });
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get settingKey => $composableBuilder(
+    column: $table.settingKey,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16064,6 +16567,11 @@ class $SettingsOrderingComposer extends Composer<_$SoulDatabase, Settings> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get settingKey => $composableBuilder(
+    column: $table.settingKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get value => $composableBuilder(
     column: $table.value,
     builder: (column) => ColumnOrderings(column),
@@ -16085,6 +16593,11 @@ class $SettingsAnnotationComposer extends Composer<_$SoulDatabase, Settings> {
   });
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get settingKey => $composableBuilder(
+    column: $table.settingKey,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get value =>
       $composableBuilder(column: $table.value, builder: (column) => column);
@@ -16122,17 +16635,24 @@ class $SettingsTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String> settingKey = const Value.absent(),
                 Value<String> value = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
-              }) =>
-                  SettingsCompanion(id: id, value: value, updatedAt: updatedAt),
+              }) => SettingsCompanion(
+                id: id,
+                settingKey: settingKey,
+                value: value,
+                updatedAt: updatedAt,
+              ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                required String settingKey,
                 required String value,
                 required int updatedAt,
               }) => SettingsCompanion.insert(
                 id: id,
+                settingKey: settingKey,
                 value: value,
                 updatedAt: updatedAt,
               ),
@@ -17405,6 +17925,216 @@ typedef $CachedContactsProcessedTableManager =
         BaseReferences<_$SoulDatabase, CachedContacts, CachedContact>,
       ),
       CachedContact,
+      PrefetchHooks Function()
+    >;
+typedef $VesselToolsCreateCompanionBuilder =
+    VesselToolsCompanion Function({
+      Value<int> id,
+      required String vesselId,
+      required String toolName,
+      Value<String?> description,
+      required String capabilityGroup,
+      required int cachedAt,
+    });
+typedef $VesselToolsUpdateCompanionBuilder =
+    VesselToolsCompanion Function({
+      Value<int> id,
+      Value<String> vesselId,
+      Value<String> toolName,
+      Value<String?> description,
+      Value<String> capabilityGroup,
+      Value<int> cachedAt,
+    });
+
+class $VesselToolsFilterComposer extends Composer<_$SoulDatabase, VesselTools> {
+  $VesselToolsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vesselId => $composableBuilder(
+    column: $table.vesselId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get toolName => $composableBuilder(
+    column: $table.toolName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get capabilityGroup => $composableBuilder(
+    column: $table.capabilityGroup,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cachedAt => $composableBuilder(
+    column: $table.cachedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $VesselToolsOrderingComposer
+    extends Composer<_$SoulDatabase, VesselTools> {
+  $VesselToolsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get vesselId => $composableBuilder(
+    column: $table.vesselId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get toolName => $composableBuilder(
+    column: $table.toolName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get capabilityGroup => $composableBuilder(
+    column: $table.capabilityGroup,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cachedAt => $composableBuilder(
+    column: $table.cachedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $VesselToolsAnnotationComposer
+    extends Composer<_$SoulDatabase, VesselTools> {
+  $VesselToolsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get vesselId =>
+      $composableBuilder(column: $table.vesselId, builder: (column) => column);
+
+  GeneratedColumn<String> get toolName =>
+      $composableBuilder(column: $table.toolName, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get capabilityGroup => $composableBuilder(
+    column: $table.capabilityGroup,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get cachedAt =>
+      $composableBuilder(column: $table.cachedAt, builder: (column) => column);
+}
+
+class $VesselToolsTableManager
+    extends
+        RootTableManager<
+          _$SoulDatabase,
+          VesselTools,
+          VesselTool,
+          $VesselToolsFilterComposer,
+          $VesselToolsOrderingComposer,
+          $VesselToolsAnnotationComposer,
+          $VesselToolsCreateCompanionBuilder,
+          $VesselToolsUpdateCompanionBuilder,
+          (VesselTool, BaseReferences<_$SoulDatabase, VesselTools, VesselTool>),
+          VesselTool,
+          PrefetchHooks Function()
+        > {
+  $VesselToolsTableManager(_$SoulDatabase db, VesselTools table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $VesselToolsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $VesselToolsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $VesselToolsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> vesselId = const Value.absent(),
+                Value<String> toolName = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                Value<String> capabilityGroup = const Value.absent(),
+                Value<int> cachedAt = const Value.absent(),
+              }) => VesselToolsCompanion(
+                id: id,
+                vesselId: vesselId,
+                toolName: toolName,
+                description: description,
+                capabilityGroup: capabilityGroup,
+                cachedAt: cachedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String vesselId,
+                required String toolName,
+                Value<String?> description = const Value.absent(),
+                required String capabilityGroup,
+                required int cachedAt,
+              }) => VesselToolsCompanion.insert(
+                id: id,
+                vesselId: vesselId,
+                toolName: toolName,
+                description: description,
+                capabilityGroup: capabilityGroup,
+                cachedAt: cachedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $VesselToolsProcessedTableManager =
+    ProcessedTableManager<
+      _$SoulDatabase,
+      VesselTools,
+      VesselTool,
+      $VesselToolsFilterComposer,
+      $VesselToolsOrderingComposer,
+      $VesselToolsAnnotationComposer,
+      $VesselToolsCreateCompanionBuilder,
+      $VesselToolsUpdateCompanionBuilder,
+      (VesselTool, BaseReferences<_$SoulDatabase, VesselTools, VesselTool>),
+      VesselTool,
       PrefetchHooks Function()
     >;
 typedef $VesselTasksCreateCompanionBuilder =
@@ -19739,6 +20469,8 @@ class $SoulDatabaseManager {
       $CachedCalendarEventsTableManager(_db, _db.cachedCalendarEvents);
   $CachedContactsTableManager get cachedContacts =>
       $CachedContactsTableManager(_db, _db.cachedContacts);
+  $VesselToolsTableManager get vesselTools =>
+      $VesselToolsTableManager(_db, _db.vesselTools);
   $VesselTasksTableManager get vesselTasks =>
       $VesselTasksTableManager(_db, _db.vesselTasks);
   $VesselConfigsTableManager get vesselConfigs =>

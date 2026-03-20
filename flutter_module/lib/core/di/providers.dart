@@ -148,9 +148,19 @@ final claudeServiceProvider = Provider<ClaudeService>((ref) {
 
 // --- ObjectBox ---
 
-/// ObjectBox Store -- starts as null, set by SoulInitWidget after async init.
+/// Notifier for ObjectBox Store -- starts as null, set by SoulInitWidget after async init.
 /// Use [objectBoxStoreReadyProvider] in providers that require a non-null Store.
-final objectBoxStoreProvider = StateProvider<Store?>((ref) => null);
+class ObjectBoxStoreNotifier extends Notifier<Store?> {
+  @override
+  Store? build() => null;
+
+  void setStore(Store store) => state = store;
+}
+
+final objectBoxStoreProvider =
+    NotifierProvider<ObjectBoxStoreNotifier, Store?>(
+  ObjectBoxStoreNotifier.new,
+);
 
 /// Non-null store provider — only use after initialization is confirmed complete.
 /// Throws if accessed before store is ready (guarded by SoulInitWidget).

@@ -70,7 +70,7 @@ final class ChatNotifierProvider
   }
 }
 
-String _$chatNotifierHash() => r'6710d3221be2b0a1cf8538a086dd52a47926f918';
+String _$chatNotifierHash() => r'ae0c5279e2a4c7c06309a89daf37cbf7c307f8ad';
 
 /// Manages chat message state, streaming lifecycle, persistence, and offline queueing.
 ///

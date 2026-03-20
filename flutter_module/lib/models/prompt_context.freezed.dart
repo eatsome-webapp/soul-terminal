@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PromptContext {
 
- MemoryContext? get memory; String? get phoneContext; MoodState? get moodState; ProjectState? get projectState; List<OpenQuestion>? get openQuestions; String get detectedLanguage; DateTime? get firstInteractionDate; int get totalConversationCount; String get distilledFacts; String? get extractedProjectStatus; String? get extractedRiskiestItem; String? get extractedAssumptions; double? get momentumScore;
+ MemoryContext? get memory; String? get phoneContext; MoodState? get moodState; ProjectState? get projectState; List<OpenQuestion>? get openQuestions; String get detectedLanguage; DateTime? get firstInteractionDate; int get totalConversationCount; String get distilledFacts; String? get extractedProjectStatus; String? get extractedRiskiestItem; String? get extractedAssumptions; double? get momentumScore; List<VesselCapabilitySummary>? get connectedVessels; int? get vesselBootstrapStep;
 /// Create a copy of PromptContext
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $PromptContextCopyWith<PromptContext> get copyWith => _$PromptContextCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PromptContext&&(identical(other.memory, memory) || other.memory == memory)&&(identical(other.phoneContext, phoneContext) || other.phoneContext == phoneContext)&&(identical(other.moodState, moodState) || other.moodState == moodState)&&(identical(other.projectState, projectState) || other.projectState == projectState)&&const DeepCollectionEquality().equals(other.openQuestions, openQuestions)&&(identical(other.detectedLanguage, detectedLanguage) || other.detectedLanguage == detectedLanguage)&&(identical(other.firstInteractionDate, firstInteractionDate) || other.firstInteractionDate == firstInteractionDate)&&(identical(other.totalConversationCount, totalConversationCount) || other.totalConversationCount == totalConversationCount)&&(identical(other.distilledFacts, distilledFacts) || other.distilledFacts == distilledFacts)&&(identical(other.extractedProjectStatus, extractedProjectStatus) || other.extractedProjectStatus == extractedProjectStatus)&&(identical(other.extractedRiskiestItem, extractedRiskiestItem) || other.extractedRiskiestItem == extractedRiskiestItem)&&(identical(other.extractedAssumptions, extractedAssumptions) || other.extractedAssumptions == extractedAssumptions)&&(identical(other.momentumScore, momentumScore) || other.momentumScore == momentumScore));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PromptContext&&(identical(other.memory, memory) || other.memory == memory)&&(identical(other.phoneContext, phoneContext) || other.phoneContext == phoneContext)&&(identical(other.moodState, moodState) || other.moodState == moodState)&&(identical(other.projectState, projectState) || other.projectState == projectState)&&const DeepCollectionEquality().equals(other.openQuestions, openQuestions)&&(identical(other.detectedLanguage, detectedLanguage) || other.detectedLanguage == detectedLanguage)&&(identical(other.firstInteractionDate, firstInteractionDate) || other.firstInteractionDate == firstInteractionDate)&&(identical(other.totalConversationCount, totalConversationCount) || other.totalConversationCount == totalConversationCount)&&(identical(other.distilledFacts, distilledFacts) || other.distilledFacts == distilledFacts)&&(identical(other.extractedProjectStatus, extractedProjectStatus) || other.extractedProjectStatus == extractedProjectStatus)&&(identical(other.extractedRiskiestItem, extractedRiskiestItem) || other.extractedRiskiestItem == extractedRiskiestItem)&&(identical(other.extractedAssumptions, extractedAssumptions) || other.extractedAssumptions == extractedAssumptions)&&(identical(other.momentumScore, momentumScore) || other.momentumScore == momentumScore)&&const DeepCollectionEquality().equals(other.connectedVessels, connectedVessels)&&(identical(other.vesselBootstrapStep, vesselBootstrapStep) || other.vesselBootstrapStep == vesselBootstrapStep));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,memory,phoneContext,moodState,projectState,const DeepCollectionEquality().hash(openQuestions),detectedLanguage,firstInteractionDate,totalConversationCount,distilledFacts,extractedProjectStatus,extractedRiskiestItem,extractedAssumptions,momentumScore);
+int get hashCode => Object.hash(runtimeType,memory,phoneContext,moodState,projectState,const DeepCollectionEquality().hash(openQuestions),detectedLanguage,firstInteractionDate,totalConversationCount,distilledFacts,extractedProjectStatus,extractedRiskiestItem,extractedAssumptions,momentumScore,const DeepCollectionEquality().hash(connectedVessels),vesselBootstrapStep);
 
 @override
 String toString() {
-  return 'PromptContext(memory: $memory, phoneContext: $phoneContext, moodState: $moodState, projectState: $projectState, openQuestions: $openQuestions, detectedLanguage: $detectedLanguage, firstInteractionDate: $firstInteractionDate, totalConversationCount: $totalConversationCount, distilledFacts: $distilledFacts, extractedProjectStatus: $extractedProjectStatus, extractedRiskiestItem: $extractedRiskiestItem, extractedAssumptions: $extractedAssumptions, momentumScore: $momentumScore)';
+  return 'PromptContext(memory: $memory, phoneContext: $phoneContext, moodState: $moodState, projectState: $projectState, openQuestions: $openQuestions, detectedLanguage: $detectedLanguage, firstInteractionDate: $firstInteractionDate, totalConversationCount: $totalConversationCount, distilledFacts: $distilledFacts, extractedProjectStatus: $extractedProjectStatus, extractedRiskiestItem: $extractedRiskiestItem, extractedAssumptions: $extractedAssumptions, momentumScore: $momentumScore, connectedVessels: $connectedVessels, vesselBootstrapStep: $vesselBootstrapStep)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $PromptContextCopyWith<$Res>  {
   factory $PromptContextCopyWith(PromptContext value, $Res Function(PromptContext) _then) = _$PromptContextCopyWithImpl;
 @useResult
 $Res call({
- MemoryContext? memory, String? phoneContext, MoodState? moodState, ProjectState? projectState, List<OpenQuestion>? openQuestions, String detectedLanguage, DateTime? firstInteractionDate, int totalConversationCount, String distilledFacts, String? extractedProjectStatus, String? extractedRiskiestItem, String? extractedAssumptions, double? momentumScore
+ MemoryContext? memory, String? phoneContext, MoodState? moodState, ProjectState? projectState, List<OpenQuestion>? openQuestions, String detectedLanguage, DateTime? firstInteractionDate, int totalConversationCount, String distilledFacts, String? extractedProjectStatus, String? extractedRiskiestItem, String? extractedAssumptions, double? momentumScore, List<VesselCapabilitySummary>? connectedVessels, int? vesselBootstrapStep
 });
 
 
@@ -62,7 +62,7 @@ class _$PromptContextCopyWithImpl<$Res>
 
 /// Create a copy of PromptContext
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? memory = freezed,Object? phoneContext = freezed,Object? moodState = freezed,Object? projectState = freezed,Object? openQuestions = freezed,Object? detectedLanguage = null,Object? firstInteractionDate = freezed,Object? totalConversationCount = null,Object? distilledFacts = null,Object? extractedProjectStatus = freezed,Object? extractedRiskiestItem = freezed,Object? extractedAssumptions = freezed,Object? momentumScore = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? memory = freezed,Object? phoneContext = freezed,Object? moodState = freezed,Object? projectState = freezed,Object? openQuestions = freezed,Object? detectedLanguage = null,Object? firstInteractionDate = freezed,Object? totalConversationCount = null,Object? distilledFacts = null,Object? extractedProjectStatus = freezed,Object? extractedRiskiestItem = freezed,Object? extractedAssumptions = freezed,Object? momentumScore = freezed,Object? connectedVessels = freezed,Object? vesselBootstrapStep = freezed,}) {
   return _then(_self.copyWith(
 memory: freezed == memory ? _self.memory : memory // ignore: cast_nullable_to_non_nullable
 as MemoryContext?,phoneContext: freezed == phoneContext ? _self.phoneContext : phoneContext // ignore: cast_nullable_to_non_nullable
@@ -77,7 +77,9 @@ as String,extractedProjectStatus: freezed == extractedProjectStatus ? _self.extr
 as String?,extractedRiskiestItem: freezed == extractedRiskiestItem ? _self.extractedRiskiestItem : extractedRiskiestItem // ignore: cast_nullable_to_non_nullable
 as String?,extractedAssumptions: freezed == extractedAssumptions ? _self.extractedAssumptions : extractedAssumptions // ignore: cast_nullable_to_non_nullable
 as String?,momentumScore: freezed == momentumScore ? _self.momentumScore : momentumScore // ignore: cast_nullable_to_non_nullable
-as double?,
+as double?,connectedVessels: freezed == connectedVessels ? _self.connectedVessels : connectedVessels // ignore: cast_nullable_to_non_nullable
+as List<VesselCapabilitySummary>?,vesselBootstrapStep: freezed == vesselBootstrapStep ? _self.vesselBootstrapStep : vesselBootstrapStep // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -162,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( MemoryContext? memory,  String? phoneContext,  MoodState? moodState,  ProjectState? projectState,  List<OpenQuestion>? openQuestions,  String detectedLanguage,  DateTime? firstInteractionDate,  int totalConversationCount,  String distilledFacts,  String? extractedProjectStatus,  String? extractedRiskiestItem,  String? extractedAssumptions,  double? momentumScore)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( MemoryContext? memory,  String? phoneContext,  MoodState? moodState,  ProjectState? projectState,  List<OpenQuestion>? openQuestions,  String detectedLanguage,  DateTime? firstInteractionDate,  int totalConversationCount,  String distilledFacts,  String? extractedProjectStatus,  String? extractedRiskiestItem,  String? extractedAssumptions,  double? momentumScore,  List<VesselCapabilitySummary>? connectedVessels,  int? vesselBootstrapStep)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PromptContext() when $default != null:
-return $default(_that.memory,_that.phoneContext,_that.moodState,_that.projectState,_that.openQuestions,_that.detectedLanguage,_that.firstInteractionDate,_that.totalConversationCount,_that.distilledFacts,_that.extractedProjectStatus,_that.extractedRiskiestItem,_that.extractedAssumptions,_that.momentumScore);case _:
+return $default(_that.memory,_that.phoneContext,_that.moodState,_that.projectState,_that.openQuestions,_that.detectedLanguage,_that.firstInteractionDate,_that.totalConversationCount,_that.distilledFacts,_that.extractedProjectStatus,_that.extractedRiskiestItem,_that.extractedAssumptions,_that.momentumScore,_that.connectedVessels,_that.vesselBootstrapStep);case _:
   return orElse();
 
 }
@@ -183,10 +185,10 @@ return $default(_that.memory,_that.phoneContext,_that.moodState,_that.projectSta
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( MemoryContext? memory,  String? phoneContext,  MoodState? moodState,  ProjectState? projectState,  List<OpenQuestion>? openQuestions,  String detectedLanguage,  DateTime? firstInteractionDate,  int totalConversationCount,  String distilledFacts,  String? extractedProjectStatus,  String? extractedRiskiestItem,  String? extractedAssumptions,  double? momentumScore)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( MemoryContext? memory,  String? phoneContext,  MoodState? moodState,  ProjectState? projectState,  List<OpenQuestion>? openQuestions,  String detectedLanguage,  DateTime? firstInteractionDate,  int totalConversationCount,  String distilledFacts,  String? extractedProjectStatus,  String? extractedRiskiestItem,  String? extractedAssumptions,  double? momentumScore,  List<VesselCapabilitySummary>? connectedVessels,  int? vesselBootstrapStep)  $default,) {final _that = this;
 switch (_that) {
 case _PromptContext():
-return $default(_that.memory,_that.phoneContext,_that.moodState,_that.projectState,_that.openQuestions,_that.detectedLanguage,_that.firstInteractionDate,_that.totalConversationCount,_that.distilledFacts,_that.extractedProjectStatus,_that.extractedRiskiestItem,_that.extractedAssumptions,_that.momentumScore);case _:
+return $default(_that.memory,_that.phoneContext,_that.moodState,_that.projectState,_that.openQuestions,_that.detectedLanguage,_that.firstInteractionDate,_that.totalConversationCount,_that.distilledFacts,_that.extractedProjectStatus,_that.extractedRiskiestItem,_that.extractedAssumptions,_that.momentumScore,_that.connectedVessels,_that.vesselBootstrapStep);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +205,10 @@ return $default(_that.memory,_that.phoneContext,_that.moodState,_that.projectSta
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( MemoryContext? memory,  String? phoneContext,  MoodState? moodState,  ProjectState? projectState,  List<OpenQuestion>? openQuestions,  String detectedLanguage,  DateTime? firstInteractionDate,  int totalConversationCount,  String distilledFacts,  String? extractedProjectStatus,  String? extractedRiskiestItem,  String? extractedAssumptions,  double? momentumScore)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( MemoryContext? memory,  String? phoneContext,  MoodState? moodState,  ProjectState? projectState,  List<OpenQuestion>? openQuestions,  String detectedLanguage,  DateTime? firstInteractionDate,  int totalConversationCount,  String distilledFacts,  String? extractedProjectStatus,  String? extractedRiskiestItem,  String? extractedAssumptions,  double? momentumScore,  List<VesselCapabilitySummary>? connectedVessels,  int? vesselBootstrapStep)?  $default,) {final _that = this;
 switch (_that) {
 case _PromptContext() when $default != null:
-return $default(_that.memory,_that.phoneContext,_that.moodState,_that.projectState,_that.openQuestions,_that.detectedLanguage,_that.firstInteractionDate,_that.totalConversationCount,_that.distilledFacts,_that.extractedProjectStatus,_that.extractedRiskiestItem,_that.extractedAssumptions,_that.momentumScore);case _:
+return $default(_that.memory,_that.phoneContext,_that.moodState,_that.projectState,_that.openQuestions,_that.detectedLanguage,_that.firstInteractionDate,_that.totalConversationCount,_that.distilledFacts,_that.extractedProjectStatus,_that.extractedRiskiestItem,_that.extractedAssumptions,_that.momentumScore,_that.connectedVessels,_that.vesselBootstrapStep);case _:
   return null;
 
 }
@@ -218,7 +220,7 @@ return $default(_that.memory,_that.phoneContext,_that.moodState,_that.projectSta
 
 
 class _PromptContext implements PromptContext {
-  const _PromptContext({this.memory = null, this.phoneContext = null, this.moodState = null, this.projectState = null, final  List<OpenQuestion>? openQuestions = null, this.detectedLanguage = 'nl', this.firstInteractionDate = null, this.totalConversationCount = 0, this.distilledFacts = '', this.extractedProjectStatus = null, this.extractedRiskiestItem = null, this.extractedAssumptions = null, this.momentumScore = null}): _openQuestions = openQuestions;
+  const _PromptContext({this.memory = null, this.phoneContext = null, this.moodState = null, this.projectState = null, final  List<OpenQuestion>? openQuestions = null, this.detectedLanguage = 'nl', this.firstInteractionDate = null, this.totalConversationCount = 0, this.distilledFacts = '', this.extractedProjectStatus = null, this.extractedRiskiestItem = null, this.extractedAssumptions = null, this.momentumScore = null, final  List<VesselCapabilitySummary>? connectedVessels = null, this.vesselBootstrapStep = null}): _openQuestions = openQuestions,_connectedVessels = connectedVessels;
   
 
 @override@JsonKey() final  MemoryContext? memory;
@@ -242,6 +244,16 @@ class _PromptContext implements PromptContext {
 @override@JsonKey() final  String? extractedRiskiestItem;
 @override@JsonKey() final  String? extractedAssumptions;
 @override@JsonKey() final  double? momentumScore;
+ final  List<VesselCapabilitySummary>? _connectedVessels;
+@override@JsonKey() List<VesselCapabilitySummary>? get connectedVessels {
+  final value = _connectedVessels;
+  if (value == null) return null;
+  if (_connectedVessels is EqualUnmodifiableListView) return _connectedVessels;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(value);
+}
+
+@override@JsonKey() final  int? vesselBootstrapStep;
 
 /// Create a copy of PromptContext
 /// with the given fields replaced by the non-null parameter values.
@@ -253,16 +265,16 @@ _$PromptContextCopyWith<_PromptContext> get copyWith => __$PromptContextCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PromptContext&&(identical(other.memory, memory) || other.memory == memory)&&(identical(other.phoneContext, phoneContext) || other.phoneContext == phoneContext)&&(identical(other.moodState, moodState) || other.moodState == moodState)&&(identical(other.projectState, projectState) || other.projectState == projectState)&&const DeepCollectionEquality().equals(other._openQuestions, _openQuestions)&&(identical(other.detectedLanguage, detectedLanguage) || other.detectedLanguage == detectedLanguage)&&(identical(other.firstInteractionDate, firstInteractionDate) || other.firstInteractionDate == firstInteractionDate)&&(identical(other.totalConversationCount, totalConversationCount) || other.totalConversationCount == totalConversationCount)&&(identical(other.distilledFacts, distilledFacts) || other.distilledFacts == distilledFacts)&&(identical(other.extractedProjectStatus, extractedProjectStatus) || other.extractedProjectStatus == extractedProjectStatus)&&(identical(other.extractedRiskiestItem, extractedRiskiestItem) || other.extractedRiskiestItem == extractedRiskiestItem)&&(identical(other.extractedAssumptions, extractedAssumptions) || other.extractedAssumptions == extractedAssumptions)&&(identical(other.momentumScore, momentumScore) || other.momentumScore == momentumScore));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PromptContext&&(identical(other.memory, memory) || other.memory == memory)&&(identical(other.phoneContext, phoneContext) || other.phoneContext == phoneContext)&&(identical(other.moodState, moodState) || other.moodState == moodState)&&(identical(other.projectState, projectState) || other.projectState == projectState)&&const DeepCollectionEquality().equals(other._openQuestions, _openQuestions)&&(identical(other.detectedLanguage, detectedLanguage) || other.detectedLanguage == detectedLanguage)&&(identical(other.firstInteractionDate, firstInteractionDate) || other.firstInteractionDate == firstInteractionDate)&&(identical(other.totalConversationCount, totalConversationCount) || other.totalConversationCount == totalConversationCount)&&(identical(other.distilledFacts, distilledFacts) || other.distilledFacts == distilledFacts)&&(identical(other.extractedProjectStatus, extractedProjectStatus) || other.extractedProjectStatus == extractedProjectStatus)&&(identical(other.extractedRiskiestItem, extractedRiskiestItem) || other.extractedRiskiestItem == extractedRiskiestItem)&&(identical(other.extractedAssumptions, extractedAssumptions) || other.extractedAssumptions == extractedAssumptions)&&(identical(other.momentumScore, momentumScore) || other.momentumScore == momentumScore)&&const DeepCollectionEquality().equals(other._connectedVessels, _connectedVessels)&&(identical(other.vesselBootstrapStep, vesselBootstrapStep) || other.vesselBootstrapStep == vesselBootstrapStep));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,memory,phoneContext,moodState,projectState,const DeepCollectionEquality().hash(_openQuestions),detectedLanguage,firstInteractionDate,totalConversationCount,distilledFacts,extractedProjectStatus,extractedRiskiestItem,extractedAssumptions,momentumScore);
+int get hashCode => Object.hash(runtimeType,memory,phoneContext,moodState,projectState,const DeepCollectionEquality().hash(_openQuestions),detectedLanguage,firstInteractionDate,totalConversationCount,distilledFacts,extractedProjectStatus,extractedRiskiestItem,extractedAssumptions,momentumScore,const DeepCollectionEquality().hash(_connectedVessels),vesselBootstrapStep);
 
 @override
 String toString() {
-  return 'PromptContext(memory: $memory, phoneContext: $phoneContext, moodState: $moodState, projectState: $projectState, openQuestions: $openQuestions, detectedLanguage: $detectedLanguage, firstInteractionDate: $firstInteractionDate, totalConversationCount: $totalConversationCount, distilledFacts: $distilledFacts, extractedProjectStatus: $extractedProjectStatus, extractedRiskiestItem: $extractedRiskiestItem, extractedAssumptions: $extractedAssumptions, momentumScore: $momentumScore)';
+  return 'PromptContext(memory: $memory, phoneContext: $phoneContext, moodState: $moodState, projectState: $projectState, openQuestions: $openQuestions, detectedLanguage: $detectedLanguage, firstInteractionDate: $firstInteractionDate, totalConversationCount: $totalConversationCount, distilledFacts: $distilledFacts, extractedProjectStatus: $extractedProjectStatus, extractedRiskiestItem: $extractedRiskiestItem, extractedAssumptions: $extractedAssumptions, momentumScore: $momentumScore, connectedVessels: $connectedVessels, vesselBootstrapStep: $vesselBootstrapStep)';
 }
 
 
@@ -273,7 +285,7 @@ abstract mixin class _$PromptContextCopyWith<$Res> implements $PromptContextCopy
   factory _$PromptContextCopyWith(_PromptContext value, $Res Function(_PromptContext) _then) = __$PromptContextCopyWithImpl;
 @override @useResult
 $Res call({
- MemoryContext? memory, String? phoneContext, MoodState? moodState, ProjectState? projectState, List<OpenQuestion>? openQuestions, String detectedLanguage, DateTime? firstInteractionDate, int totalConversationCount, String distilledFacts, String? extractedProjectStatus, String? extractedRiskiestItem, String? extractedAssumptions, double? momentumScore
+ MemoryContext? memory, String? phoneContext, MoodState? moodState, ProjectState? projectState, List<OpenQuestion>? openQuestions, String detectedLanguage, DateTime? firstInteractionDate, int totalConversationCount, String distilledFacts, String? extractedProjectStatus, String? extractedRiskiestItem, String? extractedAssumptions, double? momentumScore, List<VesselCapabilitySummary>? connectedVessels, int? vesselBootstrapStep
 });
 
 
@@ -290,7 +302,7 @@ class __$PromptContextCopyWithImpl<$Res>
 
 /// Create a copy of PromptContext
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? memory = freezed,Object? phoneContext = freezed,Object? moodState = freezed,Object? projectState = freezed,Object? openQuestions = freezed,Object? detectedLanguage = null,Object? firstInteractionDate = freezed,Object? totalConversationCount = null,Object? distilledFacts = null,Object? extractedProjectStatus = freezed,Object? extractedRiskiestItem = freezed,Object? extractedAssumptions = freezed,Object? momentumScore = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? memory = freezed,Object? phoneContext = freezed,Object? moodState = freezed,Object? projectState = freezed,Object? openQuestions = freezed,Object? detectedLanguage = null,Object? firstInteractionDate = freezed,Object? totalConversationCount = null,Object? distilledFacts = null,Object? extractedProjectStatus = freezed,Object? extractedRiskiestItem = freezed,Object? extractedAssumptions = freezed,Object? momentumScore = freezed,Object? connectedVessels = freezed,Object? vesselBootstrapStep = freezed,}) {
   return _then(_PromptContext(
 memory: freezed == memory ? _self.memory : memory // ignore: cast_nullable_to_non_nullable
 as MemoryContext?,phoneContext: freezed == phoneContext ? _self.phoneContext : phoneContext // ignore: cast_nullable_to_non_nullable
@@ -305,7 +317,9 @@ as String,extractedProjectStatus: freezed == extractedProjectStatus ? _self.extr
 as String?,extractedRiskiestItem: freezed == extractedRiskiestItem ? _self.extractedRiskiestItem : extractedRiskiestItem // ignore: cast_nullable_to_non_nullable
 as String?,extractedAssumptions: freezed == extractedAssumptions ? _self.extractedAssumptions : extractedAssumptions // ignore: cast_nullable_to_non_nullable
 as String?,momentumScore: freezed == momentumScore ? _self.momentumScore : momentumScore // ignore: cast_nullable_to_non_nullable
-as double?,
+as double?,connectedVessels: freezed == connectedVessels ? _self._connectedVessels : connectedVessels // ignore: cast_nullable_to_non_nullable
+as List<VesselCapabilitySummary>?,vesselBootstrapStep: freezed == vesselBootstrapStep ? _self.vesselBootstrapStep : vesselBootstrapStep // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
