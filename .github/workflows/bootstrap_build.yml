@@ -74,16 +74,17 @@ jobs:
           echo "sha256=$CHECKSUM" >> "$GITHUB_OUTPUT"
           echo "Bootstrap aarch64 SHA-256: $CHECKSUM"
 
-      - name: Import GPG key
-        if: ${{ secrets.SOUL_GPG_PRIVATE_KEY != '' }}
+      - name: Import GPG key and sign
         env:
           GPG_PRIVATE_KEY: ${{ secrets.SOUL_GPG_PRIVATE_KEY }}
         run: |
-          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
-
-      - name: Sign bootstrap zip
-        if: ${{ secrets.SOUL_GPG_PRIVATE_KEY != '' }}
-        run: gpg --batch --yes --detach-sign --armor bootstrap-aarch64.zip
+          if [ -n "$GPG_PRIVATE_KEY" ]; then
+            echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+            gpg --batch --yes --detach-sign --armor bootstrap-aarch64.zip
+            echo "GPG signing done"
+          else
+            echo "No GPG key configured, skipping signing"
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
