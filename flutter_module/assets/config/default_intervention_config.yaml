@@ -1,0 +1,25 @@
+intervention:
+  decision_delay:
+    nudge_hours: 4
+    confront_hours: 8
+    propose_hours: 24
+  stuckness:
+    threshold: 0.6
+    cooldown_days: 7
+  inactivity:
+    threshold_hours: 24
+  deadline_proximity:
+    warning_days: [7, 3, 1]
+
+mood:
+  analysis_frequency: 3
+  low_energy_threshold: 2
+
+trust_tiers:
+  autonomous: [ci_status, git_log, git_diff, memory_update, briefing_generate, calendar_read, notification_read]
+  soft_approval: [ci_diagnose, pr_draft, label_add, comment_add, lint_fix]
+  hard_approval: [deploy, pr_merge, message_send]
+
+kill_switch:
+  max_runtime_minutes: 10
+  stop_timeout_seconds: 5
