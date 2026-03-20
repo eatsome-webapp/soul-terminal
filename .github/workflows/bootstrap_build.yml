@@ -64,6 +64,19 @@ jobs:
           done < <(grep -rIl 'com\.termux' "$TERMUX_TREE" 2>/dev/null)
           echo "[*] Replaced com.termux in $REPLACED text files"
 
+          # Step 2b: Fix symlinks that point to com.termux paths
+          echo "[*] Fixing symlink targets containing com.termux..."
+          FIXED_LINKS=0
+          while IFS= read -r -d '' lnk; do
+              target=$(readlink "$lnk")
+              if [[ "$target" == *com.termux* ]]; then
+                  new_target="${target//com.termux/com.soul.terminal}"
+                  ln -sfn "$new_target" "$lnk"
+                  FIXED_LINKS=$((FIXED_LINKS + 1))
+              fi
+          done < <(find "$TERMUX_TREE" -type l -print0)
+          echo "[*] Fixed $FIXED_LINKS symlinks"
+
           # Step 3: Binary-patch ELF files with same-length path substitution
           # /data/data/com.termux/files/usr = 31 chars
           # /data/data/com.soul.terminal/tu = 31 chars (exact same length!)

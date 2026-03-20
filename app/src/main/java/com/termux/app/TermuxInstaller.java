@@ -420,6 +420,17 @@ final class TermuxInstaller {
         for (File file : files) {
             if (file.isDirectory()) {
                 fixupBootstrapPaths(file, oldPrefix, newPrefix);
+            } else if (Files.isSymbolicLink(file.toPath())) {
+                // Fix symlink targets that reference the old prefix
+                try {
+                    String target = Files.readSymbolicLink(file.toPath()).toString();
+                    if (target.contains(oldPrefix)) {
+                        String newTarget = target.replace(oldPrefix, newPrefix);
+                        Files.delete(file.toPath());
+                        Files.createSymbolicLink(file.toPath(), new File(newTarget).toPath());
+                    }
+                } catch (Exception ignored) {
+                }
             } else if (file.isFile()) {
                 try {
                     byte[] bytes = Files.readAllBytes(file.toPath());
