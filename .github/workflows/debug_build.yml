@@ -57,6 +57,9 @@ jobs:
 
       - name: Build APKs
         shell: bash {0}
+        env:
+          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY || '' }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN || '' }}
         run: |
           exit_on_error() { echo "$1"; exit 1; }
 
@@ -87,6 +90,22 @@ jobs:
           export TERMUX_APP_VERSION_NAME="${RELEASE_VERSION_NAME/v/}" # Used by app/build.gradle
           export TERMUX_APK_VERSION_TAG="$APK_VERSION_TAG" # Used by app/build.gradle
           export TERMUX_PACKAGE_VARIANT="apt-android-7" # Fixed: soul-terminal uses aarch64-only bootstrap
+
+          # Pass dart-defines to Flutter module via EXTRA_DART_DEFINES (base64-encoded, comma-separated)
+          DART_DEFINES_LIST=()
+          [ -n "$VOYAGE_API_KEY" ] && DART_DEFINES_LIST+=("VOYAGE_API_KEY=$VOYAGE_API_KEY")
+          [ -n "$SENTRY_DSN" ] && DART_DEFINES_LIST+=("SENTRY_DSN=$SENTRY_DSN")
+          if [ ${#DART_DEFINES_LIST[@]} -gt 0 ]; then
+            ENCODED_PARTS=()
+            for define in "${DART_DEFINES_LIST[@]}"; do
+              ENCODED_PARTS+=("$(echo -n "$define" | base64 -w0)")
+            done
+            export EXTRA_DART_DEFINES="$(IFS=','; echo "${ENCODED_PARTS[*]}")"
+            echo "dart-define: passing ${#DART_DEFINES_LIST[@]} define(s) to Flutter module"
+          else
+            echo "dart-define: no secrets configured, building with empty fallbacks"
+          fi
+
           if ! ./gradlew assembleDebug; then
             exit_on_error "Build failed for '$APK_VERSION_TAG' build."
           fi
