@@ -1,96 +1,107 @@
 # Requirements: SOUL Terminal
 
-**Defined:** 2026-03-19
-**Core Value:** Een native terminal die naadloos integreert met SOUL — zodat Claude Code, de AI brain, en de terminal in één app leven zonder compromis op terminal performance.
+**Defined:** 2026-03-20
+**Core Value:** Een native terminal die naadloos integreert met SOUL — terminal + AI brain in één app.
 
-## v1 Requirements
+## v1.1 Requirements
 
-Requirements for initial release. Each maps to roadmap phases.
+Requirements for milestone v1.1: Van terminal naar AI coding omgeving.
 
-### Rebranding
+### Terminal Config
 
-- [x] **REBR-01**: App draait met package name `com.soul.terminal` (applicationId gewijzigd)
-- [x] **REBR-02**: App toont naam "SOUL Terminal" in launcher en app info
-- [x] **REBR-03**: Custom launcher icon met SOUL branding
-- [x] **REBR-04**: UI theming aangepast aan SOUL kleurschema
-- [x] **REBR-05**: sharedUserId verwijderd (geen plugin compat nodig)
-- [x] **REBR-06**: targetSdk verhoogd naar minimaal 34 (Play Store vereiste)
+- [ ] **TERM-04**: User ziet scrollback buffer van 20.000 regels (was 2.000)
+- [ ] **TERM-05**: User heeft extra keys layout geoptimaliseerd voor Claude Code
+- [ ] **TERM-06**: User ziet SOUL kleurthema als default (bg #0F0F23, fg #E0E0E0, cursor #6C63FF)
+- [ ] **TERM-07**: User ziet SOUL kleuren in drawer, extra keys en app chrome (#6C63FF accent)
 
-### Bootstrap
+### App Merge
 
-- [x] **BOOT-01**: Fork van termux-packages met `com.soul.terminal` prefix in properties.sh
-- [x] **BOOT-02**: Bootstrap packages gebouwd voor aarch64 via Docker cross-compilatie
-- [x] **BOOT-03**: Bootstrap checksums bijgewerkt in app/build.gradle
-- [x] **BOOT-04**: Eigen apt repository opgezet (GitHub Releases of CDN)
-- [ ] **BOOT-05**: `pkg install` werkt correct met eigen repository — device test pending
+- [ ] **MERG-01**: SOUL app Dart code (339 files) gekopieerd naar soul-terminal flutter_module
+- [ ] **MERG-02**: pubspec.yaml gemerged (52 deps incl. ObjectBox, Drift, foreground_task)
+- [ ] **MERG-03**: AndroidManifest.xml gemerged (permissies, services, boot receiver)
+- [ ] **MERG-04**: ProviderScope gerefactored voor FlutterFragment context (niet main.dart)
+- [ ] **MERG-05**: Database pad geunificeerd (Drift + ObjectBox werken in com.soul.terminal context)
+- [ ] **MERG-06**: Foreground service coëxistentie met Termux's eigen service
+- [ ] **MERG-07**: SOUL chat UI functioneel als hoofdscherm in FlutterFragment
+- [ ] **MERG-08**: CI/CD bouwt merged app succesvol (52 Flutter deps + Android)
+- [ ] **MERG-09**: API key invoer werkt in merged context (Android Keystore onder com.soul.terminal)
 
-### Flutter Module
+### Layout
 
-- [x] **FLUT-01**: Flutter module aangemaakt als subdirectory (`flutter_module/`)
-- [ ] **FLUT-02**: FlutterEngine singleton pre-warmed in Application.onCreate()
-- [ ] **FLUT-03**: FlutterFragment geïntegreerd in TermuxActivity met toggle
-- [ ] **FLUT-04**: GeneratedPluginRegistrant.registerWith() correct aangeroepen
-- [ ] **FLUT-05**: Layout toggle tussen terminal-fullscreen en Flutter-fullscreen
+- [ ] **LAYT-01**: User ziet Flutter (SOUL chat) als hoofdscherm bij app start
+- [ ] **LAYT-02**: User kan terminal omhoog slepen als bottom sheet via handle bar
+- [ ] **LAYT-03**: User kan sheet in 4 states gebruiken: hidden, collapsed (peek), half-expanded (40%), expanded (full)
+- [ ] **LAYT-04**: User kan keyboard gebruiken in terminal sheet zonder layout glitches
+- [ ] **LAYT-05**: User kan back button gebruiken om sheet te sluiten zonder app te sluiten
+- [ ] **LAYT-06**: Terminal process draait door ongeacht sheet state
 
-### Pigeon Bridge
+### Session Management
 
-- [x] **PIGB-01**: Pigeon schema gedefinieerd (TerminalBridge, SoulBridge, SystemBridge)
-- [ ] **PIGB-02**: TerminalBridge: Flutter kan commando's uitvoeren in terminal
-- [ ] **PIGB-03**: SoulBridge: Host pusht terminal output naar Flutter (debounced, max 10/sec)
-- [ ] **PIGB-04**: Bidirectionele communicatie werkt betrouwbaar
-- [ ] **PIGB-05**: cmd-proxy functionaliteit volledig vervangen door Pigeon bridge
+- [ ] **SESS-01**: User ziet tab bar met sessienamen bovenaan terminal sheet
+- [ ] **SESS-02**: User ziet process namen in tabs (claude, bash, python via /proc/PID/cmdline)
+- [ ] **SESS-03**: User kan nieuwe sessie aanmaken via + knop in tab bar
+- [ ] **SESS-04**: User kan sessie hernoemen of sluiten via lang indrukken op tab
+- [ ] **SESS-05**: User kan swipen links/rechts om van sessie te wisselen
+- [ ] **SESS-06**: SOUL chat kan sessies aanmaken en sluiten via Pigeon
 
-### CI/CD
+### SOUL Awareness
 
-- [x] **CICD-01**: GitHub Actions workflow bouwt debug APK automatisch
-- [x] **CICD-02**: Release signing via GitHub Secrets
-- [x] **CICD-03**: Twee-stage build: Flutter module eerst, dan Gradle assembleRelease
-- [x] **CICD-04**: Bootstrap build als aparte workflow (zeldzaam, handmatig te triggeren) ✓ (02-A)
+- [ ] **AWAR-01**: SOUL kan commando's sturen naar terminal sessie via sendInput
+- [ ] **AWAR-02**: SOUL ontvangt terminal output stream via Pigeon bridge
+- [ ] **AWAR-03**: SOUL detecteert wanneer commando klaar is via OSC 133 prompt markers
+- [ ] **AWAR-04**: SOUL toont "Uitvoeren in terminal..." indicator bij actief commando
+- [ ] **AWAR-05**: SOUL vraagt bevestiging voor destructieve commando's (rm -rf, git reset, etc.)
+- [ ] **AWAR-06**: API keys en wachtwoorden worden niet gelogd in SOUL memory
+- [ ] **AWAR-07**: Terminal output wordt gestript van ANSI escape codes voor AI context
+- [ ] **AWAR-08**: User kan altijd sheet openen om te zien wat SOUL doet
 
-### Terminal Features
+### Onboarding
 
-- [x] **TERM-01**: Kitty keyboard protocol ondersteuning in terminal-emulator
-- [x] **TERM-02**: OSC9 desktop notifications (terminal → Android notificatie)
-- [x] **TERM-03**: Command palette met fuzzy search (sessies, commands, history)
+- [ ] **ONBR-01**: User ziet welkomstscherm bij eerste start met keuze: Claude Code / Python / Alleen terminal
+- [ ] **ONBR-02**: SOUL installeert gekozen packages op achtergrond met voortgang in chat
+- [ ] **ONBR-03**: User kan API key invoeren in SOUL chat, opgeslagen via Android Keystore
+- [ ] **ONBR-04**: User kan GitHub CLI authenticeren via SOUL chat flow
+- [ ] **ONBR-05**: User krijgt HyperOS battery/autostart instructies op Xiaomi devices
+- [ ] **ONBR-06**: Onboarding configureert .bashrc/.zshrc met OSC 133 prompt markers
+- [ ] **ONBR-07**: User ziet "Je omgeving is klaar" na voltooiing
+
+### UX Polish
+
+- [ ] **UXPL-01**: User kan bestandspaden in terminal output lang indrukken om te kopiëren/openen
+- [ ] **UXPL-02**: Claude Code y/n prompts worden automatisch als native Android dialog getoond
+- [ ] **UXPL-03**: Sheet expand is velocity-based: snel omhoog = altijd full screen
+- [ ] **UXPL-04**: User ziet lichte blur achter sheet (SOUL UI wazig zichtbaar)
+- [ ] **UXPL-05**: User voelt haptic feedback bij sheet open/close/switch
+- [ ] **UXPL-06**: In landscape wordt terminal sheet een side drawer (rechts), SOUL chat links
+- [ ] **UXPL-07**: App heeft content descriptions en TalkBack support
 
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
 
-### AI Features
+### AI Autonomy
 
-- **SOUL-01**: AI command suggestions op basis van terminal context
-- **SOUL-02**: AI error explanation met automatische foutanalyse
-- **SOUL-03**: Smart command history met semantisch zoeken
-- **SOUL-04**: Context-aware autocomplete
-- **SOUL-05**: Terminal-to-SOUL handoff ("SOUL, deploy dit")
+- **AUTO-01**: SOUL voert multi-step command sequences uit zonder per-stap bevestiging
+- **AUTO-02**: SOUL legt automatisch terminal errors uit met suggesties
+- **AUTO-03**: Semantische command history (zoek op wat het deed, niet exacte tekst)
 
-### Advanced Terminal
+### Terminal Advanced
 
-- **ADVT-01**: Inline image support (Kitty graphics protocol)
-- **ADVT-02**: Split panes (native, zonder tmux)
-- **ADVT-03**: Session restore na app restart
-
-### SOUL Brain Integration
-
-- **BRAIN-01**: Claude API integratie via Flutter module
-- **BRAIN-02**: Chat UI in Flutter overlay
-- **BRAIN-03**: Memory layer (Drift + ObjectBox) in Flutter module
+- **TADV-01**: Inline image rendering in terminal (sixel/kitty graphics)
+- **TADV-02**: Split panes (meerdere terminals naast elkaar)
 
 ## Out of Scope
 
+Explicitly excluded. Documented to prevent scope creep.
+
 | Feature | Reason |
 |---------|--------|
+| Warp-stijl terminal Blocks | Jaren werk, upstream incompatibel met Termux rendering |
+| Cloud sync | Lokaal-eerst architectuur, privacy prioriteit |
 | iOS versie | Android-only terminal fork |
-| Eigen terminal emulator library | Termux's terminal-emulator is bewezen en stabiel |
-| Plugin apps (Termux:Float, Termux:API) | SOUL Terminal is self-contained |
-| GUI file manager | Terminal users gebruiken ranger/lf/yazi |
-| Built-in code editor | Neovim/Helix in terminal is beter |
-| Multi-device sync | v1 is local-first |
-| Web terminal | Native Android app |
-| Root-only features | Target device heeft geen root |
-| AccessibilityService | Verboden door Play Store sinds jan 2026 |
-| Persona selector UI | SOUL is een entiteit |
+| Eigen terminal emulator | Termux's terminal-emulator is bewezen en onderhouden |
+| Plugin apps (Termux:Float etc.) | Niet nodig — SOUL vervangt plugin functionaliteit |
+| Data migratie soul-app → soul-terminal | Eenmalige handmatige actie, geen app feature |
 
 ## Traceability
 
@@ -98,40 +109,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REBR-01 | 1 | Complete |
-| REBR-02 | 1 | Complete |
-| REBR-03 | 1 | Complete |
-| REBR-04 | 1 | Complete |
-| REBR-05 | 1 | Complete |
-| REBR-06 | 1 | Complete |
-| BOOT-01 | 2 | Complete |
-| BOOT-02 | 2 | Complete |
-| BOOT-03 | 2 | Complete |
-| BOOT-04 | 2 | Complete |
-| BOOT-05 | 2 | Pending device test |
-| FLUT-01 | 3 | Not Started |
-| FLUT-02 | 3 | Not Started |
-| FLUT-03 | 3 | Not Started |
-| FLUT-04 | 3 | Not Started |
-| FLUT-05 | 3 | Not Started |
-| PIGB-01 | 3 | Not Started |
-| PIGB-02 | 3 | Not Started |
-| PIGB-03 | 3 | Not Started |
-| PIGB-04 | 3 | Not Started |
-| PIGB-05 | 3 | Not Started |
-| CICD-01 | 1 | Complete |
-| CICD-02 | 1 | Complete |
-| CICD-03 | 3 | Not Started |
-| CICD-04 | 2 | Complete |
-| TERM-01 | 4 | Not Started |
-| TERM-02 | 4 | Not Started |
-| TERM-03 | 4 | Not Started |
+| — | — | — |
 
 **Coverage:**
-- v1 requirements: 28 total
-- Mapped to phases: 28
-- Unmapped: 0
+- v1.1 requirements: 47 total
+- Mapped to phases: 0
+- Unmapped: 47
 
 ---
-*Requirements defined: 2026-03-19*
-*Last updated: 2026-03-19 after initial definition*
+*Requirements defined: 2026-03-20*
+*Last updated: 2026-03-20 after initial definition*
