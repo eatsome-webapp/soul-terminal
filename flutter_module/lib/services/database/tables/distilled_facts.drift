@@ -1,0 +1,10 @@
+CREATE TABLE distilled_facts (
+  id TEXT NOT NULL PRIMARY KEY,
+  conversation_id TEXT NOT NULL,
+  category TEXT NOT NULL,
+  fact_key TEXT,
+  fact_value TEXT NOT NULL,
+  confidence REAL NOT NULL DEFAULT 0.8,
+  distilled_at INTEGER NOT NULL,
+  source_message_range TEXT
+);

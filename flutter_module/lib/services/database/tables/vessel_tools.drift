@@ -1,0 +1,13 @@
+CREATE TABLE vessel_tools (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  vessel_id TEXT NOT NULL,
+  tool_name TEXT NOT NULL,
+  description TEXT,
+  capability_group TEXT NOT NULL,
+  cached_at INTEGER NOT NULL,
+  UNIQUE(vessel_id, tool_name)
+);
+
+toolsByVesselId: SELECT * FROM vessel_tools WHERE vessel_id = :vesselId ORDER BY capability_group;
+capabilityGroupsByVesselId: SELECT DISTINCT capability_group FROM vessel_tools WHERE vessel_id = :vesselId;
+deleteByVesselId: DELETE FROM vessel_tools WHERE vessel_id = :vesselId;

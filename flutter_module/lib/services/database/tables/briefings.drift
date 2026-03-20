@@ -1,0 +1,10 @@
+CREATE TABLE briefings (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  date TEXT NOT NULL UNIQUE,
+  content TEXT NOT NULL,
+  priorities TEXT,
+  calendar_summary TEXT,
+  created_at INTEGER NOT NULL,
+  conversation_id INTEGER
+);
+

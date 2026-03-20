@@ -1,0 +1,28 @@
+CREATE TABLE projects (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  tech_stack TEXT,
+  goals TEXT,
+  deadline INTEGER,
+  repo_url TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  onboarded_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE project_facts (
+  id TEXT NOT NULL PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  fact_key TEXT NOT NULL,
+  fact_value TEXT NOT NULL,
+  source_message_id TEXT REFERENCES messages(id),
+  created_at INTEGER NOT NULL
+);
+
+allProjects: SELECT * FROM projects ORDER BY updated_at DESC;
+projectById: SELECT * FROM projects WHERE id = :id;
+activeProject: SELECT * FROM projects WHERE status = 'active' ORDER BY updated_at DESC LIMIT 1;
+factsForProject: SELECT * FROM project_facts WHERE project_id = :projectId ORDER BY created_at ASC;
+activeProjects: SELECT * FROM projects WHERE status = 'active' ORDER BY updated_at DESC;
+projectsWithDeadlines: SELECT * FROM projects WHERE deadline IS NOT NULL AND status = 'active' ORDER BY deadline ASC;

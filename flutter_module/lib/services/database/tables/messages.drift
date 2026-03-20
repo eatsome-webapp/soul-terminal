@@ -1,0 +1,36 @@
+CREATE TABLE messages (
+  id TEXT NOT NULL PRIMARY KEY,
+  conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  token_count INTEGER
+);
+
+CREATE VIRTUAL TABLE messages_fts USING fts5(
+  content,
+  content='messages',
+  content_rowid='rowid'
+);
+
+CREATE TRIGGER messages_ai AFTER INSERT ON messages BEGIN
+  INSERT INTO messages_fts(rowid, content) VALUES (new.rowid, new.content);
+END;
+
+CREATE TRIGGER messages_ad AFTER DELETE ON messages BEGIN
+  INSERT INTO messages_fts(messages_fts, rowid, content) VALUES('delete', old.rowid, old.content);
+END;
+
+CREATE TRIGGER messages_au AFTER UPDATE ON messages BEGIN
+  INSERT INTO messages_fts(messages_fts, rowid, content) VALUES('delete', old.rowid, old.content);
+  INSERT INTO messages_fts(rowid, content) VALUES (new.rowid, new.content);
+END;
+
+messagesForConversation: SELECT * FROM messages
+  WHERE conversation_id = :conversationId
+  ORDER BY created_at ASC;
+
+searchMessages: SELECT m.* FROM messages m
+  INNER JOIN messages_fts f ON m.rowid = f.rowid
+  WHERE messages_fts MATCH :query
+  ORDER BY rank;
