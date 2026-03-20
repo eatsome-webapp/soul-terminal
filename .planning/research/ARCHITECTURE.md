@@ -1,229 +1,473 @@
-# Architecture Research: SOUL Terminal
+# Architecture Research: SOUL Terminal v1.1
 
-## Component Overview
-
-SOUL Terminal bestaat uit 5 duidelijke componenten met heldere grenzen:
-
-### 1. Terminal Emulator Library (`terminal-emulator/`)
-Pure Java library, geen Android dependencies. Bevat de core terminal emulatie: `TerminalEmulator`, `TerminalSession`, `TerminalBuffer`, `KeyHandler`, ANSI/VT parsing, Unicode width. Dit is upstream Termux code — minimaal wijzigen.
-
-**Grens:** Communiceert via `TerminalSessionClient` interface (callbacks naar boven) en `TerminalOutput` interface (schrijft bytes naar PTY). Geen kennis van UI, Android, of Flutter.
-
-### 2. Terminal View (`terminal-view/`)
-Android `View` subclass (`TerminalView`) die een `TerminalSession` rendert. Handelt touch, keyboard input, scrolling, text selection af. Communiceert met de Activity via `TerminalViewClient` interface.
-
-**Grens:** Kent alleen `TerminalSession` (van terminal-emulator) en de `TerminalViewClient` callback interface. Geen kennis van services, Flutter, of app-logica.
-
-### 3. Termux Shared (`termux-shared/`)
-Constants (`TermuxConstants`), settings, preferences, shell utilities, crash handling, logging, extra keys. De "glue" library die door alle modules wordt gebruikt.
-
-**Grens:** Definieert package names, file paths, shared preferences keys. Kernpunt voor rebranding (alles wijst naar `com.soul.terminal` paths).
-
-### 4. App Module (`app/`)
-De Android applicatie zelf. Bevat:
-- **TermuxActivity** — Hoofd-Activity, host `TerminalView` in een `DrawerLayout`. Bindt aan `TermuxService` via `ServiceConnection`.
-- **TermuxService** — Foreground Service die terminal sessions beheert. Overleeft Activity lifecycle.
-- **TermuxInstaller** — Bootstrap installer (extracts bootstrap-*.zip naar $PREFIX).
-- **Terminal clients** — `TermuxTerminalSessionActivityClient`, `TermuxTerminalViewClient` — bridge tussen view/session callbacks en Activity.
-- **Extra Keys** — Toolbar met programmeerbare extra toetsen.
-
-**Grens:** Praat met terminal-emulator via interfaces, met terminal-view via interfaces, met termux-shared voor config/constants.
-
-### 5. Flutter Module (nieuw toe te voegen)
-Een apart Flutter module project (`flutter_module/` of `soul_module/`) dat via add-to-app als AAR wordt ingebouwd. Bevat de SOUL AI interface: chat UI, Claude API communicatie, memory layer.
-
-**Grens:** Draait in eigen `FlutterEngine`, gehost via `FlutterFragment` in de App module. Communiceert met de Java/Kotlin host uitsluitend via Pigeon-gegenereerde interfaces.
+*Geschreven: 2026-03-20 — Milestone v1.1: Van terminal naar AI coding omgeving*
 
 ---
 
-## Integration Points
-
-### A. TermuxActivity ↔ FlutterFragment
-
-De primaire integratie. Twee architectuuropties:
-
-**Optie 1: Split-screen layout (aanbevolen voor v1)**
-- `activity_termux.xml` uitbreiden met een `FrameLayout` container voor de `FlutterFragment`
-- Toggle-knop om te wisselen tussen terminal-fullscreen, Flutter-fullscreen, of split
-- `FlutterFragment` wordt lazy geïnitialiseerd (pas bij eerste gebruik)
-- FlutterEngine wordt gecached in `FlutterEngineCache` (via `TermuxApplication`) voor snelle start
-
-**Optie 2: Aparte Activity**
-- `SoulActivity` extends `FlutterFragmentActivity`
-- Navigatie via drawer of bottom nav
-- Eenvoudiger, maar verliest de "één scherm" ervaring
-
-**Aanbeveling:** Optie 1 — `FlutterFragment` in dezelfde Activity, met een ViewSwitcher of FrameLayout overlay.
-
-### B. Pigeon Bridge (Flutter ↔ Host)
-
-Pigeon genereert type-safe interfaces aan beide kanten:
+## System Overview
 
 ```
-┌─────────────────┐         ┌──────────────────┐
-│  Flutter Module  │         │   Android Host   │
-│                  │         │                  │
-│  SoulApi         │◄───────►│  SoulApiImpl     │  (Flutter calls host)
-│  (generated)     │         │  (implements)    │
-│                  │         │                  │
-│  HostApiImpl     │◄───────►│  HostApi         │  (Host calls Flutter)
-│  (implements)    │         │  (generated)     │
-└─────────────────┘         └──────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                        TermuxApplication                            │
+│  onCreate() → preWarmFlutterEngine() → FlutterEngineCache           │
+│  FLUTTER_ENGINE_ID = "soul_flutter_engine"                          │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │ engine lifecycle
+┌────────────────────────────▼────────────────────────────────────────┐
+│                        TermuxActivity                               │
+│                                                                     │
+│  TermuxActivityRootView (LinearLayout, vertical)                    │
+│  ├── RelativeLayout (terminal container, weight=1)                  │
+│  │    └── DrawerLayout                                              │
+│  │         ├── TerminalView  ←── renders TerminalSession            │
+│  │         └── left_drawer (ListView: session list)                 │
+│  ├── FrameLayout flutter_container (weight=1, visibility toggled)   │
+│  │    └── FlutterFragment (cached engine)                           │
+│  └── View activity_termux_bottom_space_view (IME spacer)            │
+│                                                                     │
+│  ServiceConnection ←──────────────────────────────┐                │
+│  setupPigeonBridges() (called in onServiceConnected)                │
+└──────────┬─────────────────────────────────────────┼───────────────┘
+           │ bindService                             │
+┌──────────▼─────────────────────────────────────────▼───────────────┐
+│                         TermuxService (foreground)                  │
+│  TermuxShellManager.mTermuxSessions []                              │
+│  createTermuxSession() / removeTermuxSession()                      │
+│  setTermuxTerminalSessionClient()                                   │
+└──────────┬──────────────────────────────────────────────────────────┘
+           │ manages
+┌──────────▼──────────────────────────────────────────────────────────┐
+│                   terminal-emulator module                          │
+│  TerminalSession → PTY ↔ shell process                              │
+│  TerminalEmulator → TerminalBuffer (scrollback)                     │
+│  Callbacks via: TerminalSessionClient                               │
+└──────────┬──────────────────────────────────────────────────────────┘
+           │ rendered by
+┌──────────▼──────────────────────────────────────────────────────────┐
+│                   terminal-view module                              │
+│  TerminalView (Android View)                                        │
+│  onTextChanged() → TermuxTerminalSessionActivityClient              │
+│                  → SoulBridgeController.onTerminalTextChanged()     │
+└─────────────────────────────────────────────────────────────────────┘
+
+Pigeon Bridge (bidirectioneel, in-process, main thread):
+
+  Flutter (Dart)                     Java (Host)
+  ┌──────────────────┐               ┌──────────────────────┐
+  │ TerminalBridgeApi│──HostApi ────►│ TerminalBridgeImpl   │
+  │ SystemBridgeApi  │──HostApi ────►│ SystemBridgeImpl     │
+  │ SoulBridgeApi    │◄──FlutterApi─ │ SoulBridgeController │
+  └──────────────────┘               └──────────────────────┘
+   (pigeons/terminal_bridge.dart)     (com.termux.bridge.*)
+   (pigeons/system_bridge.dart)
 ```
 
-**Kerninterfaces (Pigeon):**
+---
 
-1. **TerminalBridge** (Flutter → Host):
-   - `executeCommand(String cmd)` — voer een commando uit in de actieve terminal sessie
-   - `readTerminalBuffer()` — lees huidige terminal output
-   - `createSession()` / `switchSession(int index)` — sessiebeheer
-   - `getEnvironmentVariable(String name)` — lees env vars
-   - `sendInput(String text)` — stuur tekst naar terminal stdin
+## Component Responsibilities
 
-2. **SoulBridge** (Host → Flutter):
-   - `onTerminalOutput(String text)` — stream terminal output naar Flutter
-   - `onSessionChanged(int index, String title)` — sessie-updates
-   - `onAppLifecycleChanged(String state)` — lifecycle events
+### Bestaande componenten (v1.0)
 
-3. **SystemBridge** (Flutter → Host):
-   - `readContacts()`, `readCalendar()` — Android data access
-   - `showNotification(...)` — systeem notificaties
-   - `getDeviceInfo()` — device metadata
+| Component | Verantwoordelijkheid | Wijzigingen v1.1 |
+|-----------|---------------------|------------------|
+| `TermuxApplication` | App init, FlutterEngine pre-warm, FlutterEngineCache | Geen |
+| `TermuxActivity` | Host Activity, layout toggle terminal/Flutter, Pigeon setup | **Uitbreiden**: bottom sheet layout, onboarding check |
+| `TermuxService` | Foreground service, session lifecycle, PTY management | Geen (bridge gaat via Activity) |
+| `TermuxShellManager` | Session lijst beheer | Geen |
+| `TermuxTerminalSessionActivityClient` | Callback-bridge session→Activity, `onTextChanged` | **Uitbreiden**: aanroep `SoulBridgeController` |
+| `SoulBridgeController` | Debounced output push naar Flutter (max 10/sec) | **Uitbreiden**: active session tracking |
+| `TerminalBridgeImpl` | `executeCommand`, `createSession`, `listSessions`, `getTerminalOutput` | **Uitbreiden**: `switchSession(id)` |
+| `SystemBridgeImpl` | `getDeviceInfo`, `getPackageInfo` | **Uitbreiden**: `isBootstrapInstalled()`, `runInstallStep()` |
+| `FlutterFragment` | Flutter UI container, engine lifecycle | Geen (framework level) |
+| `terminal-emulator` | VT/ANSI emulatie, PTY, scrollback buffer | Scrollback naar 20k (config) |
+| `terminal-view` | TerminalView render, touch, keyboard | Extra keys voor Claude Code |
 
-### C. TermuxService ↔ FlutterEngine
+### Nieuwe componenten (v1.1)
 
-FlutterEngine moet in-process communiceren met TermuxService voor terminal access. Twee paden:
+| Component | Type | Locatie | Verantwoordelijkheid |
+|-----------|------|---------|---------------------|
+| `BottomSheetTerminalLayout` | Layout refactor | `activity_termux.xml` | CoordinatorLayout wrapper zodat terminal als bottom sheet schuift |
+| `SessionTabBar` | Flutter widget | `flutter_module/lib/` | Tab bar bovenin Flutter UI, toont actieve sessies, stuurt via Pigeon |
+| `OnboardingFlow` | Flutter screen | `flutter_module/lib/` | Eerste-start wizard: bootstrap check → install → gereed |
+| `SoulAwarenessService` | Flutter service | `flutter_module/lib/` | Luistert naar `onTerminalOutput`, geeft context door aan SOUL AI brain |
+| `OnboardingBridge` | Pigeon uitbreiding | `pigeons/system_bridge.dart` | `isBootstrapInstalled()`, `runInstallStep(String pkg)`, installatieprogressie |
+| `SessionBridge` | Pigeon uitbreiding | `pigeons/terminal_bridge.dart` | `switchSession(int id)`, `renameSession(int id, String name)`, `closeSession(int id)` |
 
-1. **Via Activity** — Activity heeft binding met Service, Flutter praat via Pigeon met Activity, Activity delegeert naar Service. Eenvoudig maar Activity moet actief zijn.
-2. **Via eigen Service binding** — FlutterEngine draait in een `FlutterEngineService` die direct bindt aan TermuxService. Werkt ook als Activity op de achtergrond is.
+---
 
-**Aanbeveling:** Start met pad 1 (via Activity), migreer naar pad 2 als background processing nodig is.
+## Project Structure
+
+```
+soul-terminal/
+├── app/
+│   └── src/main/
+│       ├── java/com/termux/
+│       │   ├── app/
+│       │   │   ├── TermuxActivity.java          ← wijzigen: bottom sheet setup, onboarding gate
+│       │   │   ├── TermuxApplication.java       ← ongewijzigd
+│       │   │   ├── TermuxService.java           ← ongewijzigd
+│       │   │   └── terminal/
+│       │   │       └── TermuxTerminalSessionActivityClient.java  ← uitbreiden: bridge push
+│       │   └── bridge/
+│       │       ├── SoulBridgeController.java    ← uitbreiden: session tracking
+│       │       ├── TerminalBridgeImpl.java      ← uitbreiden: switchSession, renameSession
+│       │       ├── SystemBridgeImpl.java        ← uitbreiden: bootstrap check/install
+│       │       ├── TerminalBridgeApi.java       ← gegenereerd door Pigeon (niet handmatig)
+│       │       └── SystemBridgeApi.java         ← gegenereerd door Pigeon (niet handmatig)
+│       └── res/layout/
+│           └── activity_termux.xml             ← herschrijven: CoordinatorLayout + BottomSheet
+│
+├── flutter_module/
+│   ├── pigeons/
+│   │   ├── terminal_bridge.dart                ← uitbreiden: switch/rename/close session
+│   │   └── system_bridge.dart                  ← uitbreiden: bootstrap APIs
+│   └── lib/
+│       ├── main.dart                           ← herschrijven: onboarding gate + main screen
+│       ├── generated/                          ← gegenereerd, niet handmatig
+│       ├── screens/
+│       │   ├── soul_home_screen.dart           ← NIEUW: hoofd Flutter scherm (SOUL chat)
+│       │   └── onboarding/
+│       │       ├── onboarding_flow.dart        ← NIEUW: wizard controller
+│       │       ├── onboarding_welcome.dart     ← NIEUW: stap 1
+│       │       └── onboarding_install.dart     ← NIEUW: stap 2 (bootstrap install)
+│       └── widgets/
+│           └── session_tab_bar.dart            ← NIEUW: tab bar voor sessies
+│
+├── terminal-emulator/                          ← upstream, minimaal wijzigen
+├── terminal-view/                              ← upstream, minimaal wijzigen
+└── termux-shared/                              ← upstream, minimaal wijzigen
+```
+
+---
+
+## Architectural Patterns
+
+### 1. Bottom Sheet Terminal (Java/Android kant)
+
+**Patroon:** CoordinatorLayout + BottomSheetBehavior over FlutterFragment als main content.
+
+```xml
+<!-- activity_termux.xml — nieuwe structuur -->
+<CoordinatorLayout>
+    <!-- Hoofd content: Flutter (SOUL UI) -->
+    <FrameLayout id="flutter_container"
+        layout_height="match_parent" />
+    <!-- FlutterFragment wordt hier ingeladen -->
+
+    <!-- Bottom sheet: terminal -->
+    <TermuxActivityRootView id="terminal_sheet"
+        app:layout_behavior="BottomSheetBehavior"
+        app:behavior_peekHeight="48dp"
+        app:behavior_hideable="false">
+        <DrawerLayout>
+            <TerminalView />
+        </DrawerLayout>
+        <!-- Tab bar handle bovenaan sheet -->
+        <TabHandleView id="session_tab_handle" />
+    </TermuxActivityRootView>
+</CoordinatorLayout>
+```
+
+**States:**
+- `STATE_COLLAPSED` (peekHeight=48dp) — tab bar zichtbaar, terminal verborgen → Flutter is hoofdscherm
+- `STATE_EXPANDED` — terminal fullscreen
+- `STATE_HALF_EXPANDED` (50%) — split view
+
+**Implicaties:**
+- `TermuxActivityRootView` (huidige custom LinearLayout) moet `CoordinatorLayout.LayoutParams` ondersteunen. Optie: wrapper FrameLayout erbuiten, `TermuxActivityRootView` erin.
+- `mIsFlutterVisible` toggle logica verdwijnt — vervangen door `BottomSheetBehavior.setState()`.
+- IME handling: `android:windowSoftInputMode="adjustResize"` werkt met CoordinatorLayout.
+
+### 2. FlutterFragment als Hoofdscherm
+
+**Huidig:** FlutterFragment in `flutter_container` (weight=1, naast terminal, zichtbaarheid toggle).
+
+**v1.1:** FlutterFragment vult de volledige CoordinatorLayout op de achtergrond. Terminal is bottom sheet erover.
+
+**Gevolg voor Pigeon setup:** `setupPigeonBridges()` wordt aangeroepen in `onServiceConnected`. Dit blijft ongewijzigd — het moment van setup is correct.
+
+### 3. Output Streaming — Pigeon vs EventChannel
+
+**Huidige aanpak:** `SoulBridgeController` gebruikt Pigeon's gegenereerde `SoulBridgeApi` (FlutterApi) met 100ms debounce. Dit zijn MethodChannel-calls onder de motorkap.
+
+**EventChannel alternatief:** Lower-level, native stream, geen serialisatie overhead, ideaal voor hoge frequentie. Maar: Pigeon ondersteunt streaming via `@EventChannelApi` pas in recente versies, en onze Pigeon-setup werkt al.
+
+**Beslissing voor v1.1:** Behoud Pigeon-debounce (10/sec) voor output streaming — voldoende voor SOUL awareness. Als later real-time typing feedback nodig is (< 50ms), migreer `onTerminalOutput` naar een handmatige `EventChannel` naast de Pigeon MethodChannels.
+
+**Waarom niet nu:** 10 updates/sec geeft SOUL genoeg context. Hogere frequentie heeft geen meerwaarde totdat SOUL realtime mee-typeert.
+
+### 4. Session Tab Bar
+
+**Patroon:** Flutter-side widget bovenaan het terminal sheet handle. Tab bar toont sessies van `listSessions()` en roept `switchSession(id)` aan via Pigeon.
+
+**Data flow:**
+1. Java `SoulBridgeController.onSessionChanged()` → Flutter `SoulBridgeApi.onSessionChanged(SessionInfo)` → tab bar herlaadt
+2. Flutter tab-tik → `TerminalBridgeApi.switchSession(id)` → Java → `TermuxService.setCurrentStoredSession()`
+
+**Nieuw Pigeon API (toevoegen aan `terminal_bridge.dart`):**
+```dart
+@HostApi()
+abstract class TerminalBridgeApi {
+  // bestaand...
+  void switchSession(int id);          // NIEUW
+  void renameSession(int id, String name);  // NIEUW
+  void closeSession(int id);           // NIEUW
+}
+```
+
+### 5. SOUL Terminal Awareness
+
+**Patroon:** Flutter-side service (geen Android Service) die luistert naar `onTerminalOutput` callbacks en deze doorgeeft aan de SOUL AI logic.
+
+```dart
+// Conceptueel — flutter_module/lib/
+class SoulAwarenessService implements SoulBridgeApi {
+  @override
+  void onTerminalOutput(String output) {
+    // Buffer laatste N regels
+    // Trigger SOUL brain met context als commando eindigt
+    // Detecteer foutmeldingen (exit code patterns)
+  }
+
+  @override
+  void onSessionChanged(SessionInfo info) {
+    // Verander context van actieve sessie
+  }
+}
+```
+
+**SOUL command → terminal data flow:**
+```
+SOUL AI (Dart)
+  → TerminalBridgeApi.executeCommand("npm install")   [Pigeon HostApi call]
+  → Java: TerminalBridgeImpl.executeCommand()
+  → TerminalSession.write("npm install\n")
+  → PTY → bash → output
+  → TerminalSessionClient.onTextChanged()
+  → SoulBridgeController.onTerminalTextChanged() [debounced]
+  → SoulBridgeApi.onTerminalOutput(output)        [Pigeon FlutterApi call]
+  → Flutter: SoulAwarenessService.onTerminalOutput()
+  → SOUL brain verwerkt output
+```
+
+### 6. Onboarding Flow
+
+**Patroon:** Flutter-side, meerstaps wizard. Eerste check op Java-kant of bootstrap geïnstalleerd is.
+
+**Nieuwe Pigeon APIs (toevoegen aan `system_bridge.dart`):**
+```dart
+@HostApi()
+abstract class SystemBridgeApi {
+  // bestaand...
+  bool isBootstrapInstalled();                     // NIEUW
+  void runInstallStep(String description);         // NIEUW — async via SoulBridgeApi callback
+}
+
+@FlutterApi()
+abstract class SoulBridgeApi {
+  // bestaand...
+  void onInstallProgress(String step, int percent);  // NIEUW
+  void onInstallComplete(bool success, String error); // NIEUW
+}
+```
+
+**Java-kant `SystemBridgeImpl`:**
+- `isBootstrapInstalled()` → checkt of `$PREFIX/bin/bash` bestaat
+- `runInstallStep()` → delegeert aan `TermuxInstaller` achterlogica, pusht progress via `SoulBridgeController`
+
+**Flutter onboarding flow:**
+```
+main.dart
+  └── check SharedPreferences: "onboarding_done"
+       ├── false → OnboardingFlow()
+       │    ├── WelcomeStep (statisch)
+       │    ├── PermissionsStep (storage, notifications)
+       │    ├── BootstrapStep → SystemBridgeApi.isBootstrapInstalled()
+       │    │    └── false → "Install development tools" knop
+       │    │         → SystemBridgeApi.runInstallStep(...)
+       │    │         → SoulBridgeApi.onInstallProgress() updates UI
+       │    └── CompleteStep → SharedPreferences.set("onboarding_done", true)
+       └── true → SoulHomeScreen()
+```
+
+**Constraint:** `TermuxInstaller` draait bootstrap installatie al in `TermuxActivity.onServiceConnected()` als bootstrap mist. De onboarding moet dit onderscheppen of samenwerken: onboarding toont de progress die `TermuxInstaller` al doet.
 
 ---
 
 ## Data Flow
 
+### A. Normale terminal output naar SOUL
+
 ```
-┌─────────────────────────────────────────────────┐
-│                  TermuxActivity                  │
-│                                                  │
-│  ┌──────────┐    ServiceConnection    ┌────────┐│
-│  │ Terminal  │◄──────────────────────►│ Termux ││
-│  │ View     │                         │ Service││
-│  │          │   TerminalViewClient    │        ││
-│  │          │◄───────────────────────►│Sessions││
-│  └──────────┘   TerminalSessionClient └────────┘│
-│       ▲                                    ▲     │
-│       │ layout                             │     │
-│       │ toggle                      Pigeon │     │
-│       ▼                            Bridge  │     │
-│  ┌──────────┐                             │     │
-│  │ Flutter  │◄────────────────────────────┘     │
-│  │ Fragment │   TerminalBridge / SoulBridge      │
-│  │ (SOUL)   │                                    │
-│  └──────────┘                                    │
-└─────────────────────────────────────────────────┘
+bash (PTY)
+  → TerminalSession.onProcessExit() / bytes uit PTY
+  → TerminalEmulator.processCodePoint()
+  → TerminalBuffer update
+  → TerminalSessionClient.onTextChanged(session)       ← callback interface
+  → TermuxTerminalSessionClientBase.onTextChanged()
+  → TermuxTerminalSessionActivityClient.onTextChanged()
+  → SoulBridgeController.onTerminalTextChanged(session)
+  → [100ms debounce]
+  → SoulBridgeApi.onTerminalOutput(last50Lines)         ← Pigeon FlutterApi
+  → Flutter: SoulAwarenessService.onTerminalOutput()
+  → SOUL brain context update
 ```
 
-**Informatiestromen:**
+### B. SOUL commando naar terminal
 
-1. **User input → Terminal:** Keyboard → TerminalView → TerminalSession → PTY → shell proces
-2. **Terminal output → Display:** Shell → PTY → TerminalSession → TerminalSessionClient callback → TerminalView render
-3. **Terminal output → SOUL:** Shell → PTY → TerminalSession → Host interceptor → Pigeon `onTerminalOutput` → Flutter SOUL brain
-4. **SOUL command → Terminal:** Flutter → Pigeon `executeCommand` → Host → TermuxService → TerminalSession → PTY
-5. **SOUL → Claude API:** Flutter → ClaudeService → HTTP → Claude API (direct vanuit Flutter, geen host betrokkenheid)
-6. **SOUL → Local memory:** Flutter → Drift SQLite / ObjectBox (in Flutter, eigen databases)
+```
+Flutter: TerminalBridgeApi.executeCommand("git status")  ← Pigeon HostApi
+  → Java: TerminalBridgeImpl.executeCommand()
+  → getCurrentTerminalSession()  [last session van TermuxService]
+  → TerminalSession.write("git status\n")
+  → PTY stdin → bash verwerkt commando
+  → output terug via flow A
+```
+
+### C. Session tab interactie
+
+```
+Gebruiker tikt tab in Flutter UI
+  → TerminalBridgeApi.switchSession(2)               ← Pigeon HostApi
+  → Java: TerminalBridgeImpl.switchSession(2)
+  → TermuxService.getTermuxSessions().get(2)
+  → [activity] setCurrentSession(terminalSession)
+  → TerminalView.attachSession(terminalSession)
+  → SoulBridgeController.onSessionChanged(2, name, true)  ← notify Flutter
+  → Flutter tab bar update
+```
+
+### D. Bottom sheet drag interactie
+
+```
+Gebruiker sleept terminal sheet omhoog
+  → BottomSheetBehavior callback: onStateChanged(STATE_EXPANDED)
+  → Java: TerminalView.requestFocus()
+  → Keyboard popup (als terminal focussed)
+  → Normaal terminal gebruik
+
+Gebruiker sleept sheet terug omlaag
+  → BottomSheetBehavior: STATE_COLLAPSED
+  → Flutter Flutter krijgt focus terug
+  → Terminal processen blijven lopen (TermuxService)
+```
+
+### E. Onboarding → bootstrap installatie
+
+```
+OnboardingFlow: SystemBridgeApi.isBootstrapInstalled()   ← Pigeon
+  → Java: SystemBridgeImpl: check $PREFIX/bin/bash
+  → false: Flutter toont install stap
+
+Gebruiker drukt "Install"
+  → SystemBridgeApi.runInstallStep("bootstrap")          ← Pigeon
+  → Java: TermuxInstaller.setupIfNeeded(activity, callback)
+  → [progresscallbacks] SoulBridgeApi.onInstallProgress("Extracting...", 45)  ← Pigeon
+  → Flutter: progress bar update
+  → [klaar] SoulBridgeApi.onInstallComplete(true, "")    ← Pigeon
+  → Flutter: markeer onboarding klaar, navigeer naar SoulHomeScreen
+```
 
 ---
 
-## Build Order
+## Anti-Patterns
 
-Fasering op basis van afhankelijkheden:
+| Anti-pattern | Reden | Alternatief |
+|-------------|-------|------------|
+| EventChannel voor terminal output | Overhead van handmatige setup, Pigeon werkt al, 10/sec is genoeg | Pigeon debounce behouden; EventChannel pas als < 50ms latency nodig |
+| PlatformView voor TerminalView in Flutter | Sync rendering problemen, touch event conflicts, jank | FlutterFragment naast native terminal (huidig patroon) |
+| TermuxService direct binden vanuit Flutter | Flutter/Dart kent Android Service niet, violates layering | Via Pigeon bridge via Activity (huidig patroon) |
+| Polling van terminal output vanuit Flutter | CPU waste, race conditions | Push via `SoulBridgeApi.onTerminalOutput` (huidig patroon) |
+| RecyclerView voor session list | `androidx.recyclerview` dependency niet aanwezig in project | ListView + BaseAdapter (conform STATE.md constraint) |
+| Meerdere FlutterEngines | +40MB per engine, complexe lifecycle | Eén engine in FlutterEngineCache (huidig patroon) |
+| Onboarding als Android native UI | Breekt de "Flutter is hoofdscherm" architectuur | Onboarding volledig in Flutter module |
+| `android:nonTransitiveRClass=true` | Breekt bestaande cross-module R-class referenties | Behoud `false` (conform STATE.md constraint) |
+| Kotlin in `app/` module | Vereist extra Gradle plugin, upstream merge conflicts | Java only voor host-side (conform STATE.md) |
 
-### Fase 1: Rebranding (geen nieuwe componenten)
+---
+
+## Integration Points
+
+### Nieuw vs. gewijzigd
+
+| Component | Status | Reden |
+|-----------|--------|-------|
+| `activity_termux.xml` | **Herschrijven** | Root view moet CoordinatorLayout worden |
+| `TermuxActivity.java` | **Uitbreiden** | Bottom sheet setup, onboarding gate, remove toggle logic |
+| `TerminalBridgeImpl.java` | **Uitbreiden** | `switchSession`, `renameSession`, `closeSession` |
+| `SystemBridgeImpl.java` | **Uitbreiden** | `isBootstrapInstalled`, `runInstallStep` |
+| `SoulBridgeController.java` | **Uitbreiden** | `onInstallProgress`, `onInstallComplete` push, active session tracking |
+| `TermuxTerminalSessionActivityClient.java` | **Uitbreiden** | Bridge call ook als Flutter zichtbaar maar terminal in collapsed state |
+| `pigeons/terminal_bridge.dart` | **Uitbreiden** | Nieuwe session management methods |
+| `pigeons/system_bridge.dart` | **Uitbreiden** | Bootstrap check/install APIs + install progress callbacks |
+| `flutter_module/lib/main.dart` | **Herschrijven** | Onboarding gate, SoulHomeScreen als entry point |
+| `SoulHomeScreen` (widget) | **Nieuw** | Hoofd Flutter scherm, host voor SessionTabBar + SOUL chat |
+| `SessionTabBar` (widget) | **Nieuw** | Tab bar in bottom sheet handle area |
+| `OnboardingFlow` (widgets) | **Nieuw** | Meerstaps wizard |
+| `SoulAwarenessService` (Dart class) | **Nieuw** | Terminal output → SOUL brain context |
+| `TermuxApplication.java` | Ongewijzigd | Engine pre-warm werkt al |
+| `TermuxService.java` | Ongewijzigd | Session management API volledig genoeg |
+| `terminal-emulator/` | Minimaal | Scrollback naar 20k via config (geen code) |
+| `terminal-view/` | Minimaal | Extra keys CSS voor Claude Code |
+
+### Kritieke koppelpunten
+
+1. **`onServiceConnected` → `setupPigeonBridges()`** — Dit is de enige plek waar engine, service en bridge samenkomen. Alle bridge setup moet hier gebeuren.
+
+2. **`BottomSheetBehavior.BottomSheetCallback`** — Java callback voor state changes. Hier wordt focus management gedaan (terminal focus bij expand, Flutter focus bij collapse).
+
+3. **`TermuxTerminalSessionActivityClient.onTextChanged()`** — Enige plek waar terminal output bridge-calls worden getriggerd. Moet ook werken als terminal in collapsed state is (SOUL awareness werkt op achtergrond).
+
+4. **`TermuxInstaller.setupIfNeeded()`** — Bestaande bootstrap installatie logica. Onboarding moet hier omheen wrappen, niet dupliceren.
+
+---
+
+## Suggested Build Order
+
+### Stap 1: Layout refactor — CoordinatorLayout + BottomSheet
 **Afhankelijk van:** niets
-- Package name → `com.soul.terminal` in TermuxConstants, build.gradle, manifests
-- App naam, icon, theming
-- Eigen signing keys
-- CI/CD pipeline (GitHub Actions)
-- **Output:** werkende SOUL Terminal APK die identiek functioneert aan Termux
+**Wijzigt:** `activity_termux.xml`, `TermuxActivity.java`
+**Test:** Terminal schuift omhoog als bottom sheet, Flutter zichtbaar op achtergrond, terminal processen blijven lopen
+**Risico:** IME handling, `TermuxActivityRootView` custom insets listener — testen na refactor
 
-### Fase 2: Bootstrap Pipeline
-**Afhankelijk van:** Fase 1 (package name moet vast staan)
-- Fork termux-packages, wijzig `properties.sh` prefix
-- Build bootstrap zips voor aarch64
-- Eigen apt repository (GitHub Releases of eigen hosting)
-- **Output:** SOUL Terminal installeert eigen packages met com.soul.terminal prefix
+### Stap 2: Pigeon API uitbreiding — session management + bootstrap
+**Afhankelijk van:** stap 1 niet vereist, maar logisch samen
+**Wijzigt:** `pigeons/terminal_bridge.dart`, `pigeons/system_bridge.dart`
+**Actie:** Pigeon codegen uitvoeren → `TerminalBridgeApi.java`, `SystemBridgeApi.java` worden gegenereerd
+**Implementeer:** `TerminalBridgeImpl.switchSession()`, `SystemBridgeImpl.isBootstrapInstalled()`
 
-### Fase 3: Flutter Module Skeleton
-**Afhankelijk van:** Fase 1 (build pipeline)
-- Maak Flutter module project (`flutter create --template module`)
-- Configureer Gradle: `settings.gradle` include Flutter module
-- `FlutterEngine` caching in `TermuxApplication.onCreate()`
-- Lege `FlutterFragment` toevoegen aan `TermuxActivity`
-- Toggle-knop in drawer of toolbar
-- **Output:** Flutter UI (placeholder) zichtbaar naast terminal
+### Stap 3: Flutter SoulHomeScreen + SessionTabBar
+**Afhankelijk van:** stap 2 (Pigeon APIs beschikbaar)
+**Wijzigt:** `main.dart`, nieuw `soul_home_screen.dart`, nieuw `session_tab_bar.dart`
+**Test:** Tab bar toont sessies, tik wisselt actieve sessie, terminal schuift mee
 
-### Fase 4: Pigeon Bridge
-**Afhankelijk van:** Fase 3 (Flutter module moet bestaan)
-- Definieer Pigeon schema (`pigeons/soul_api.dart`)
-- Genereer Java/Dart code
-- Implementeer `TerminalBridge` aan host-kant (Java)
-- Implementeer `SoulBridge` aan Flutter-kant
-- **Output:** Flutter kan commando's sturen naar terminal en output ontvangen
+### Stap 4: Onboarding flow
+**Afhankelijk van:** stap 2 (bootstrap APIs), stap 3 (SoulHomeScreen als doel)
+**Wijzigt:** `main.dart` (routing), nieuw `onboarding/` screens
+**Test:** Eerste start → wizard → bootstrap install → SoulHomeScreen; tweede start → direct SoulHomeScreen
 
-### Fase 5: SOUL Brain Integration
-**Afhankelijk van:** Fase 4 (Pigeon bridge moet werken)
-- Migreer SOUL Flutter code (claude_service, soul_brain, memory) naar module
-- Chat UI in Flutter
-- Claude API integratie
-- Memory layer (Drift + ObjectBox)
-- **Output:** volledige SOUL AI interface in de terminal app
+### Stap 5: SOUL terminal awareness
+**Afhankelijk van:** stap 3 (SoulHomeScreen host), bestaande `SoulBridgeController`
+**Wijzigt:** nieuw `SoulAwarenessService`, `SoulBridgeController.java` uitbreiden
+**Test:** Commando uitvoeren → SOUL ontvangt output → kan follow-up commando sturen
 
-### Fase 6: Terminal Enhancements
-**Afhankelijk van:** Fase 1 (onafhankelijk van Flutter fases)
-- Kitty keyboard protocol
-- OSC9 desktop notifications
-- Command palette
-- Kan parallel met Fase 3-5
+### Stap 6: UX polish
+**Afhankelijk van:** stap 1-5 werkend
+**Wijzigt:** scrollback config, extra keys layout, kleurthema tweaks, landscape support
+**Onafhankelijk van Flutter fases** — kan parallel aan stap 3-5
 
 ---
 
-## Key Technical Decisions
+## Constraints Reminder
 
-### 1. FlutterEngine lifecycle management
-**Beslissing nodig:** Pre-warm de FlutterEngine bij app start, of lazy bij eerste gebruik?
-- Pre-warming: snellere eerste open, maar +40MB geheugen vanaf start
-- Lazy: langzamere eerste open (~1-2 sec), minder geheugen als gebruiker SOUL niet opent
-- **Aanbeveling:** Pre-warm in `TermuxApplication.onCreate()` met `FlutterEngineCache`. Geheugen is geen probleem op Xiaomi 17 Ultra (16GB RAM).
-
-### 2. Java vs Kotlin voor host-side Pigeon
-**Beslissing nodig:** Termux is puur Java. Pigeon genereert zowel Java als Kotlin.
-- Kotlin toevoegen vereist Kotlin Gradle plugin, vergroot build complexity
-- Java-only houdt het simpel en compatible met upstream Termux
-- **Aanbeveling:** Java voor Pigeon host-side. Kotlin pas als Android side groeit voorbij Pigeon implementaties.
-
-### 3. Terminal output streaming naar Flutter
-**Beslissing nodig:** Hoe stream je terminal output efficiënt naar Flutter?
-- `TerminalSessionClient.onTextChanged()` wordt bij elke screen update aangeroepen
-- Direct doorsturen via Pigeon zou flooding veroorzaken
-- **Aanbeveling:** Debounce/batch terminal output (bijv. max 10 updates/sec), stuur alleen diff of volledige buffer op request. Flutter pollt niet — host pusht via `SoulBridge.onTerminalOutput()`.
-
-### 4. Enkele of meerdere FlutterEngines
-**Beslissing nodig:** Eén engine voor alles, of meerdere voor isolatie?
-- Meerdere engines: meer geheugen, complexer
-- Eén engine: eenvoudiger, alle SOUL logica in één Dart isolate
-- **Aanbeveling:** Eén FlutterEngine. SOUL is conceptueel één entiteit.
-
-### 5. Flutter module als source of als AAR
-**Beslissing nodig:** Include Flutter module als source dependency of als pre-built AAR?
-- Source: makkelijker development, maar vereist Flutter SDK in CI
-- AAR: CI bouwt AAR apart, Android project includet als dependency. Complexer maar schonere scheiding.
-- **Aanbeveling:** Source dependency voor development snelheid. CI pipeline bouwt alles in één stap. AAR is premature optimization.
-
-### 6. cmd-proxy eliminatie timeline
-De Pigeon bridge vervangt uiteindelijk cmd-proxy voor Claude Code ↔ proot-distro communicatie. Dit is pas relevant na Fase 4. Tot die tijd blijft cmd-proxy de werkende oplossing.
+- `android.nonTransitiveRClass=false` — behoud, alle cross-module R-class refs werken zo
+- ListView + BaseAdapter — geen RecyclerView dependency
+- Java only in `app/` module — geen Kotlin
+- Pigeon codegen uitvoeren na elke pigeon-wijziging (CI of lokaal via `flutter pub run pigeon`)
+- Bootstrap installatie: `TermuxInstaller.setupIfNeeded()` al aanwezig — wrap, niet dupliceer
+- `FlutterEngineCache` key: `"soul_flutter_engine"` (gedefinieerd in `TermuxApplication`)
+- `setupPigeonBridges()` wordt aangeroepen in `onServiceConnected` — afhankelijk van zowel engine als service beschikbaar
 
 ---
 
-*Geschreven: 2026-03-19*
+*Bronnen: Flutter docs (add-to-app, FlutterFragment, platform channels), Android developer docs (BottomSheetBehavior, CoordinatorLayout), bestaande codebase analyse*

@@ -137,3 +137,177 @@
 | Flutter module dependencies | **Medium** — versions depend on Flutter 3.41 pub resolution |
 | CI/CD pipeline | **High** — established pattern |
 | targetSdk/minSdk recommendations | **Medium** — trade-offs with Termux upstream compatibility |
+
+---
+
+# Stack Research: v1.1 New Features
+
+**Domain:** Android terminal emulator with embedded Flutter AI interface
+**Researched:** 2026-03-20
+**Confidence:** HIGH
+
+This section covers only the NEW stack additions required for v1.1 features. Existing validated capabilities (Termux fork, FlutterFragment, Pigeon, CI/CD, Kitty protocol, AGP/Java/Kotlin versions) are NOT repeated.
+
+## Recommended Stack — v1.1 Additions
+
+### Core Technologies
+
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| `BottomSheetBehavior` (Material) | included in `material:1.12.0` | Persistent bottom sheet for terminal-as-sheet pattern | Part of existing Material dependency — zero added cost. Handles three states: collapsed (peek), half-expanded, and fully expanded. `BottomSheetCallback` exposes slide offset for animations. |
+| `CoordinatorLayout` (AndroidX) | included in `material:1.12.0` | Container that orchestrates BottomSheetBehavior with FlutterFragment | Already transitively included via Material. The FlutterFragment goes above, terminal container is the sheet child with `app:layout_behavior="@string/bottom_sheet_behavior"`. |
+| `EventChannel` (Flutter embedding) | bundled with Flutter engine | High-throughput terminal output streaming from Java to Dart | Native Flutter platform channel. One active stream per channel. For terminal output: Java side calls `eventSink.success(chunk)` from the PTY read loop. Dart side listens via `receiveBroadcastStream()`. No extra dependency. |
+| `ViewPager2` + `TabLayoutMediator` | `androidx.viewpager2:viewpager2:1.1.0` + included in `material:1.12.0` | Session tab bar in bottom sheet | ViewPager2 supersedes ViewPager (RecyclerView-backed, fixes diffing and lifecycle). `TabLayoutMediator` is the correct 2025 API — `setupWithViewPager()` is deprecated. Already have `viewpager:1.0.0`; upgrade to ViewPager2. |
+| Android Keystore + DataStore | `androidx.datastore:datastore-preferences:1.1.5` (stable, March 2025) | Secure API key storage | `EncryptedSharedPreferences` is deprecated as of security-crypto 1.1.0-alpha07 (2025). Modern pattern: DataStore Preferences for persistence + Android Keystore for AES-GCM encryption of sensitive values. No extra Tink dependency needed for simple key-value API key storage — raw Keystore AES-GCM via `KeyGenerator` + `Cipher` is sufficient. |
+| `HapticFeedbackConstants` | Android SDK (no dependency) | Haptic feedback on key press, sheet drag, confirmations | `view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)` is API 3+, no library needed. For richer patterns: `VibrationEffect.createPredefined(EFFECT_CLICK)` via `Vibrator` service is API 29+. Use predefined effects — they adapt per device. |
+| `RenderEffect` (blur) | Android SDK API 31+ (no dependency) | Frosted-glass effect on bottom sheet handle or Flutter overlay | `view.setRenderEffect(RenderEffect.createBlurEffect(radius, radius, TileMode.CLAMP))`. Hardware-accelerated. minSdk 24, but `RenderEffect` requires API 31 — guard with `Build.VERSION.SDK_INT >= Build.VERSION_CODES.S`. For pre-API-31: semi-transparent background (alpha) as fallback. |
+| `AccessibilityNodeInfoCompat` | included in `androidx.core:core:1.18.0` | TalkBack support for custom terminal View | Terminal view is a custom canvas-rendered `View`. Must override `onInitializeAccessibilityNodeInfo()` and set content descriptions. `ViewCompat.setAccessibilityDelegate()` is the compat path. No extra dependency beyond already-present `core`. |
+
+### Supporting Libraries
+
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| `androidx.viewpager2:viewpager2` | `1.1.0` | Session management tab bar | Add when implementing session tabs. Replaces existing `androidx.viewpager:viewpager:1.0.0` — keep both during transition, remove old once migrated. |
+| `androidx.datastore:datastore-preferences` | `1.1.5` | API key + preferences persistence | Add when implementing onboarding (first-run detection) and API key entry. Stable release (March 2025). DataStore 1.2.x is alpha — stay on 1.1.5. |
+| Google Tink (optional) | `com.google.crypto.tink:tink-android:1.20.0` | AES-GCM encryption wrapper for DataStore | Only needed if encrypting the entire DataStore file. For simple API key storage, raw Android Keystore is sufficient and adds no dependency. Add Tink only if the stored data volume warrants full-file encryption. |
+
+### Development Tools
+
+| Tool | Purpose | Notes |
+|------|---------|-------|
+| `AccessibilityScanner` (Google app) | Test TalkBack node info on device | Install from Play Store to validate content descriptions without running full TalkBack. Faster iteration than enabling TalkBack manually. |
+| `Layout Inspector` (Android Studio) | Debug CoordinatorLayout + BottomSheetBehavior hierarchy | Verify FlutterFragment and BottomSheetBehavior child are correctly positioned. |
+| Android Emulator API 31+ | Test `RenderEffect` blur | `RenderEffect` is API 31+. Pixel 6 emulator (API 33) is the minimum for realistic blur testing. Xiaomi 17 Ultra is API 35 — primary test device. |
+
+## Installation (Gradle)
+
+```groovy
+// app/build.gradle — additions for v1.1
+dependencies {
+    // Session management — replaces androidx.viewpager:viewpager:1.0.0
+    implementation "androidx.viewpager2:viewpager2:1.1.0"
+    // TabLayoutMediator is bundled in material:1.12.0 (already present)
+
+    // Secure storage for API keys and onboarding state
+    implementation "androidx.datastore:datastore-preferences:1.1.5"
+
+    // Optional: full-file encryption with Tink (only if needed)
+    // implementation "com.google.crypto.tink:tink-android:1.20.0"
+
+    // EventChannel, BottomSheetBehavior, CoordinatorLayout, HapticFeedback,
+    // AccessibilityNodeInfoCompat, RenderEffect — all bundled in existing deps:
+    //   material:1.12.0, androidx.core:core:1.18.0, Flutter engine JAR
+    // No additional dependencies needed.
+}
+```
+
+## Alternatives Considered
+
+| Recommended | Alternative | When to Use Alternative |
+|-------------|------------|------------------------|
+| `BottomSheetBehavior` (persistent) | `BottomSheetDialogFragment` (modal) | Modal variant if terminal must block the Flutter UI when open. For terminal-as-sheet-alongside-Flutter, persistent is correct. |
+| `EventChannel` | Pigeon `@FlutterApi` (streaming via Pigeon) | Pigeon-generated streaming is cleaner type-safe but adds codegen overhead. `EventChannel` is lower-level but directly supports high-throughput `byte[]` streams without serialization cost. For raw terminal output, `EventChannel` wins on throughput. |
+| `ViewPager2` + `TabLayoutMediator` | Custom `RecyclerView` tab strip | Use custom strip if tab design deviates significantly from Material or requires terminal-specific drag-to-close gestures. Adds implementation complexity. |
+| Android Keystore (raw) | `EncryptedSharedPreferences` | Do not use — officially deprecated in security-crypto 1.1.0-alpha07 (2025). |
+| Android Keystore (raw) | `DataStore` + Tink `AeadSerializer` | Use Tink only for full Proto DataStore file encryption. For simple key-value API key storage, raw Keystore is 50 lines and zero extra dependency. |
+| `RenderEffect` (API 31+) + alpha fallback | `BlurView` third-party library | Use BlurView only if supporting API < 31 is critical and a blur effect (not alpha) is non-negotiable. Adds 100KB+, causes jank on older hardware. Not worth it for a dev terminal app. |
+| `performHapticFeedback()` | `VibrationEffect.compose()` | Use VibrationEffect.compose() only for custom multi-primitive haptic sequences (API 30+). For terminal key feedback, `KEYBOARD_TAP` via `performHapticFeedback` is sufficient and respects user's haptic settings automatically. |
+| `/proc/PID/cmdline` (direct file read) | `ActivityManager.getRunningAppProcesses()` | Use ActivityManager only to list own app's processes. For detecting which shell/program is running inside a Termux session, `/proc/PID/cmdline` is the only option — ActivityManager can't see child processes of the terminal PTY. Read via `new FileInputStream("/proc/" + pid + "/cmdline")`, split on null bytes. Works on all API levels for own child processes without root. |
+
+## What NOT to Use
+
+| Avoid | Why | Use Instead |
+|-------|-----|------------|
+| `EncryptedSharedPreferences` | Deprecated in AndroidX Security Crypto 1.1.0-alpha07 (2025). Google explicitly recommends migration away. | DataStore + Android Keystore AES-GCM |
+| `RenderScript` (blur) | Deprecated since Android 12 (API 31). Removed in Android 14+ on some OEMs. | `RenderEffect.createBlurEffect()` (API 31+) with alpha fallback |
+| `ViewPager` (v1) | Deprecated. No DiffUtil support, fragment lifecycle issues. Already present as `viewpager:1.0.0` — migrate away. | `ViewPager2:1.1.0` |
+| `FLAG_IGNORE_GLOBAL_SETTING` (haptics) | Deprecated in API 33. Privileged apps only. Overriding user's haptic settings is bad UX for a terminal. | `performHapticFeedback(constant)` without flags |
+| `setupWithViewPager()` | Deprecated API for linking TabLayout to ViewPager. | `TabLayoutMediator` |
+| `AccessibilityService` | Banned from Play Store since January 2026. | `ViewCompat.setAccessibilityDelegate()` + `AccessibilityNodeInfoCompat` |
+| Third-party blur libraries (BlurView, haze) | Compatibility shims that predate `RenderEffect`. Add APK weight, cause jank on low-end devices. | `RenderEffect` (API 31+) + semi-transparent background fallback |
+| `Window.setBackgroundBlurRadius()` | Cross-window blur — blurs content of other apps behind the window. Not appropriate for blurring the terminal behind a sheet. | `view.setRenderEffect()` for in-window blur on the bottom sheet handle |
+
+## Version Compatibility
+
+| Package A | Compatible With | Notes |
+|-----------|----------------|-------|
+| `viewpager2:1.1.0` | `material:1.12.0` | `TabLayoutMediator` is in Material, not in viewpager2. Both required. |
+| `datastore-preferences:1.1.5` | minSdk 21+ | Kotlin coroutines required in calling code — Flutter module uses Dart, so DataStore is on the Java/Kotlin host side only. |
+| `RenderEffect` | API 31+ (Android 12) | Xiaomi 17 Ultra = API 35. Production safe with `Build.VERSION.SDK_INT >= 31` guard. |
+| `VibrationEffect.createPredefined()` | API 29+ (Android 10) | All modern devices. Guard with `Build.VERSION.SDK_INT >= 29`. |
+| `HapticFeedbackConstants.KEYBOARD_TAP` | API 3+ | No guard needed. |
+| `EventChannel` | Flutter engine (any version) | Already bundled. EventChannel requires `FlutterPlugin.FlutterPluginBinding` context or `BinaryMessenger` from `FlutterEngine`. |
+| `BottomSheetBehavior` | `CoordinatorLayout` required as parent | The FlutterFragment container view must be a direct child of `CoordinatorLayout`, not nested inside `LinearLayout` or `FrameLayout`. |
+| `androidx.core:core:1.18.0` | compileSdk 36, minSdk 21+ | Contains `ViewCompat` for accessibility compat path. |
+
+## Integration Notes
+
+### BottomSheetBehavior + FlutterFragment
+
+The layout structure for terminal-as-sheet:
+
+```xml
+<androidx.coordinatorlayout.widget.CoordinatorLayout>
+    <!-- Flutter UI fills the top area -->
+    <FrameLayout android:id="@+id/flutter_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Terminal is the persistent bottom sheet -->
+    <FrameLayout android:id="@+id/terminal_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/bottom_sheet_behavior"
+        app:behavior_peekHeight="56dp"
+        app:behavior_hideable="false" />
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+```
+
+The `FlutterFragment` is added to `flutter_container`. The existing `TerminalView` lives in `terminal_container`. `BottomSheetBehavior.from(terminalContainer)` retrieves the behavior for programmatic state control.
+
+### EventChannel for Terminal Output
+
+Terminal output volume can be high (Claude Code output, compiles). EventChannel handles this without back-pressure issues because:
+- The PTY read loop runs on a background thread and calls `eventSink.success(data)` on the main thread via `Handler`
+- Dart's stream buffering absorbs bursts
+- For terminal output, send `byte[]` or `String` chunks — avoid sending individual bytes
+
+The Pigeon bridge (`SoulBridge`) covers bidirectional control signals. EventChannel is additive for the output stream specifically — it can be higher throughput than Pigeon because it bypasses serialization overhead.
+
+### /proc/PID/cmdline for Process Detection
+
+Android 7.0+ restricts `/proc` access for other apps' processes. However, reading `/proc/PID/cmdline` for **own child processes** (the shell spawned by Termux's PTY) works without root on all API levels. The terminal session has the PID via `TerminalSession.getPid()`. Read the file, split on null bytes (cmdline uses null as separator), take `args[0]` as the process name.
+
+### Secure API Key Storage Pattern
+
+```java
+// Android Keystore — no library needed
+KeyGenerator keyGen = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
+keyGen.init(new KeyGenParameterSpec.Builder("soul_key",
+    KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+    .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+    .build());
+SecretKey key = keyGen.generateKey(); // stored in hardware-backed keystore
+```
+
+DataStore holds the encrypted blob; Keystore holds the key. The key never leaves secure hardware on supported devices (Xiaomi 17 Ultra has StrongBox).
+
+## Sources
+
+- Android Developers: BottomSheetBehavior API reference (2025-10-28)
+- Android Developers: Create a bottom sheet (2025-07-31)
+- Android Developers: CoordinatorLayout migration to Compose (explains View-side behavior)
+- ProAndroidDev: "Goodbye EncryptedSharedPreferences: A 2026 Migration Guide" (Jay Patel, 2025-12-04)
+- Medium: "EncryptedSharedPreferences is Deprecated" (MobileDev NK, 2025-08-29)
+- AndroidX DataStore release page: stable 1.1.5 (April 2025), 1.2.1 alpha (March 2026)
+- Google Tink setup docs: tink-android 1.20.0 (2025-04-23)
+- Android AOSP: Window blurs API (source.android.com, 2025-12-02) — confirmed API 31+
+- Medium: "Blurring the Lines — Android RenderEffects #1" (Chet Haase, Google)
+- Android Developers: HapticFeedbackConstants API reference
+- Android Developers: Haptics API reference (design principles table)
+- Android Developers: Make custom views more accessible
+- Android Developers: Create swipe views with tabs using ViewPager2
+- ViewPager2:1.1.0 — stable (2024, last stable release per AndroidX)
+- jaredrummler/AndroidProcesses: deprecated note confirms /proc access restricted for foreign processes since Android 7.0+
+- Stack Overflow: "Is there a way to get current process name in Android" — confirmed own child processes readable

@@ -1,159 +1,154 @@
-# Research Summary: SOUL Terminal
+# Project Research Summary
 
-*Synthesized: 2026-03-19*
+**Project:** SOUL Terminal
+**Domain:** Android terminal emulator with embedded Flutter AI interface
+**Researched:** 2026-03-20
+**Confidence:** HIGH
 
----
+## Executive Summary
+
+SOUL Terminal is een fork van Termux (Java/Android) die uitgebreid wordt met een embedded Flutter module als primaire AI-interface. De architectuur keert het gebruikelijke terminal-app patroon om: Flutter (SOUL AI brain) is het hoofdscherm, de terminal schuift omhoog als een persistent bottom sheet. De twee lagen communiceren via een type-safe Pigeon bridge; de terminal rendering blijft volledig native (geen PlatformView).
+
+De v1.0 fundering is gelegd: FlutterFragment embedding, Pigeon bridge, CI/CD pipeline, Kitty keyboard protocol en OSC9 notificaties zijn gebouwd. V1.1 bouwt hier direct op voort met vijf kerndoelen: bottom sheet terminal layout, session tab bar, onboarding wizard, SOUL terminal awareness (AI stuurt terminal aan), en UX polish. De Pigeon bridge wordt uitgebreid maar het fundamentele patroon wijzigt niet.
+
+De technische risico's zijn concreet en beheersbaar: touch event conflicts tussen BottomSheetBehavior en TerminalView, IME-handling in CoordinatorLayout, Pigeon thread-safety bij hoge output volumes, en HyperOS-specifiek foreground service management zijn de kritieke pitfalls. Elk heeft een gedocumenteerde oplossing. Security verdient aandacht vóór het AI-naar-terminal pad live gaat: command injection whitelist en API key isolation zijn niet-onderhandelbaar.
 
 ## Key Findings
 
-1. **Forking Termux is the right call** — ~15 core terminal features are inherited for free (shell, tabs, SSH, foreground service, clipboard, extra keys, colors). Building from scratch would cost months. The strategic risk is keeping upstream merge compatibility.
+### Recommended Stack
 
-2. **Bootstrap pipeline is the hardest problem** — Every Termux binary has `/data/data/com.termux/` hardcoded. All packages must be recompiled for `com.soul.terminal`. This requires a full `termux-packages` fork, Docker-based cross-compilation, a custom apt repository, and SHA-256 checksum updates in `app/build.gradle`. It is the largest single effort in the project.
+**Build system (geen wijzigingen):** AGP 8.13.2 + Gradle 9.2.1 zijn correct. AGP 9.x is nog te pril voor Flutter add-to-app. targetSdk moet naar 34 (Play Store vereist dit). minSdk naar 24 vereenvoudigt desugaring. `desugar_jdk_libs` upgraden van 1.1.5 naar 2.1.3.
 
-3. **Flutter embedding is mature but has known traps** — FlutterFragment + FlutterEngineCache is the correct pattern. Three critical gotchas: plugins are not auto-registered (must call `GeneratedPluginRegistrant.registerWith(engine)` manually), engines leak if created per-fragment (use singleton cache), and pre-warming in `Application.onCreate()` is required to avoid terminal startup delay.
+**Flutter embedding:** FlutterFragment (add-to-app), engine pre-warmed in `TermuxApplication.onCreate()`, gecached via `FlutterEngineCache`. Pigeon 26.2.x voor de type-safe bridge. Één engine — nooit meerdere (+40MB per extra engine).
 
-4. **Rebranding must be surgical** — Change exactly three files: `TermuxConstants.java` (line 352), `app/build.gradle` (applicationId + manifestPlaceholders), and `strings.xml` (XML entity). Do NOT rename Java namespaces — keep `com.termux.*` internally to avoid thousands of compilation errors. Changing namespace and applicationId independently is intentional.
+**V1.1 toevoegingen (minimaal):** `ViewPager2:1.1.0` (vervangt deprecated ViewPager v1), `datastore-preferences:1.1.5` voor API key opslag via Android Keystore AES-GCM (EncryptedSharedPreferences is deprecated). `BottomSheetBehavior`, `CoordinatorLayout`, `EventChannel` en `RenderEffect` (API 31+) zitten al in bestaande dependencies — geen nieuwe libs nodig.
 
-5. **Pigeon is the correct bridge** — Type-safe, generated code for both sides. Replaces manual MethodChannel and eventually replaces cmd-proxy for Claude Code communication. Design the interface contract (TerminalBridge, SoulBridge, SystemBridge) before writing any platform channel code.
+**Bewust niet gebruiken:** AGP 9.x, Kotlin in `app/`, Jetpack Compose in de host app, FlutterActivity, PlatformView voor terminal rendering, manual MethodChannel (Pigeon doet dit), EncryptedSharedPreferences, AccessibilityService (Play Store ban jan 2026).
 
-6. **targetSdk must be raised to 34** — Current is 28, Play Store requires 34+. Termux upstream stays at 28 intentionally to avoid scoped storage restrictions, but SOUL Terminal needs Play Store distribution. Also upgrade `desugar_jdk_libs` to 2.1.3.
+### Expected Features
 
-7. **Terminal output streaming needs rate-limiting** — `TerminalSessionClient.onTextChanged()` fires on every screen update. Direct Pigeon passthrough floods the bridge. Debounce to max 10 updates/sec; host pushes diffs, Flutter does not poll.
+**Table stakes (inherited gratis):** ~13 Termux-features inclusief bash/zsh, package manager, meerdere sessies, persistent sessions via foreground service, clipboard, extra keys, true color, unicode, SSH.
 
----
+**V1.0 gebouwd:** SOUL branding, FlutterFragment embedding, Pigeon bridge (terminal control + session info + output streaming), Kitty keyboard protocol, OSC9 notificaties, command palette, CI/CD.
 
-## Recommended Stack
+**V1.1 — Tier 1 differentiators (must ship):**
 
-| Layer | Choice | Notes |
-|-------|--------|-------|
-| Build | AGP 8.13.2 + Gradle 9.2.1 | Keep — AGP 9.x not yet stable with Flutter add-to-app |
-| Target API | 34 (raise from 28) | Play Store requirement |
-| Min API | 24 (raise from 21) | Simplifies desugaring; drops <1% device share |
-| Flutter embedding | FlutterFragment + FlutterEngineCache | Industry standard, single engine singleton |
-| Bridge | Pigeon 26.2.x | Type-safe, generated, bidirectional |
-| Host language | Java (keep) | Kotlin adds build complexity, upstream merge risk |
-| Flutter state | Riverpod + @riverpod codegen | Consistent with SOUL app |
-| Key upgrades | `desugar_jdk_libs` 2.1.3, `androidx.core` 1.18.0 | High priority |
-| CI | GitHub Actions — two-stage build | Flutter AAR first, then `./gradlew assembleRelease` |
+| Feature | Complexiteit | Onderscheidend van |
+|---------|-------------|-------------------|
+| Bottom sheet terminal | Medium | Alle Android terminals: terminal is de UI, niet een paneel |
+| SOUL terminal awareness (AI stuurt terminal aan) | Medium-Hoog | Termux/Termius/JuiceSSH: geen AI integratie |
+| Session tab bar | Laag | Termux: onvindbare swipe-drawer |
+| Onboarding flow (guided setup) | Medium | Termux: geen onboarding |
 
----
+**V1.1 — Tier 2 UX polish:** Smart path detection, native permission dialogs, scrollback 20k regels (was 2000), Claude Code extra keys profiel.
 
-## Table Stakes vs Differentiators
+**Tier 3 (na v1.1):** Autonome AI command loop, AI error explanation, semantic command history.
 
-### Table Stakes (inherited free from Termux)
-Shell, package manager, multiple sessions, persistent sessions, copy/paste, extra keys row, configurable fonts, true color, Unicode, SSH, foreground service, storage access, URL detection, share text.
+**Bewust NIET bouwen:** Warp-stijl terminal Blocks (jaren werk, upstream incompatibel), split panes (touch event chaos, tmux dekt dit), cloud sync, inline image rendering, eigen terminal emulator, iOS versie.
 
-### Tier 1 Differentiators (must ship)
-- **SOUL AI overlay** (FlutterFragment) — the killer feature, AI in the terminal
-- **Pigeon bridge** — terminal output to AI, AI commands to terminal, replaces cmd-proxy
-- **Custom branding** — name, icon, theme (already started)
-- **Custom bootstrap pipeline** — own packages with `com.soul.terminal` prefix
+### Architecture Approach
 
-### Tier 2 Differentiators (competitive edge, parallel track)
-- Kitty keyboard protocol — Neovim/Helix require it, Termux lacks it
-- OSC9 desktop notifications — low effort, high value
-- Command palette — Flutter UI, fuzzy search over commands/history
-- Split panes — native, no tmux required
-- Session restore
+De host Activity (`TermuxActivity`) krijgt een nieuwe root layout: `CoordinatorLayout` met `FlutterFragment` als fullscreen achtergrond en de terminal als `BottomSheetBehavior` child. Drie states: collapsed (peek 48dp, alleen tab handle zichtbaar), half-expanded (50%, split view), expanded (fullscreen terminal).
 
-### Tier 3 Differentiators (long-term moat, after Pigeon bridge)
-- AI command suggestions, AI error explanation, smart history, context-aware autocomplete
+De Pigeon bridge blijft het centrale communicatiekanaal. Uitbreidingen voor v1.1: `switchSession()`, `renameSession()`, `closeSession()` in de terminal bridge; `isBootstrapInstalled()`, `runInstallStep()`, install progress callbacks in de system bridge. Alle Pigeon calls vanuit Java naar Flutter moeten via de main thread (`Handler(Looper.getMainLooper()).post{}`).
 
-### Anti-features (explicitly not building)
-Own terminal emulator library, iOS, plugin APKs, GUI file manager, built-in IDE, multi-device sync, root-only features, AccessibilityService, persona selector UI.
+Terminal output naar SOUL: 100ms debounce buffer in `SoulBridgeController` — voldoende voor AI context, geen EventChannel migratie nodig totdat realtime typing feedback (<50ms) vereist is.
 
----
+Nieuwe Flutter-side componenten: `SoulHomeScreen` (hoofd scherm), `SessionTabBar` (widget in sheet handle), `OnboardingFlow` (meerstaps wizard), `SoulAwarenessService` (Dart class, luistert naar `onTerminalOutput`).
 
-## Architecture
+**Bouwvolgorde:**
+1. CoordinatorLayout + BottomSheetBehavior layout refactor
+2. Pigeon API uitbreiding + codegen
+3. Flutter SoulHomeScreen + SessionTabBar
+4. Onboarding flow
+5. SOUL terminal awareness
+6. UX polish (parallel aan stappen 3-5)
 
-Five components with clean boundaries:
+### Critical Pitfalls
 
-| Component | Language | Role | Coupling |
-|-----------|----------|------|---------|
-| `terminal-emulator/` | Java | Pure terminal emulation (VT, ANSI, PTY) | No Android, no Flutter |
-| `terminal-view/` | Java | Android View rendering terminal session | Only knows TerminalSession |
-| `termux-shared/` | Java | Constants, paths, settings (rebranding pivot point) | Cross-module glue |
-| `app/` | Java | TermuxActivity + TermuxService + FlutterFragment host | Orchestrates all |
-| Flutter module | Dart | SOUL AI brain, chat UI, memory layer | Talks only via Pigeon |
+**CP-1 — IME + BottomSheet conflict:** Het toetsenbord duwt het sheet omhoog via CoordinatorLayout insets. Oplossing: `windowSoftInputMode="adjustPan"` + handmatige inset-verwerking via `ViewCompat.setOnApplyWindowInsetsListener`.
 
-**Integration:** FlutterFragment lives inside TermuxActivity. A layout toggle switches between terminal-fullscreen, Flutter-fullscreen, or split view. One `FlutterEngine` singleton, pre-warmed in `Application.onCreate()`.
+**CP-2 — Touch interception (blokkerende pitfall):** `BottomSheetBehavior` pikt verticale swipes in de terminal weg. `TerminalView` implementeert geen `NestedScrollingChild3`. Oplossing: dedicated `BottomSheetDragHandleView` zodat alleen de handle het sheet expandeert; `NestedScrollingChild3` implementatie in TerminalView.
 
-**Pigeon interfaces:**
-- `TerminalBridge` (Flutter → Host): executeCommand, readTerminalBuffer, createSession, sendInput
-- `SoulBridge` (Host → Flutter): onTerminalOutput, onSessionChanged, onAppLifecycleChanged
-- `SystemBridge` (Flutter → Host): readContacts, readCalendar, showNotification, getDeviceInfo
+**CP-3 — HyperOS doodt TermuxService (doeldevice!):** Xiaomi HyperOS negeert `android:stopWithTask="false"` en `START_STICKY`. Oplossing: detecteer Xiaomi bij onboarding, toon gerichte instructies (Settings → Battery → No restrictions + Autostart), `PowerManager.PARTIAL_WAKE_LOCK` als backup.
 
-**For TermuxService access:** Start with Flutter → Pigeon → Activity → Service binding. Migrate to direct Service binding only when background processing is needed.
+**CP-4 — Pigeon main thread crash:** `TerminalSession` output-callbacks komen van de PTY reader thread; Pigeon verwacht main thread calls. Crasht pas bij hoog output volume (niet zichtbaar in development). Oplossing: `Handler(Looper.getMainLooper()).post{}` wrapper + 16ms debounce buffer.
 
----
+**CP-5 — Prompt-detectie faalt bij custom PS1 en zsh/fish:** `$ ` regex werkt niet met ANSI kleurcodes, multi-line prompts of starship. Oplossing: OSC 133 shell integration (`\033]133;D\007` = commando klaar), toevoegen via onboarding `.bashrc`/`.zshrc` configuratie.
 
-## Critical Pitfalls
+**SM-1 — Command injection (security, EERST implementeren):** LLM-output direct als terminal input kan shell injection bevatten. Oplossing: gestructureerde command API (`runCommand(executable, args[])`), whitelist van destructieve patronen, bevestigingsdialoog voor `rm -rf`, `dd`, `mkfs` e.d.
 
-| ID | Pitfall | Phase | Impact |
-|----|---------|-------|--------|
-| P1 | Bootstrap binaries have `/data/data/com.termux` hardcoded — must recompile ALL packages | Bootstrap | Catastrophic if ignored |
-| P2 | FlutterFragment does not auto-register plugins — call `GeneratedPluginRegistrant.registerWith(engine)` manually | Flutter embedding | All plugin calls fail silently |
-| P3 | New FlutterEngine per fragment = memory leak (issues #168658, #36898) — use singleton cache | Flutter embedding | OOM crashes |
-| P4 | `sharedUserId` locks signing key forever — decide before first public APK, consider removing it | Rebranding | Can never recover without data loss |
-| M2 | Changing Java `namespace` ≠ changing `applicationId` — change only applicationId, keep `com.termux.*` namespaces | Rebranding | Thousands of compile errors if done wrong |
-| B1 | `build-bootstraps.sh` on master is broken — use `infra-improvs` branch | Bootstrap | Silent build failures |
-| B3 | Bootstrap checksums hardcoded in `app/build.gradle` — must update after every rebuild | Bootstrap | Gradle build fails |
-| B5 | Custom packages require own apt repository — Termux's repo won't serve `com.soul.terminal` binaries | Bootstrap | `pkg install` broken for users |
+## Implications for Roadmap
 
----
+### Phase ordering rationale
 
-## Build Order Recommendation
+**Stap 1 als eerste** (CoordinatorLayout layout refactor) heeft geen dependencies maar is de fundering van alles — de bottom sheet is de visuele architectuur van v1.1. Zonder dit kan niets worden getest.
 
-```
-Phase 1: Rebranding (days)
-  Change TermuxConstants.java L352, app/build.gradle applicationId,
-  strings.xml entity, sharedUserId decision, signing key strategy.
-  Output: working SOUL Terminal APK identical to Termux functionally.
+**Pigeon API uitbreiding direct daarna** omdat zowel session tabs als onboarding als SOUL awareness nieuwe Pigeon APIs nodig hebben. Codegen eenmalig uitvoeren, alle implementaties wachten hierop.
 
-Phase 2: CI/CD Pipeline (days, parallel with Phase 1)
-  GitHub Actions workflows: debug APK build, release signing via secrets.
-  Separate workflow for bootstrap builds (rare) vs app builds (frequent).
-  Output: automated APK builds on push.
+**Security (SM-1) vóór SOUL terminal awareness live gaat** — de command injection whitelist moet er zijn voordat de AI-naar-terminal data flow in productie komt. Dit is geen optie.
 
-Phase 3: Bootstrap Pipeline (weeks — largest effort)
-  Fork termux-packages, change properties.sh prefix, build aarch64 packages
-  using run-docker.sh + infra-improvs branch, update checksums, set up apt repo.
-  Output: SOUL Terminal installs own packages with com.soul.terminal prefix.
+**CP-3 (HyperOS) in de onboarding verwerken** — het testapparaat is een Xiaomi 17 Ultra. Zonder de battery-permissie instructies werken achtergrond-sessies op het primaire testdevice niet, wat elke andere test onbetrouwbaar maakt.
 
-Phase 4: Flutter Module Skeleton (1 week)
-  flutter create --template module, settings.gradle source dependency,
-  FlutterEngine pre-warm in TermuxApplication, empty FlutterFragment in TermuxActivity,
-  toggle button, GeneratedPluginRegistrant call.
-  Output: Flutter placeholder UI visible alongside terminal.
+**UX polish (scrollback 20k, extra keys) parallel uitvoerbaar** aan de Flutter fases — deze raken alleen de terminal-emulator configuratie, geen Flutter of Pigeon code.
 
-Phase 5: Pigeon Bridge (1-2 weeks)
-  Define pigeons/soul_api.dart schema, generate Java/Dart code,
-  implement TerminalBridge (Java host), SoulBridge (Flutter), debounced output streaming.
-  Output: Flutter can execute commands and receive terminal output.
+### Research Flags
 
-Phase 6: SOUL Brain Integration (weeks)
-  Migrate claude_service, soul_brain, memory layer into Flutter module.
-  Chat UI, Claude API, Drift + ObjectBox.
-  Output: full SOUL AI interface inside the terminal app.
+| Gebied | Dieper onderzoek nodig? | Reden |
+|--------|------------------------|-------|
+| Bottom sheet + IME | Nee — patroon gedocumenteerd | `adjustPan` + inset listener is bewezen aanpak |
+| NestedScrollingChild3 in TerminalView | Ja — implementatie-details onbekend | TerminalView is custom View, geen standaard scroll view |
+| OSC 133 parsing in Java | Nee — protocol is eenvoudig | Byte-sequence herkenning, geen externe library nodig |
+| Flutter insets in CoordinatorLayout (CP-7) | Ja — edge cases onbekend | FlutterView inset-doorgifte in geneste hierarchy niet gedocumenteerd |
+| TermuxInstaller second stage wrapping | Ja — interne API onbekend | Onboarding moet `setupIfNeeded()` onderscheppen zonder duplicatie |
+| HyperOS autostart API | Nee — documentatie beschikbaar | `dontkillmyapp.com/xiaomi` is voldoende referentie |
 
-Phase 7: Terminal Enhancements (parallel with 4-6, independent)
-  Kitty keyboard protocol, OSC9 notifications, command palette, split panes.
-  No Flutter dependency — pure terminal-emulator/terminal-view work.
-```
+## Confidence Assessment
 
-**Critical path:** Rebranding → Bootstrap → Flutter skeleton → Pigeon → SOUL brain.
-Phase 3 (Bootstrap) is the longest and blocks nothing else — can be done in parallel with Phases 4-7 if the team (Claude) parallelizes.
+| Area | Confidence | Notes |
+|------|------------|-------|
+| Build system (AGP, Gradle, SDK versions) | HIGH | Geverifieerd tegen official release notes |
+| Flutter embedding pattern (FlutterFragment + Pigeon) | HIGH | Official docs, v1.0 al werkend |
+| BottomSheetBehavior layout | HIGH | Android Material docs, patroon bewezen in Maps/Music apps |
+| Touch event conflict resolution | MEDIUM | NestedScrollingChild3 implementatie vereist praktijktest |
+| Flutter insets in CoordinatorLayout (CP-7) | MEDIUM | Specifieke edge case, workarounds gedocumenteerd maar niet geverifieerd |
+| Pigeon thread safety (CP-4) | HIGH | Root cause duidelijk, oplossing standaard Java pattern |
+| HyperOS service survival (CP-3) | HIGH | Bekend Xiaomi-probleem, oplossing gedocumenteerd |
+| OSC 133 prompt detection (CP-5) | HIGH | Protocol open standaard, Fish/Zsh/Bash supporten het |
+| SOUL terminal awareness (end-to-end) | MEDIUM | Data flow duidelijk, ANSI stripping + context windowing vereist praktijkimplementatie |
+| Onboarding bootstrap wrapping | MEDIUM | TermuxInstaller interne API moet worden geïnspecteerd |
+| CI/CD pipeline (Flutter AAR + Gradle) | HIGH | Bestaand patroon, geen nieuwe risico's |
+| Security (SM-1 command injection) | HIGH | Oplossing duidelijk: gestructureerde API + whitelist |
+| AndroidX dependency versions | HIGH | Geverifieerd tegen Maven Central |
 
----
+## Sources
 
-## Open Questions
+**Stack:**
+- Android Developers: BottomSheetBehavior API reference (2025-10-28)
+- ProAndroidDev: "Goodbye EncryptedSharedPreferences: A 2026 Migration Guide" (Jay Patel, 2025-12-04)
+- AndroidX DataStore release page: stable 1.1.5 (April 2025)
+- Android AOSP: Window blurs API (source.android.com, 2025-12-02)
+- Flutter docs: Add-to-App, FlutterFragment, platform channels
+- ViewPager2:1.1.0 AndroidX stable release
 
-| # | Question | Options | Blocker for |
-|---|----------|---------|-------------|
-| 1 | **sharedUserId**: keep with `com.soul.terminal`, or remove entirely? | Remove (cleaner, no plugin compat needed) vs keep | Phase 1 — must decide before first APK |
-| 2 | **targetSdk 34 vs 35**: 34 is minimum, 35 enforces edge-to-edge UI | Start at 34, upgrade to 35 when UI is ready (recommended) | Phase 1 |
-| 3 | **minSdk 21 vs 24**: 24 simplifies desugaring but diverges from upstream | 24 recommended (drops <1% devices, enables cleaner desugaring) | Phase 1 |
-| 4 | **Flutter module location**: sibling dir (`../soul_flutter_module/`) or subdirectory (`flutter_module/`)? | Subdirectory simpler for mono-repo (recommended) | Phase 4 |
-| 5 | **Bootstrap hosting**: GitHub Releases or external CDN for apt repo? | GitHub Releases is free and easy for v1 | Phase 3 |
-| 6 | **FlutterEngine pre-warm vs lazy**: pre-warm adds 40MB from start | Pre-warm recommended (Xiaomi 17 Ultra has 16GB RAM) | Phase 4 |
-| 7 | **cmd-proxy replacement timeline**: Pigeon bridge eventually replaces it | Pigeon replaces after Phase 5; cmd-proxy stays until then | Phase 5 |
+**Features:**
+- Warp Terminal documentation: Blocks, Agent Mode, Session Management (docs.warp.dev)
+- GitHub Copilot CLI architecture (shubh7.medium.com)
+- How Claude Code works (virtuslab.com)
+- Material Design: Persistent vs Modal Bottom Sheet (m2.material.io)
+- Android Linux Terminal adds tabs — Android 16 (androidauthority.com, 2025)
+- Best Practices Developer Onboarding 2025 (blog.stateshift.com)
+
+**Architecture:**
+- Flutter docs (add-to-app, FlutterFragment, platform channels)
+- Android developer docs (BottomSheetBehavior, CoordinatorLayout)
+- Bestaande codebase analyse (soul-terminal v1.0)
+
+**Pitfalls:**
+- Flutter GitHub issues (CoordinatorLayout + FlutterView insets)
+- Material Components Android issues (BottomSheetBehavior + IME)
+- Termux GitHub issues (#4134, #3798 — session management UX)
+- dontkillmyapp.com/xiaomi (HyperOS foreground service behavior)
+- embracethered.com (ANSI escape injection research)
+- Trail of Bits (prompt injection naar RCE)
+- Android Developers: OSC 133 shell integration
