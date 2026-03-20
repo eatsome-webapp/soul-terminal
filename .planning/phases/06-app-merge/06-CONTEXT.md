@@ -97,6 +97,13 @@ De bestaande SOUL Flutter app (melos monorepo: `soul-app/apps/soul/` met 237 Dar
   8. `runApp(UncontrolledProviderScope(container: container, child: SoulApp(...)))`
 - **Finale verificatie: APK installeren op device, SOUL chat UI moet zichtbaar zijn als hoofdscherm**
 
+### HARDE GATE: CI build als verificatie
+- **Elke plan-stap MOET eindigen met: push naar GitHub → CI build groen**
+- Als CI rood is: STOP, fix, opnieuw pushen tot groen. Pas dan door naar volgende stap
+- `dart analyze` alleen is GEEN bewijs — alleen een groene CI build telt
+- Executor agents MOETEN `~/soul-app/apps/soul/lib/main.dart` en `~/soul-app/apps/soul/lib/core/di/providers.dart` LEZEN (niet raden) voor elke stap die providers of init-flow raakt
+- Executor agents MOETEN de bronbestanden in soul-app LEZEN voor ze iets kopiëren of herschrijven — geen aannames op basis van het plan alleen
+
 ### Claude's Discretion
 - Eventuele tussentijdse compilatie-fixes bij import conflicts
 - Melos workspace configuratie (verwijderen of laten staan in soul-app)
