@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-20T22:23:51.440Z"
+last_updated: "2026-03-20T22:24:57.612Z"
 progress:
   total_phases: 11
   completed_phases: 5
   total_plans: 22
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 # Project State
@@ -63,3 +63,14 @@ Plan: 2 of 5
 - `datastore-preferences:1.1.5` voor API key opslag (EncryptedSharedPreferences is deprecated)
 - `RenderEffect` blur API 31+ — al beschikbaar in bestaande dependencies
 - ProviderScope refactoring (MERG-04) is de zwaarste merge taak
+
+### From 06-01 (Code Copy & Dependency Merge)
+
+- soul_core package is dode code (lege library stub, nul imports) — niet gekopieerd
+- pigeon: ^22.7.0 retained als runtime dep (Pigeon generated code in lib/generated/ heeft het nodig)
+- objectbox.g.dart op lib/ root — correct voor relative import vanuit main.dart
+
+## Session
+
+- **Stopped at:** Completed 06-01-PLAN.md
+- **Resume file:** None
