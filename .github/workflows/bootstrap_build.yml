@@ -20,53 +20,27 @@ jobs:
           repository: termux/termux-packages
           path: termux-packages
 
-      - name: Patch package name to com.soul.terminal
+      - name: Patch for com.soul.terminal
         working-directory: termux-packages
         run: |
+          # 1. Change package name in properties
           sed -i 's/^TERMUX_APP__PACKAGE_NAME=.*/TERMUX_APP__PACKAGE_NAME="com.soul.terminal"/' scripts/properties.sh
           grep TERMUX_APP__PACKAGE_NAME scripts/properties.sh
-          # Fix upstream bug: profile.d directory not created before write
-          # Insert mkdir -p for PROFILE_D_DIR right after the chmod 700 line (before the second sed block)
-          sed -i '/chmod 700.*BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE/a\\n\tmkdir -p "${BOOTSTRAP_ROOTFS}/${TERMUX__PREFIX__PROFILE_D_DIR}"' scripts/generate-bootstraps.sh
-          echo "profile.d mkdir patch applied"
 
-      - name: Cache built packages
-        uses: actions/cache@v4
-        with:
-          path: termux-packages/output/
-          key: bootstrap-debs-${{ hashFiles('termux-packages/packages/**') }}
-          restore-keys: bootstrap-debs-
+          # 2. Fix profile.d dir not created before write
+          sed -i '/chmod 700.*BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE/a\\n\tmkdir -p "${BOOTSTRAP_ROOTFS}/${TERMUX__PREFIX__PROFILE_D_DIR}"' scripts/generate-bootstraps.sh
+
+          # 3. After packages are extracted (com.termux paths), remap to com.soul.terminal
+          #    Insert a mv command right before create_bootstrap_archive is called
+          sed -i '/add_termux_bootstrap_second_stage_files/i\\n\t# Remap com.termux paths to com.soul.terminal\n\tif [ -d "${BOOTSTRAP_ROOTFS}/data/data/com.termux" ] && [ ! -d "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal" ]; then\n\t\tmkdir -p "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files"\n\t\tmv "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr"\n\t\techo "[*] Remapped com.termux -> com.soul.terminal"\n\tfi' scripts/generate-bootstraps.sh
+
+          echo "All patches applied"
 
       - name: Enable FUSE on host
         run: |
           sudo apt-get install -y fuse3
           sudo modprobe fuse || true
           ls -la /dev/fuse
-
-      - name: Build bootstrap packages via Docker
-        working-directory: termux-packages
-        run: |
-          docker run --rm --privileged \
-            --device /dev/fuse \
-            -v "$PWD:/home/builder/termux-packages" \
-            -w /home/builder/termux-packages \
-            ghcr.io/termux/package-builder \
-            bash -c "./build-package.sh -a aarch64 -I \
-              apt bash command-not-found dash dpkg gawk grep \
-              less procps psmisc sed tar \
-              termux-exec termux-keyring termux-tools"
-
-      - name: Create local APT repository
-        working-directory: termux-packages
-        run: |
-          # Build a local apt repo from the compiled .deb files so generate-bootstraps.sh
-          # uses our com.soul.terminal packages instead of downloading com.termux ones
-          sudo apt-get install -y dpkg-dev
-          mkdir -p output/dists/stable/main/binary-aarch64
-          cd output
-          dpkg-scanpackages --arch aarch64 . > dists/stable/main/binary-aarch64/Packages
-          echo "Local repo created with $(grep -c '^Package:' dists/stable/main/binary-aarch64/Packages) packages"
-          cat dists/stable/main/binary-aarch64/Packages | head -20
 
       - name: Assemble bootstrap zip
         working-directory: termux-packages
@@ -76,7 +50,7 @@ jobs:
             -v "$PWD:/home/builder/termux-packages" \
             -w /home/builder/termux-packages \
             ghcr.io/termux/package-builder \
-            bash -c "./scripts/generate-bootstraps.sh --architectures aarch64 --repository file:///home/builder/termux-packages/output"
+            bash -c "./scripts/generate-bootstraps.sh --architectures aarch64"
           mv bootstrap-aarch64.zip ../
 
       - name: Compute SHA-256
