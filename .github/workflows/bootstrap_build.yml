@@ -30,9 +30,11 @@ jobs:
           # 2. Fix profile.d dir not created before write
           sed -i '/chmod 700.*BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE/a\\n\tmkdir -p "${BOOTSTRAP_ROOTFS}/${TERMUX__PREFIX__PROFILE_D_DIR}"' scripts/generate-bootstraps.sh
 
-          # 3. After packages are extracted (com.termux paths), symlink to com.soul.terminal
-          #    Match the function CALL (with "$package_arch" arg), not the definition (with "() {")
-          sed -i '/create_bootstrap_archive "\$package_arch"/i\\n\t# Symlink com.termux -> com.soul.terminal so create_bootstrap_archive finds everything\n\tif [ -d "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" ] && [ ! -e "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal" ]; then\n\t\tmkdir -p "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files"\n\t\tln -sfn "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr"\n\t\techo "[*] Symlinked com.soul.terminal/files/usr -> com.termux/files/usr"\n\tfi' scripts/generate-bootstraps.sh
+          # 3. After packages are extracted (com.termux paths) and second-stage files are added
+          #    (com.soul.terminal paths), merge everything under com.termux and symlink back.
+          #    Packages extract to com.termux/files/usr, second-stage goes to com.soul.terminal/files/usr.
+          #    We need create_bootstrap_archive to find both via com.soul.terminal path.
+          sed -i '/create_bootstrap_archive "\$package_arch"/i\\n\t# Merge second-stage files into com.termux tree, then symlink com.soul.terminal -> com.termux\n\tif [ -d "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" ]; then\n\t\t# Copy second-stage files from com.soul.terminal into com.termux tree\n\t\tif [ -d "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr" ] && [ ! -L "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr" ]; then\n\t\t\tcp -a "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr/." "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr/"\n\t\t\trm -rf "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr"\n\t\t\techo "[*] Merged second-stage files into com.termux tree"\n\t\tfi\n\t\t# Create symlink so create_bootstrap_archive finds everything\n\t\tmkdir -p "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files"\n\t\tln -sfn "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr"\n\t\techo "[*] Symlinked com.soul.terminal/files/usr -> com.termux/files/usr"\n\tfi' scripts/generate-bootstraps.sh
 
           # Debug: verify patches applied
           echo "=== grep create_bootstrap_archive ==="
