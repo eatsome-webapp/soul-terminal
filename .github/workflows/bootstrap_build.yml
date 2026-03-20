@@ -30,9 +30,9 @@ jobs:
           # 2. Fix profile.d dir not created before write
           sed -i '/chmod 700.*BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE/a\\n\tmkdir -p "${BOOTSTRAP_ROOTFS}/${TERMUX__PREFIX__PROFILE_D_DIR}"' scripts/generate-bootstraps.sh
 
-          # 3. After packages are extracted (com.termux paths), remap to com.soul.terminal
-          #    Insert a mv command right before create_bootstrap_archive is called
-          sed -i '/add_termux_bootstrap_second_stage_files/i\\n\t# Remap com.termux paths to com.soul.terminal\n\tif [ -d "${BOOTSTRAP_ROOTFS}/data/data/com.termux" ] && [ ! -d "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal" ]; then\n\t\tmkdir -p "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files"\n\t\tmv "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr"\n\t\techo "[*] Remapped com.termux -> com.soul.terminal"\n\tfi' scripts/generate-bootstraps.sh
+          # 3. After packages are extracted (com.termux paths), symlink to com.soul.terminal
+          #    This preserves all symlinks inside usr/ (mv can lose them)
+          sed -i '/add_termux_bootstrap_second_stage_files/i\\n\t# Symlink com.termux -> com.soul.terminal so create_bootstrap_archive finds everything\n\tif [ -d "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" ] && [ ! -e "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal" ]; then\n\t\tmkdir -p "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files"\n\t\tln -sfn "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr"\n\t\techo "[*] Symlinked com.soul.terminal/files/usr -> com.termux/files/usr"\n\tfi' scripts/generate-bootstraps.sh
 
           echo "All patches applied"
 
@@ -52,6 +52,17 @@ jobs:
             ghcr.io/termux/package-builder \
             bash -c "./scripts/generate-bootstraps.sh --architectures aarch64"
           mv bootstrap-aarch64.zip ../
+
+      - name: Verify bootstrap zip contents
+        run: |
+          echo "=== Zip file size ==="
+          ls -lh bootstrap-aarch64.zip
+          echo "=== SYMLINKS.txt content (first 30 lines) ==="
+          unzip -p bootstrap-aarch64.zip SYMLINKS.txt | head -30
+          echo "=== SYMLINKS.txt line count ==="
+          unzip -p bootstrap-aarch64.zip SYMLINKS.txt | wc -l
+          echo "=== Zip entry count ==="
+          unzip -l bootstrap-aarch64.zip | tail -1
 
       - name: Compute SHA-256
         id: checksum
