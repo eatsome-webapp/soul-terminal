@@ -20,4 +20,9 @@
 
     <color name="blue_link_light">#0969DA</color>
     <color name="blue_link_dark">#58A6FF</color>
+
+    <color name="soul_bg">#0F0F23</color>
+    <color name="soul_fg">#E0E0E0</color>
+    <color name="soul_accent">#6C63FF</color>
+    <color name="soul_accent_dim">#2A2A4A</color>
 </resources>
