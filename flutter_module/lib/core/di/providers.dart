@@ -2,6 +2,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:objectbox/objectbox.dart';
 
+import '../bridge/pigeon_bridge_handler.dart';
+
 import '../../services/auth/api_key_service.dart';
 import '../../services/ai/claude_service.dart';
 import '../../services/ai/cost_tracker.dart';
@@ -156,6 +158,20 @@ final objectBoxStoreReadyProvider = Provider<Store>((ref) {
   final store = ref.watch(objectBoxStoreProvider);
   if (store == null) throw StateError('ObjectBox store not yet initialized');
   return store;
+});
+
+// --- Pigeon Bridge ---
+
+/// Pigeon bridge handler singleton — handles Java→Dart terminal events.
+///
+/// Reading this provider triggers [PigeonBridgeHandler.init()] which registers
+/// the handler with the SoulBridgeApi Pigeon channel. Must be read during app
+/// startup (before the Flutter UI is fully loaded) to ensure Java-side events
+/// are handled from the start.
+final pigeonBridgeHandlerProvider = Provider<PigeonBridgeHandler>((ref) {
+  final handler = PigeonBridgeHandler();
+  handler.init();
+  return handler;
 });
 
 // --- Memory Services ---
