@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-20T21:48:15.703Z"
+last_updated: "2026-03-20T22:23:51.440Z"
 progress:
   total_phases: 11
   completed_phases: 5
-  total_plans: 17
-  completed_plans: 17
+  total_plans: 22
+  completed_plans: 18
 ---
 
 # Project State
@@ -18,13 +18,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Een native terminal die naadloos integreert met SOUL — terminal + AI brain in één app.
-**Current focus:** Phase 05 — terminal-quick-wins
+**Current focus:** Phase 06 — app-merge
 
 ## Current Position
 
-Phase: 05 (terminal-quick-wins) — COMPLETE
-Plan: 1 of 1 — complete (2026-03-20)
-Resume: .planning/phases/05-terminal-quick-wins/05-01-SUMMARY.md
+Phase: 06 (app-merge) — EXECUTING
+Plan: 2 of 5
 
 ## v1.1 Phase Overview
 
