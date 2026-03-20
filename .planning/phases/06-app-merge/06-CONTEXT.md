@@ -72,10 +72,32 @@ De bestaande SOUL Flutter app (melos monorepo: `soul-app/apps/soul/` met 237 Dar
 - `build_runner` stap toevoegen voor codegen (Drift, Freezed, Riverpod, ObjectBox)
 - Bestaande twee-stage build (Flutter → Gradle) behouden maar met meer deps
 
+### KRITIEK: Merge strategie (uit mislukte poging 1)
+- **NOOIT bulk copy-paste** — incrementeel mergen, per laag, met compilatie check na elke stap
+- **NOOIT .g.dart/.freezed.dart files kopiëren** — altijd `build_runner` draaien om te regenereren
+- **`objectbox-model.json` WEL kopiëren** (is het schema), `objectbox.g.dart` NIET (is generated)
+- **`dart analyze` is NIET voldoende als bewijs** — de app moet daadwerkelijk STARTEN op een device
+- **Incrementele volgorde verplicht:**
+  1. pubspec.yaml deps toevoegen → `flutter pub get` → groen
+  2. core/di/providers.dart + dependencies → `build_runner` → groen
+  3. core/database/ (Drift schema) → `build_runner` → groen
+  4. services/ laag voor laag → elke laag compileerbaar
+  5. models/ → `build_runner` → groen (Freezed, ObjectBox)
+  6. ui/ als laatste → router, screens, widgets
+  7. main.dart herschrijven als ALLERLAATSTE stap
+  8. **Na elke stap: `build_runner` + CI build check**
+- **main.dart MOET de SOUL app init-flow EXACT volgen:**
+  1. `WidgetsFlutterBinding.ensureInitialized()`
+  2. `openStore()` (ObjectBox)
+  3. `ProviderContainer` met `objectBoxStoreProvider.overrideWithValue(store)`
+  4. API key laden uit secure storage
+  5. OpenClaw client initialiseren
+  6. Foreground service starten
+  7. `SentryConfig.init()` wrapping
+  8. `runApp(UncontrolledProviderScope(container: container, child: SoulApp(...)))`
+- **Finale verificatie: APK installeren op device, SOUL chat UI moet zichtbaar zijn als hoofdscherm**
+
 ### Claude's Discretion
-- Exacte volgorde van file kopiëren en import refactoring
-- Hoe objectbox.g.dart regeneratie in CI af te handelen
-- Welke SOUL app tests mee te nemen naar flutter_module/test/
 - Eventuele tussentijdse compilatie-fixes bij import conflicts
 - Melos workspace configuratie (verwijderen of laten staan in soul-app)
 
