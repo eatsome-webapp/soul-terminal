@@ -34,6 +34,11 @@ jobs:
           #    Match the function CALL (with "$package_arch" arg), not the definition (with "() {")
           sed -i '/create_bootstrap_archive "\$package_arch"/i\\n\t# Symlink com.termux -> com.soul.terminal so create_bootstrap_archive finds everything\n\tif [ -d "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" ] && [ ! -e "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal" ]; then\n\t\tmkdir -p "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files"\n\t\tln -sfn "${BOOTSTRAP_ROOTFS}/data/data/com.termux/files/usr" "${BOOTSTRAP_ROOTFS}/data/data/com.soul.terminal/files/usr"\n\t\techo "[*] Symlinked com.soul.terminal/files/usr -> com.termux/files/usr"\n\tfi' scripts/generate-bootstraps.sh
 
+          # Debug: verify patches applied
+          echo "=== grep create_bootstrap_archive ==="
+          grep -n 'create_bootstrap_archive' scripts/generate-bootstraps.sh
+          echo "=== grep Symlink ==="
+          grep -n 'Symlink' scripts/generate-bootstraps.sh || echo "Symlink patch NOT found!"
           echo "All patches applied"
 
       - name: Enable FUSE on host
