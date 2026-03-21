@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T12:20:48.958Z"
+last_updated: "2026-03-21T13:18:24.156Z"
 progress:
   total_phases: 11
   completed_phases: 8
-  total_plans: 33
-  completed_plans: 30
+  total_plans: 36
+  completed_plans: 31
 ---
 
 # Project State
@@ -18,12 +18,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Een native terminal die naadloos integreert met SOUL — terminal + AI brain in één app.
-**Current focus:** Phase 09 — soul-terminal-awareness
+**Current focus:** Phase 10 — onboarding-flow
 
 ## Current Position
 
-Phase: 09 (soul-terminal-awareness) — EXECUTING
-Plan: 1 of 3
+Phase: 10 (onboarding-flow) — EXECUTING
+Plan: 2 of 3
 
 ## v1.1 Phase Overview
 
@@ -129,3 +129,10 @@ Plan: 1 of 3
 - termuxSessionListNotifyUpdated() vuurt onSessionListChanged af — centrale hook voor alle sessiewijzigingen
 - Pigeon code handmatig gegenereerd (cmd-proxy token unavailable) — exact v22.7.0 patroon gevolgd
 - Phase 08 COMPLETE — alle 6 SESS requirements (SESS-01..06) geleverd
+
+### From 10-01
+
+- writeShellConfig: Java FileOutputStream(file, true) append mode — geen shell escaping nodig voor OSC 133 escape sequences
+- Setup wizard .g.dart handmatig gegenereerd (cmd-proxy niet beschikbaar) — exact patroon van soul_awareness_service.g.dart gevolgd
+- terminalOnly skip logic: _advanceToNextStep() itereert stappen centraal, slaat `installing` over voor terminalOnly profiel
+- Xiaomi detectie via SystemBridgeApi().getDeviceInfo() in build() — async zonder blocking, sets isXiaomi flag
