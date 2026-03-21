@@ -29,7 +29,6 @@ import android.widget.Toast;
 
 import com.termux.R;
 import com.termux.app.api.file.FileReceiverActivity;
-import com.termux.app.terminal.TermuxActivityRootView;
 import com.termux.app.terminal.TermuxTerminalSessionActivityClient;
 import com.termux.app.terminal.io.TermuxTerminalExtraKeys;
 import com.termux.shared.activities.ReportActivity;
@@ -67,11 +66,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager.widget.ViewPager;
+
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
 import com.termux.app.terminal.CommandPaletteAdapter;
 import com.termux.shared.termux.shell.command.runner.terminal.TermuxSession;
@@ -127,14 +131,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     private TermuxAppSharedProperties mProperties;
 
     /**
-     * The root view of the {@link TermuxActivity}.
+     * The BottomSheetBehavior controlling the terminal sheet.
      */
-    TermuxActivityRootView mTermuxActivityRootView;
-
-    /**
-     * The space at the bottom of {@link @mTermuxActivityRootView} of the {@link TermuxActivity}.
-     */
-    View mTermuxActivityBottomSpaceView;
+    private BottomSheetBehavior<View> mBottomSheetBehavior;
 
     /**
      * The terminal extra keys view.
@@ -187,9 +186,6 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     private int mNavBarHeight;
 
     private float mTerminalToolbarDefaultHeight;
-
-    /** Whether the Flutter view is currently visible. */
-    private boolean mIsFlutterVisible = false;
 
     /** Tag for the FlutterFragment in FragmentManager. */
     private static final String FLUTTER_FRAGMENT_TAG = "flutter_fragment";
@@ -245,11 +241,12 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         setMargins();
         setupFlutterFragment();
+        setupBottomSheet();
 
-        mTermuxActivityRootView = findViewById(R.id.activity_termux_root_view);
-        mTermuxActivityRootView.setActivity(this);
-        mTermuxActivityBottomSpaceView = findViewById(R.id.activity_termux_bottom_space_view);
-        mTermuxActivityRootView.setOnApplyWindowInsetsListener(new TermuxActivityRootView.WindowInsetsListener());
+        if (savedInstanceState != null) {
+            int savedState = savedInstanceState.getInt("sheet_state", BottomSheetBehavior.STATE_COLLAPSED);
+            mBottomSheetBehavior.setState(savedState);
+        }
 
         View content = findViewById(android.R.id.content);
         content.setOnApplyWindowInsetsListener((v, insets) -> {
@@ -317,9 +314,6 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         if (mTermuxTerminalViewClient != null)
             mTermuxTerminalViewClient.onStart();
 
-        if (mPreferences.isTerminalMarginAdjustmentEnabled())
-            addTermuxActivityRootViewGlobalLayoutListener();
-
         registerTermuxActivityBroadcastReceiver();
     }
 
@@ -360,8 +354,6 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         if (mTermuxTerminalViewClient != null)
             mTermuxTerminalViewClient.onStop();
 
-        removeTermuxActivityRootViewGlobalLayoutListener();
-
         unregisterTermuxActivityBroadcastReceiver();
         getDrawer().closeDrawers();
     }
@@ -394,6 +386,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         super.onSaveInstanceState(savedInstanceState);
         saveTerminalToolbarTextInput(savedInstanceState);
         savedInstanceState.putBoolean(ARG_ACTIVITY_RECREATED, true);
+        if (mBottomSheetBehavior != null) {
+            savedInstanceState.putInt("sheet_state", mBottomSheetBehavior.getState());
+        }
     }
 
 
@@ -491,17 +486,6 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         int marginHorizontal = mProperties.getTerminalMarginHorizontal();
         int marginVertical = mProperties.getTerminalMarginVertical();
         ViewUtils.setLayoutMarginsInDp(relativeLayout, marginHorizontal, marginVertical, marginHorizontal, marginVertical);
-    }
-
-
-
-    public void addTermuxActivityRootViewGlobalLayoutListener() {
-        getTermuxActivityRootView().getViewTreeObserver().addOnGlobalLayoutListener(getTermuxActivityRootView());
-    }
-
-    public void removeTermuxActivityRootViewGlobalLayoutListener() {
-        if (getTermuxActivityRootView() != null)
-            getTermuxActivityRootView().getViewTreeObserver().removeOnGlobalLayoutListener(getTermuxActivityRootView());
     }
 
 
@@ -622,7 +606,14 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     private void setSoulToggleButtonView() {
         findViewById(R.id.toggle_soul_button).setOnClickListener(v -> {
             getDrawer().closeDrawers();
-            toggleFlutterView();
+            if (mBottomSheetBehavior != null) {
+                int state = mBottomSheetBehavior.getState();
+                if (state == BottomSheetBehavior.STATE_COLLAPSED || state == BottomSheetBehavior.STATE_HIDDEN) {
+                    mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
+                } else {
+                    mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                }
+            }
         });
     }
 
@@ -646,36 +637,52 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         }
     }
 
-    /**
-     * Toggle between terminal view and Flutter view.
-     * Terminal processes continue running when Flutter is visible.
-     */
-    public void toggleFlutterView() {
-        mIsFlutterVisible = !mIsFlutterVisible;
+    private void setupBottomSheet() {
+        View sheetContainer = findViewById(R.id.terminal_sheet_container);
+        mBottomSheetBehavior = BottomSheetBehavior.from(sheetContainer);
+        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
-        View terminalContainer = findViewById(R.id.activity_termux_root_relative_layout);
-        View flutterContainer = findViewById(R.id.flutter_container);
-
-        if (mIsFlutterVisible) {
-            terminalContainer.setVisibility(View.GONE);
-            flutterContainer.setVisibility(View.VISIBLE);
-        } else {
-            flutterContainer.setVisibility(View.GONE);
-            terminalContainer.setVisibility(View.VISIBLE);
-            // Refocus terminal view when switching back
-            if (mTerminalView != null) {
-                mTerminalView.requestFocus();
+        mBottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                if (newState == BottomSheetBehavior.STATE_EXPANDED && mTerminalView != null) {
+                    mTerminalView.requestFocus();
+                }
+                Logger.logDebug(LOG_TAG, "Sheet state changed to: " + newState);
             }
-        }
 
-        Logger.logDebug(LOG_TAG, "Flutter view visible: " + mIsFlutterVisible);
-    }
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                // No-op for now
+            }
+        });
 
-    /**
-     * Whether the Flutter view is currently shown.
-     */
-    public boolean isFlutterVisible() {
-        return mIsFlutterVisible;
+        // IME insets handling on sheet container
+        ViewCompat.setOnApplyWindowInsetsListener(sheetContainer, (view, insets) -> {
+            int imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            int navBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+            view.setPadding(0, 0, 0, Math.max(imeHeight, navBarHeight));
+            return insets;
+        });
+
+        // Back button handling
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @SuppressLint("RtlHardcoded")
+            @Override
+            public void handleOnBackPressed() {
+                if (getDrawer().isDrawerOpen(Gravity.LEFT)) {
+                    getDrawer().closeDrawers();
+                    return;
+                }
+                int state = mBottomSheetBehavior.getState();
+                if (state == BottomSheetBehavior.STATE_EXPANDED
+                        || state == BottomSheetBehavior.STATE_HALF_EXPANDED) {
+                    mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                } else {
+                    finishActivityIfNotFinishing();
+                }
+            }
+        });
     }
 
     private void setupPigeonBridges() {
@@ -742,9 +749,18 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         ));
 
         items.add(new CommandPaletteAdapter.PaletteItem(
-            "Toggle Flutter view",
-            "Show or hide the Flutter view",
-            () -> toggleFlutterView()
+            "Toggle terminal sheet",
+            "Expand or collapse the terminal sheet",
+            () -> {
+                if (mBottomSheetBehavior != null) {
+                    int state = mBottomSheetBehavior.getState();
+                    if (state == BottomSheetBehavior.STATE_COLLAPSED || state == BottomSheetBehavior.STATE_HIDDEN) {
+                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
+                    } else {
+                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    }
+                }
+            }
         ));
 
         // Build dialog
@@ -785,18 +801,6 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     }
 
 
-
-    @SuppressLint("RtlHardcoded")
-    @Override
-    public void onBackPressed() {
-        if (mIsFlutterVisible) {
-            toggleFlutterView();
-        } else if (getDrawer().isDrawerOpen(Gravity.LEFT)) {
-            getDrawer().closeDrawers();
-        } else {
-            finishActivityIfNotFinishing();
-        }
-    }
 
     public void finishActivityIfNotFinishing() {
         // prevent duplicate calls to finish() if called from multiple places
@@ -1003,12 +1007,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         return mNavBarHeight;
     }
 
-    public TermuxActivityRootView getTermuxActivityRootView() {
-        return mTermuxActivityRootView;
-    }
-
-    public View getTermuxActivityBottomSpaceView() {
-        return mTermuxActivityBottomSpaceView;
+    public BottomSheetBehavior<View> getBottomSheetBehavior() {
+        return mBottomSheetBehavior;
     }
 
     public ExtraKeysView getExtraKeysView() {
