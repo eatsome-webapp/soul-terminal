@@ -24,7 +24,6 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
   final _apiKeyController = TextEditingController();
   bool _obscureApiKey = true;
   String? _apiKeyError;
-  bool _shellConfigStarted = false;
 
   @override
   void dispose() {
@@ -36,14 +35,6 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(setupWizardProvider);
     final notifier = ref.read(setupWizardProvider.notifier);
-
-    // Auto-trigger shell config on step enter
-    if (state.currentStep == SetupWizardStep.shellConfig && !_shellConfigStarted) {
-      _shellConfigStarted = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        notifier.writeShellConfig();
-      });
-    }
 
     return PopScope(
       canPop: !state.isInstalling,
@@ -81,7 +72,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
       SetupWizardStep.apiKey => _buildApiKeyStep(state, notifier),
       SetupWizardStep.githubAuth => _buildGithubStep(notifier),
       SetupWizardStep.xiaomiBattery => _buildXiaomiStep(notifier),
-      SetupWizardStep.shellConfig => _buildShellConfigStep(state),
+      SetupWizardStep.shellConfig => _buildShellConfigStep(state, notifier),
       SetupWizardStep.complete => _buildCompleteStep(notifier),
     };
   }
@@ -540,42 +531,53 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
     );
   }
 
-  Widget _buildShellConfigStep(SetupWizardState state) {
+  Widget _buildShellConfigStep(SetupWizardState state, SetupWizard notifier) {
+    // Auto-trigger on first render of this step
+    if (!state.shellConfigDone && !state.isLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifier.writeShellConfig();
+      });
+    }
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.settings_suggest, size: 64, color: _accent),
+          Icon(
+            state.shellConfigDone ? Icons.check_circle : Icons.terminal,
+            size: 64,
+            color: _accent,
+          ),
           const SizedBox(height: 24),
           const Text(
             'Shell configuratie',
             style: TextStyle(
-              color: _textPrimary,
               fontSize: 24,
               fontWeight: FontWeight.bold,
+              color: _textPrimary,
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
-          const Text(
-            'OSC 133 markers worden toegevoegd aan je shell config. Dit is nodig voor commando-detectie.',
-            style: TextStyle(color: _textSecondary, fontSize: 14),
+          const SizedBox(height: 16),
+          Text(
+            state.shellConfigDone
+                ? 'OSC 133 markers zijn geconfigureerd in .bashrc en .zshrc.\nSOUL kan nu detecteren wanneer een commando klaar is.'
+                : 'Shell configuratie schrijven...',
             textAlign: TextAlign.center,
+            style: const TextStyle(color: _textSecondary, fontSize: 16),
           ),
           const SizedBox(height: 32),
-          if (!state.shellConfigDone)
-            const Center(child: CircularProgressIndicator(color: _accent))
-          else ...[
-            const Icon(Icons.check_circle, size: 48, color: Color(0xFF4CAF50)),
-            const SizedBox(height: 8),
-            const Text(
-              'Shell config bijgewerkt',
-              style: TextStyle(color: _textPrimary),
-              textAlign: TextAlign.center,
+          if (state.isLoading)
+            const CircularProgressIndicator(color: _accent)
+          else if (state.shellConfigDone)
+            ElevatedButton(
+              onPressed: () => notifier.proceedFromShellConfig(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _accent,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              ),
+              child: const Text('Doorgaan', style: TextStyle(fontSize: 16)),
             ),
-          ],
         ],
       ),
     );
