@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T15:30:00.000Z"
+last_updated: "2026-03-21T16:35:00.000Z"
 progress:
   total_phases: 11
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 40
-  completed_plans: 35
+  completed_plans: 36
 ---
 
 # Project State
@@ -22,8 +22,8 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 
 ## Current Position
 
-Phase: 11 (ux-polish) — EXECUTING
-Plan: 3 of 4 — COMPLETE (11-03 done, commits e3d9640d, 06a33b9c, 8d5472b1, 33280a6e)
+Phase: 11 (ux-polish) — COMPLETE
+Plan: 4 of 4 — COMPLETE (11-04 done, commits b1c524c3, efeb8258, 24834662, bef71746, c8d26fad)
 
 ## v1.1 Phase Overview
 
@@ -160,6 +160,15 @@ Plan: 3 of 4 — COMPLETE (11-03 done, commits e3d9640d, 06a33b9c, 8d5472b1, 332
 - ANSI escape stripping vóór regex match op laatste non-empty transcript regel
 - AlertDialog "Ja"/"Nee" schrijft `y\n`/`n\n` via session.write() — slaat STATE_HIDDEN sheet check over
 - getPromptInterceptor() public accessor in TermuxActivity, teardown() in onDestroy()
+
+### From 11-04
+
+- onConfigurationChanged re-inflate pattern: setContentView → rebindViewsAfterLayoutChange → conditional setupBottomSheet → setupSessionTabBar → re-attach Flutter
+- mSheetBackCallback stored as field + .remove() before re-registering — prevents duplicate back callbacks on portrait restore
+- landscape layout: horizontal LinearLayout, flutter 60% / terminal 40%, no BottomSheetBehavior
+- isLandscape() public accessor used as guard in setSoulToggleButtonView + applyBlurForOffset
+- announceForAccessibility called on mTerminalView (sheet states) and mSessionTabLayout (tab selection)
+- Phase 11 COMPLETE — UXPL-01..07 all delivered
 
 ### From 11-03
 
