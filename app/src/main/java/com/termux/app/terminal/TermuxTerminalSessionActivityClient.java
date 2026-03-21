@@ -135,6 +135,12 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
         if (controller != null) {
             controller.onTerminalTextChanged(changedSession);
         }
+
+        // Check for y/n prompt patterns
+        com.termux.app.terminal.PromptInterceptor promptInterceptor = mActivity.getPromptInterceptor();
+        if (promptInterceptor != null) {
+            promptInterceptor.checkForPrompt(changedSession);
+        }
     }
 
     @Override
