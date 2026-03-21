@@ -149,6 +149,12 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     private TabLayout.OnTabSelectedListener mTabSelectedListener;
     private GestureDetector mSessionSwipeDetector;
 
+    /** Pigeon FlutterApi for calling Flutter from Java. */
+    private com.termux.bridge.TerminalBridgeApi.SoulBridgeApi mSoulBridgeApi;
+
+    /** Pigeon HostApi implementation. */
+    private com.termux.bridge.TerminalBridgeImpl mTerminalBridgeImpl;
+
     private final Runnable mProcessNamePoller = new Runnable() {
         @Override
         public void run() {
@@ -935,8 +941,18 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             return;
         }
 
-        // Pigeon bridge registration will be added when flutter_module is available
-        Logger.logDebug(LOG_TAG, "Pigeon bridges setup placeholder (flutter_module not yet integrated)");
+        io.flutter.plugin.common.BinaryMessenger messenger =
+            flutterEngine.getDartExecutor().getBinaryMessenger();
+
+        // Register HostApi implementation
+        mTerminalBridgeImpl = new com.termux.bridge.TerminalBridgeImpl(mTermuxService);
+        mTerminalBridgeImpl.setActivity(this);
+        com.termux.bridge.TerminalBridgeApi.HostApi.setUp(messenger, mTerminalBridgeImpl);
+
+        // Create FlutterApi instance for calling Flutter
+        mSoulBridgeApi = new com.termux.bridge.TerminalBridgeApi.SoulBridgeApi(messenger);
+
+        Logger.logDebug(LOG_TAG, "Pigeon bridges registered");
     }
 
     public void showCommandPalette() {

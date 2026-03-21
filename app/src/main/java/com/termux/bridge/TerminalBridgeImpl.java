@@ -1,7 +1,11 @@
 package com.termux.bridge;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import androidx.annotation.NonNull;
 
+import com.termux.app.TermuxActivity;
 import com.termux.app.TermuxService;
 import com.termux.shared.termux.shell.command.runner.terminal.TermuxSession;
 import com.termux.shared.logger.Logger;
@@ -18,9 +22,14 @@ public class TerminalBridgeImpl implements TerminalBridgeApi.HostApi {
 
     private static final String LOG_TAG = "TerminalBridgeImpl";
     private final TermuxService mTermuxService;
+    private TermuxActivity mActivity;
 
     public TerminalBridgeImpl(@NonNull TermuxService termuxService) {
         mTermuxService = termuxService;
+    }
+
+    public void setActivity(TermuxActivity activity) {
+        mActivity = activity;
     }
 
     @Override
@@ -91,7 +100,54 @@ public class TerminalBridgeImpl implements TerminalBridgeApi.HostApi {
         return result;
     }
 
+    @Override
+    public void closeSession(@NonNull Long id) {
+        int index = id.intValue();
+        if (index < 0 || index >= mTermuxService.getTermuxSessionsSize()) {
+            Logger.logWarn(LOG_TAG, "closeSession: invalid index " + index);
+            return;
+        }
+        if (mTermuxService.getTermuxSessionsSize() <= 1) {
+            Logger.logWarn(LOG_TAG, "closeSession: cannot close last session");
+            return;
+        }
+        TermuxSession session = mTermuxService.getTermuxSession(index);
+        if (session != null) {
+            new Handler(Looper.getMainLooper()).post(() ->
+                session.getTerminalSession().finishIfRunning()
+            );
+        }
+    }
+
+    @Override
+    public void switchSession(@NonNull Long id) {
+        int index = id.intValue();
+        if (mActivity != null) {
+            new Handler(Looper.getMainLooper()).post(() ->
+                mActivity.getTermuxTerminalSessionClient().switchToSession(index)
+            );
+        }
+    }
+
+    @Override
+    public void renameSession(@NonNull Long id, @NonNull String name) {
+        int index = id.intValue();
+        TermuxSession session = mTermuxService.getTermuxSession(index);
+        if (session != null) {
+            new Handler(Looper.getMainLooper()).post(() -> {
+                session.getTerminalSession().mSessionName = name;
+                if (mActivity != null) {
+                    mActivity.termuxSessionListNotifyUpdated();
+                }
+            });
+        }
+    }
+
     private TerminalSession getCurrentTerminalSession() {
+        if (mActivity != null && mActivity.getTerminalView() != null) {
+            return mActivity.getTerminalView().getCurrentSession();
+        }
+        // Fallback to last session if activity not available
         if (mTermuxService.isTermuxSessionsEmpty()) return null;
         TermuxSession lastSession = mTermuxService.getLastTermuxSession();
         return lastSession != null ? lastSession.getTerminalSession() : null;
