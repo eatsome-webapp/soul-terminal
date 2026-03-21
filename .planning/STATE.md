@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T10:36:27.428Z"
+last_updated: "2026-03-21T10:48:17.590Z"
 progress:
   total_phases: 11
   completed_phases: 7
   total_plans: 30
-  completed_plans: 28
+  completed_plans: 29
 ---
 
 # Project State
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 08 (session-management) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## v1.1 Phase Overview
 
@@ -111,3 +111,11 @@ Plan: 2 of 3
 - termuxSessionListNotifyUpdated() roept alleen updateSessionTabs() aan — notifyDataSetChanged verwijderd
 - Drawer gelocked met LOCK_MODE_LOCKED_CLOSED in setupSessionTabBar() — conflicteert niet met horizontale swipe
 - getSessionTabLayout() en getSessionSwipeDetector() accessors beschikbaar voor Phase 8 plan 02/03
+
+### From 08-02
+
+- Long-press op tab via `((ViewGroup) tabLayout.getChildAt(0)).getChildAt(i)` — tab view index na addTab
+- Session close via `finishIfRunning()` — onSessionFinished callback handelt removal af (niet directe removal)
+- checkAndScrollToSession() volledig gestript — ListView weg, tab bar doet selectie via setCurrentSession()
+- settings_tab_button toegevoegd aan session_tab_bar_container — settings altijd bereikbaar ondanks gelocked drawer
+- setTermuxSessionsListView() en setNewSessionButtonView() null-safe bewaard voor backward compat

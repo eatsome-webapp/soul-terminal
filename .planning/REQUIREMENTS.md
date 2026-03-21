@@ -40,7 +40,7 @@ Requirements for milestone v1.1: Van terminal naar AI coding omgeving.
 - [x] **SESS-01**: User ziet tab bar met sessienamen bovenaan terminal sheet
 - [x] **SESS-02**: User ziet process namen in tabs (claude, bash, python via /proc/PID/cmdline)
 - [x] **SESS-03**: User kan nieuwe sessie aanmaken via + knop in tab bar
-- [ ] **SESS-04**: User kan sessie hernoemen of sluiten via lang indrukken op tab
+- [x] **SESS-04**: User kan sessie hernoemen of sluiten via lang indrukken op tab
 - [x] **SESS-05**: User kan swipen links/rechts om van sessie te wisselen
 - [ ] **SESS-06**: SOUL chat kan sessies aanmaken en sluiten via Pigeon
 
@@ -131,7 +131,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SESS-01 | Phase 8 — Session Management | Complete |
 | SESS-02 | Phase 8 — Session Management | Complete |
 | SESS-03 | Phase 8 — Session Management | Complete |
-| SESS-04 | Phase 8 — Session Management | Pending |
+| SESS-04 | Phase 8 — Session Management | Complete |
 | SESS-05 | Phase 8 — Session Management | Complete |
 | SESS-06 | Phase 8 — Session Management | Pending |
 | AWAR-01 | Phase 9 — SOUL Terminal Awareness | Pending |
