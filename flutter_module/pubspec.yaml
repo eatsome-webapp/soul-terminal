@@ -67,8 +67,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/config/default_intervention_config.yaml
-
-module:
-  androidX: true
-  androidPackage: com.soul.terminal.flutter_module
-  iosBundleIdentifier: com.soul.terminal.flutterModule
+  module:
+    androidX: true
+    androidPackage: com.soul.terminal.flutter_module
+    iosBundleIdentifier: com.soul.terminal.flutterModule
