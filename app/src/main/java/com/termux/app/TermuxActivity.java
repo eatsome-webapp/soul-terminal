@@ -75,7 +75,15 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager.widget.ViewPager;
 
+import android.os.Handler;
+import android.os.Looper;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+
+import android.widget.PopupMenu;
+
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.tabs.TabLayout;
 
 import com.termux.app.terminal.CommandPaletteAdapter;
 import com.termux.shared.termux.shell.command.runner.terminal.TermuxSession;
@@ -134,6 +142,20 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
      * The BottomSheetBehavior controlling the terminal sheet.
      */
     private BottomSheetBehavior<View> mBottomSheetBehavior;
+
+    private TabLayout mSessionTabLayout;
+    private ImageButton mNewSessionTabButton;
+    private Handler mProcessNamePollHandler;
+    private TabLayout.OnTabSelectedListener mTabSelectedListener;
+    private GestureDetector mSessionSwipeDetector;
+
+    private final Runnable mProcessNamePoller = new Runnable() {
+        @Override
+        public void run() {
+            updateTabLabelsOnly();
+            mProcessNamePollHandler.postDelayed(this, 2000);
+        }
+    };
 
     /**
      * The terminal extra keys view.
@@ -242,6 +264,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         setMargins();
         setupFlutterFragment();
         setupBottomSheet();
+        setupSessionTabBar();
 
         if (savedInstanceState != null) {
             int savedState = savedInstanceState.getInt("sheet_state", BottomSheetBehavior.STATE_COLLAPSED);
@@ -308,6 +331,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         mIsVisible = true;
 
+        if (mProcessNamePollHandler != null)
+            mProcessNamePollHandler.post(mProcessNamePoller);
+
         if (mTermuxTerminalSessionActivityClient != null)
             mTermuxTerminalSessionActivityClient.onStart();
 
@@ -347,6 +373,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         if (mIsInvalidState) return;
 
         mIsVisible = false;
+
+        if (mProcessNamePollHandler != null)
+            mProcessNamePollHandler.removeCallbacks(mProcessNamePoller);
 
         if (mTermuxTerminalSessionActivityClient != null)
             mTermuxTerminalSessionActivityClient.onStop();
@@ -693,6 +722,135 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                 }
             }
         });
+    }
+
+    private void setupSessionTabBar() {
+        mSessionTabLayout = findViewById(R.id.session_tab_layout);
+        mNewSessionTabButton = findViewById(R.id.new_session_tab_button);
+        mProcessNamePollHandler = new Handler(Looper.getMainLooper());
+
+        mNewSessionTabButton.setOnClickListener(v -> mTermuxTerminalSessionActivityClient.addNewSession(false, null));
+
+        mTabSelectedListener = new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                mTermuxTerminalSessionActivityClient.switchToSession(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        };
+        mSessionTabLayout.addOnTabSelectedListener(mTabSelectedListener);
+
+        mSessionSwipeDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            private static final int SWIPE_MIN_DISTANCE = 120;
+            private static final int SWIPE_THRESHOLD_VELOCITY = 200;
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (e1 == null || e2 == null) return false;
+                float deltaX = e2.getX() - e1.getX();
+                float deltaY = e2.getY() - e1.getY();
+                if (Math.abs(deltaX) > Math.abs(deltaY)
+                        && Math.abs(deltaX) > SWIPE_MIN_DISTANCE
+                        && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                    if (deltaX < 0) {
+                        mTermuxTerminalSessionActivityClient.switchToSession(true);
+                    } else {
+                        mTermuxTerminalSessionActivityClient.switchToSession(false);
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        DrawerLayout drawer = getDrawer();
+        if (drawer != null) {
+            drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+        }
+
+        // Attach swipe gesture to terminal view via OnTouchListener
+        if (mTerminalView != null) {
+            mTerminalView.setOnTouchListener((v, event) -> {
+                if (mTermuxTerminalViewClient != null) {
+                    mTermuxTerminalViewClient.onTouchEvent(event);
+                }
+                return false; // let TerminalView handle the event too
+            });
+        }
+    }
+
+    private void updateSessionTabs() {
+        if (mSessionTabLayout == null || mTermuxService == null) return;
+
+        mSessionTabLayout.removeOnTabSelectedListener(mTabSelectedListener);
+        mSessionTabLayout.removeAllTabs();
+
+        java.util.List<TermuxSession> sessions = mTermuxService.getTermuxSessions();
+        for (int i = 0; i < sessions.size(); i++) {
+            TabLayout.Tab tab = mSessionTabLayout.newTab();
+            tab.setText(getSessionTabLabel(i, sessions.get(i)));
+            mSessionTabLayout.addTab(tab, false);
+        }
+
+        TerminalSession currentTerminalSession = mTerminalView != null ? mTerminalView.getCurrentSession() : null;
+        if (currentTerminalSession != null) {
+            int currentIndex = mTermuxService.getIndexOfSession(currentTerminalSession);
+            if (currentIndex >= 0 && currentIndex < mSessionTabLayout.getTabCount()) {
+                mSessionTabLayout.selectTab(mSessionTabLayout.getTabAt(currentIndex));
+            }
+        }
+
+        mSessionTabLayout.addOnTabSelectedListener(mTabSelectedListener);
+    }
+
+    private String getSessionTabLabel(int index, TermuxSession termuxSession) {
+        int pid = termuxSession.getExecutionCommand().mPid;
+        if (pid > 0) {
+            try (java.io.FileInputStream fis = new java.io.FileInputStream("/proc/" + pid + "/cmdline")) {
+                byte[] buffer = new byte[256];
+                int read = fis.read(buffer);
+                if (read > 0) {
+                    int end = 0;
+                    while (end < read && buffer[end] != 0) end++;
+                    String fullPath = new String(buffer, 0, end);
+                    int slash = fullPath.lastIndexOf('/');
+                    return slash >= 0 ? fullPath.substring(slash + 1) : fullPath;
+                }
+            } catch (java.io.IOException e) {
+                // fall through
+            }
+        }
+        String sessionName = termuxSession.getTerminalSession().mSessionName;
+        if (sessionName != null && !sessionName.isEmpty()) return sessionName;
+        return "Session " + (index + 1);
+    }
+
+    private void updateTabLabelsOnly() {
+        if (mSessionTabLayout == null || mTermuxService == null) return;
+
+        java.util.List<TermuxSession> sessions = mTermuxService.getTermuxSessions();
+        for (int i = 0; i < Math.min(sessions.size(), mSessionTabLayout.getTabCount()); i++) {
+            TabLayout.Tab tab = mSessionTabLayout.getTabAt(i);
+            if (tab == null) continue;
+            String newLabel = getSessionTabLabel(i, sessions.get(i));
+            CharSequence currentText = tab.getText();
+            if (currentText == null || !currentText.toString().equals(newLabel)) {
+                tab.setText(newLabel);
+            }
+        }
+    }
+
+    public GestureDetector getSessionSwipeDetector() {
+        return mSessionSwipeDetector;
+    }
+
+    public TabLayout getSessionTabLayout() {
+        return mSessionTabLayout;
     }
 
     private void setupPigeonBridges() {
@@ -1056,7 +1214,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
 
     public void termuxSessionListNotifyUpdated() {
-        mTermuxSessionListViewController.notifyDataSetChanged();
+        updateSessionTabs();
     }
 
     public boolean isVisible() {
