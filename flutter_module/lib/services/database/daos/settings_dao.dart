@@ -34,6 +34,10 @@ class SettingsKeys {
   // Phase 11.1: OpenClaw URL prefix
   static const String openClawUrlPrefix = 'openclaw_url_prefix';
 
+  // Phase 10: Setup Wizard
+  static const String setupCompleted = 'setup_completed';
+  static const String setupProfile = 'setup_profile'; // claude_code, python, terminal_only
+
   // Phase 11: Vessel onboarding (chronological order of use)
   static String vesselFirstConnected(String vesselId) => 'vessel_first_connected_$vesselId';
   static String vesselBootstrapStep(String vesselId) => 'vessel_bootstrap_step_$vesselId';
