@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T10:48:17.590Z"
+last_updated: "2026-03-21T12:00:00.000Z"
 progress:
   total_phases: 11
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 30
-  completed_plans: 29
+  completed_plans: 30
 ---
 
 # Project State
@@ -22,8 +22,8 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 
 ## Current Position
 
-Phase: 08 (session-management) — EXECUTING
-Plan: 3 of 3
+Phase: 08 (session-management) — COMPLETE
+Plan: 3 of 3 — DONE
 
 ## v1.1 Phase Overview
 
@@ -32,7 +32,7 @@ Plan: 3 of 3
 | 5 | Terminal Quick Wins | Pending | TERM-04..07 (4) |
 | 6 | App Merge | Pending | MERG-01..09 (9) |
 | 7 | Bottom Sheet Layout | Pending | LAYT-01..06 (6) |
-| 8 | Session Management | Pending | SESS-01..06 (6) |
+| 8 | Session Management | Complete | SESS-01..06 (6) |
 | 9 | SOUL Terminal Awareness | Pending | AWAR-01..08 (8) |
 | 10 | Onboarding Flow | Pending | ONBR-01..07 (7) |
 | 11 | UX Polish | Pending | UXPL-01..07 (7) |
@@ -119,3 +119,13 @@ Plan: 3 of 3
 - checkAndScrollToSession() volledig gestript — ListView weg, tab bar doet selectie via setCurrentSession()
 - settings_tab_button toegevoegd aan session_tab_bar_container — settings altijd bereikbaar ondanks gelocked drawer
 - setTermuxSessionsListView() en setNewSessionButtonView() null-safe bewaard voor backward compat
+
+### From 08-03
+
+- Pigeon HostApi: 7 methoden totaal (4 oud + closeSession, switchSession, renameSession)
+- Pigeon FlutterApi: 3 methoden totaal (onTerminalOutput, onSessionChanged, onSessionListChanged)
+- TerminalBridgeImpl: setActivity(TermuxActivity) setter pattern — geen constructor break
+- setupPigeonBridges() nu echte implementatie: registreert HostApi, slaat SoulBridgeApi op als mSoulBridgeApi
+- termuxSessionListNotifyUpdated() vuurt onSessionListChanged af — centrale hook voor alle sessiewijzigingen
+- Pigeon code handmatig gegenereerd (cmd-proxy token unavailable) — exact v22.7.0 patroon gevolgd
+- Phase 08 COMPLETE — alle 6 SESS requirements (SESS-01..06) geleverd
