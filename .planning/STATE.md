@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T14:30:00.000Z"
+last_updated: "2026-03-21T17:18:00.000Z"
 progress:
   total_phases: 11
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 36
-  completed_plans: 31
+  completed_plans: 33
 ---
 
 # Project State
@@ -18,12 +18,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Een native terminal die naadloos integreert met SOUL — terminal + AI brain in één app.
-**Current focus:** Phase 10 — onboarding-flow
+**Current focus:** Phase 11 — ux-polish
 
 ## Current Position
 
-Phase: 10 (onboarding-flow) — EXECUTING
-Plan: 3 of 3
+Phase: 10 (onboarding-flow) — COMPLETE
+Next: Phase 11 (ux-polish)
 
 ## v1.1 Phase Overview
 
@@ -34,7 +34,7 @@ Plan: 3 of 3
 | 7 | Bottom Sheet Layout | Pending | LAYT-01..06 (6) |
 | 8 | Session Management | Complete | SESS-01..06 (6) |
 | 9 | SOUL Terminal Awareness | Pending | AWAR-01..08 (8) |
-| 10 | Onboarding Flow | Pending | ONBR-01..07 (7) |
+| 10 | Onboarding Flow | Complete | ONBR-01..07 (7) |
 | 11 | UX Polish | Pending | UXPL-01..07 (7) |
 
 ## Accumulated Context
@@ -136,6 +136,16 @@ Plan: 3 of 3
 - outputStream.listen subscription aangemaakt in startInstallation, gecancelled in finally
 - apiKeyNotifierProvider.notifier.setKey() direct na validateAndSaveKey — app ziet key zonder restart
 - proceedFromInstall() als public accessor voor _advanceToNextStep() na installSuccess
+
+### From 10-03
+
+- writeShellConfig(): aparte bash (PROMPT_COMMAND) en zsh (precmd) OSC 133 configs via Pigeon — com.soul.terminal home path
+- Shell config failure is non-fatal: shellConfigDone=true ook bij fout, log in installLog
+- _persistCompletion() private methode, async aangeroepen vanuit _advanceToNextStep voor state update naar complete
+- completeSetup() is public no-op — persistence al gedaan vóór complete screen rendert
+- _advanceToNextStep() refactored naar switch statement — deterministische overgangen, geen loop-met-skip
+- selectProfile() roept nu _advanceToNextStep() aan ipv inline step toewijzing
+- Phase 10 COMPLETE — alle 7 ONBR requirements (ONBR-01..07) geleverd
 
 ### From 10-01
 

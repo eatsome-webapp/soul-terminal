@@ -62,7 +62,7 @@ Requirements for milestone v1.1: Van terminal naar AI coding omgeving.
 - [ ] **ONBR-03**: User kan API key invoeren in SOUL chat, opgeslagen via Android Keystore
 - [ ] **ONBR-04**: User kan GitHub CLI authenticeren via SOUL chat flow
 - [ ] **ONBR-05**: User krijgt HyperOS battery/autostart instructies op Xiaomi devices
-- [ ] **ONBR-06**: Onboarding configureert .bashrc/.zshrc met OSC 133 prompt markers
+- [x] **ONBR-06**: Onboarding configureert .bashrc/.zshrc met OSC 133 prompt markers
 - [x] **ONBR-07**: User ziet "Je omgeving is klaar" na voltooiing
 
 ### UX Polish
@@ -147,7 +147,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ONBR-03 | Phase 10 — Onboarding Flow | Pending |
 | ONBR-04 | Phase 10 — Onboarding Flow | Pending |
 | ONBR-05 | Phase 10 — Onboarding Flow | Pending |
-| ONBR-06 | Phase 10 — Onboarding Flow | Pending |
+| ONBR-06 | Phase 10 — Onboarding Flow | Complete |
 | ONBR-07 | Phase 10 — Onboarding Flow | Complete |
 | UXPL-01 | Phase 11 — UX Polish | Pending |
 | UXPL-02 | Phase 11 — UX Polish | Pending |
