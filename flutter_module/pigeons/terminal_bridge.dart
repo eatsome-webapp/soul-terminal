@@ -34,6 +34,15 @@ abstract class TerminalBridgeApi {
 
   /// List all active terminal sessions.
   List<SessionInfo> listSessions();
+
+  /// Close a terminal session by index. Switches to adjacent session.
+  void closeSession(int id);
+
+  /// Switch to a terminal session by index.
+  void switchSession(int id);
+
+  /// Rename a terminal session by index.
+  void renameSession(int id, String name);
 }
 
 /// Flutter API: Java calls these methods, Dart implements them.
@@ -45,4 +54,7 @@ abstract class SoulBridgeApi {
 
   /// Called when the active session changes.
   void onSessionChanged(SessionInfo info);
+
+  /// Called when the session list changes (add/remove/rename).
+  void onSessionListChanged(List<SessionInfo> sessions);
 }
