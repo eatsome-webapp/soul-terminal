@@ -1304,6 +1304,25 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
     public void termuxSessionListNotifyUpdated() {
         updateSessionTabs();
+
+        // Notify Flutter of session list change
+        if (mSoulBridgeApi != null && mTermuxService != null) {
+            List<com.termux.bridge.TerminalBridgeApi.SessionInfo> sessions = new ArrayList<>();
+            List<TermuxSession> termuxSessions = mTermuxService.getTermuxSessions();
+            for (int i = 0; i < termuxSessions.size(); i++) {
+                TermuxSession ts = termuxSessions.get(i);
+                TerminalSession terminalSession = ts.getTerminalSession();
+                String sessionName = terminalSession.mSessionName != null
+                    ? terminalSession.mSessionName
+                    : "Session " + (i + 1);
+                sessions.add(new com.termux.bridge.TerminalBridgeApi.SessionInfo.Builder()
+                    .setId((long) i)
+                    .setName(sessionName)
+                    .setIsRunning(terminalSession.isRunning())
+                    .build());
+            }
+            mSoulBridgeApi.onSessionListChanged(sessions, reply -> {});
+        }
     }
 
     public boolean isVisible() {
