@@ -22,7 +22,7 @@ Requirements for milestone v1.1: Van terminal naar AI coding omgeving.
 - [x] **MERG-04**: ProviderScope gerefactored voor FlutterFragment context (niet main.dart)
 - [x] **MERG-05**: Database pad geunificeerd (Drift + ObjectBox werken in com.soul.terminal context)
 - [x] **MERG-06**: Foreground service coëxistentie met Termux's eigen service
-- [ ] **MERG-07**: SOUL chat UI functioneel als hoofdscherm in FlutterFragment
+- [x] **MERG-07**: SOUL chat UI functioneel als hoofdscherm in FlutterFragment
 - [ ] **MERG-08**: CI/CD bouwt merged app succesvol (52 Flutter deps + Android)
 - [x] **MERG-09**: API key invoer werkt in merged context (Android Keystore onder com.soul.terminal)
 
@@ -119,7 +119,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MERG-04 | Phase 6 — App Merge | Complete |
 | MERG-05 | Phase 6 — App Merge | Complete |
 | MERG-06 | Phase 6 — App Merge | Complete |
-| MERG-07 | Phase 6 — App Merge | Pending |
+| MERG-07 | Phase 6 — App Merge | Complete |
 | MERG-08 | Phase 6 — App Merge | Pending |
 | MERG-09 | Phase 6 — App Merge | Complete |
 | LAYT-01 | Phase 7 — Bottom Sheet Layout | Pending |
