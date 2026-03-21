@@ -36,6 +36,38 @@
                 android:background="@drawable/sheet_drag_handle_pill" />
         </FrameLayout>
 
+        <LinearLayout
+            android:id="@+id/session_tab_bar_container"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:orientation="horizontal"
+            android:background="#0F0F23">
+
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/session_tab_layout"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                app:tabMode="scrollable"
+                app:tabGravity="start"
+                app:tabBackground="@null"
+                app:tabSelectedTextColor="#E0E0E0"
+                app:tabTextColor="#9E9E9E"
+                app:tabIndicatorColor="#6C63FF"
+                app:tabIndicatorHeight="2dp"
+                app:tabMinWidth="60dp" />
+
+            <ImageButton
+                android:id="@+id/new_session_tab_button"
+                android:layout_width="36dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_new_session"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="New session"
+                app:tint="#E0E0E0" />
+
+        </LinearLayout>
+
         <RelativeLayout
             android:id="@+id/activity_termux_root_relative_layout"
             android:layout_width="match_parent"
