@@ -43,6 +43,19 @@ abstract class TerminalBridgeApi {
 
   /// Rename a terminal session by index.
   void renameSession(int id, String name);
+
+  /// Run a structured command in a specific session (executable + args, never raw shell string).
+  /// Security whitelist is checked before execution.
+  void runCommand(int sessionId, String executable, List<String> args);
+
+  /// Send raw text input to a specific terminal session.
+  void sendInput(int sessionId, String text);
+
+  /// Open the terminal bottom sheet to half-expanded state.
+  void openTerminalSheet();
+
+  /// Create a dedicated SOUL awareness session. Returns session index.
+  int createAwarenessSession();
 }
 
 /// Flutter API: Java calls these methods, Dart implements them.
@@ -57,4 +70,7 @@ abstract class SoulBridgeApi {
 
   /// Called when the session list changes (add/remove/rename).
   void onSessionListChanged(List<SessionInfo> sessions);
+
+  /// Called when a command finishes (OSC 133 prompt marker detected).
+  void onCommandCompleted(int sessionId);
 }

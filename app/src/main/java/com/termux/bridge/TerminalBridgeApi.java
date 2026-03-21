@@ -196,6 +196,19 @@ public class TerminalBridgeApi {
     /** Rename a terminal session by index. */
     void renameSession(@NonNull Long id, @NonNull String name);
 
+    /** Run a structured command in a specific session (executable + args). Security whitelist checked. */
+    void runCommand(@NonNull Long sessionId, @NonNull String executable, @NonNull List<String> args);
+
+    /** Send raw text input to a specific terminal session. */
+    void sendInput(@NonNull Long sessionId, @NonNull String text);
+
+    /** Open the terminal bottom sheet to half-expanded state. */
+    void openTerminalSheet();
+
+    /** Create a dedicated SOUL awareness session. Returns session index. */
+    @NonNull
+    Long createAwarenessSession();
+
     /** The codec used by HostApi. */
     static @NonNull MessageCodec<Object> getCodec() {
       return PigeonCodec.INSTANCE;
@@ -390,6 +403,107 @@ public class TerminalBridgeApi {
           channel.setMessageHandler(null);
         }
       }
+      {
+        BasicMessageChannel<Object> channel =
+            new BasicMessageChannel<>(
+                binaryMessenger,
+                "dev.flutter.pigeon.flutter_module.TerminalBridgeApi.runCommand" + messageChannelSuffix,
+                getCodec());
+        if (api != null) {
+          channel.setMessageHandler(
+              (message, reply) -> {
+                ArrayList<Object> wrapped = new ArrayList<>();
+                ArrayList<Object> args = (ArrayList<Object>) message;
+                Number arg_sessionIdArg = (Number) args.get(0);
+                long arg_sessionId = (arg_sessionIdArg == null) ? 0 : arg_sessionIdArg.longValue();
+                String arg_executable = (String) args.get(1);
+                List<String> arg_args = (List<String>) args.get(2);
+                try {
+                  api.runCommand(arg_sessionId, arg_executable, arg_args);
+                  wrapped.add(0, null);
+                } catch (Throwable exception) {
+                  ArrayList<Object> wrappedError = wrapError(exception);
+                  wrapped = wrappedError;
+                }
+                reply.reply(wrapped);
+              });
+        } else {
+          channel.setMessageHandler(null);
+        }
+      }
+      {
+        BasicMessageChannel<Object> channel =
+            new BasicMessageChannel<>(
+                binaryMessenger,
+                "dev.flutter.pigeon.flutter_module.TerminalBridgeApi.sendInput" + messageChannelSuffix,
+                getCodec());
+        if (api != null) {
+          channel.setMessageHandler(
+              (message, reply) -> {
+                ArrayList<Object> wrapped = new ArrayList<>();
+                ArrayList<Object> args = (ArrayList<Object>) message;
+                Number arg_sessionIdArg = (Number) args.get(0);
+                long arg_sessionId = (arg_sessionIdArg == null) ? 0 : arg_sessionIdArg.longValue();
+                String arg_text = (String) args.get(1);
+                try {
+                  api.sendInput(arg_sessionId, arg_text);
+                  wrapped.add(0, null);
+                } catch (Throwable exception) {
+                  ArrayList<Object> wrappedError = wrapError(exception);
+                  wrapped = wrappedError;
+                }
+                reply.reply(wrapped);
+              });
+        } else {
+          channel.setMessageHandler(null);
+        }
+      }
+      {
+        BasicMessageChannel<Object> channel =
+            new BasicMessageChannel<>(
+                binaryMessenger,
+                "dev.flutter.pigeon.flutter_module.TerminalBridgeApi.openTerminalSheet" + messageChannelSuffix,
+                getCodec());
+        if (api != null) {
+          channel.setMessageHandler(
+              (message, reply) -> {
+                ArrayList<Object> wrapped = new ArrayList<>();
+                try {
+                  api.openTerminalSheet();
+                  wrapped.add(0, null);
+                } catch (Throwable exception) {
+                  ArrayList<Object> wrappedError = wrapError(exception);
+                  wrapped = wrappedError;
+                }
+                reply.reply(wrapped);
+              });
+        } else {
+          channel.setMessageHandler(null);
+        }
+      }
+      {
+        BasicMessageChannel<Object> channel =
+            new BasicMessageChannel<>(
+                binaryMessenger,
+                "dev.flutter.pigeon.flutter_module.TerminalBridgeApi.createAwarenessSession" + messageChannelSuffix,
+                getCodec());
+        if (api != null) {
+          channel.setMessageHandler(
+              (message, reply) -> {
+                ArrayList<Object> wrapped = new ArrayList<>();
+                try {
+                  Long output = api.createAwarenessSession();
+                  wrapped.add(0, output);
+                } catch (Throwable exception) {
+                  ArrayList<Object> wrappedError = wrapError(exception);
+                  wrapped = wrappedError;
+                }
+                reply.reply(wrapped);
+              });
+        } else {
+          channel.setMessageHandler(null);
+        }
+      }
     }
   }
 
@@ -481,6 +595,31 @@ public class TerminalBridgeApi {
               getCodec());
       channel.send(
           new ArrayList<>(Collections.singletonList(sessionsArg)),
+          channelReply -> {
+            if (channelReply instanceof List) {
+              List<Object> listReply = (List<Object>) channelReply;
+              if (listReply.size() > 1) {
+                callback.reply(
+                    new FlutterError((String) listReply.get(0), (String) listReply.get(1), listReply.get(2)));
+              } else {
+                callback.reply(null);
+              }
+            } else {
+              callback.reply(new FlutterError("channel-error", "Unable to establish connection on channel.", ""));
+            }
+          });
+    }
+
+    /** Called when a command finishes (OSC 133 prompt marker detected). */
+    public void onCommandCompleted(
+        @NonNull Long sessionIdArg, @NonNull Reply<Object> callback) {
+      BasicMessageChannel<Object> channel =
+          new BasicMessageChannel<>(
+              binaryMessenger,
+              "dev.flutter.pigeon.flutter_module.SoulBridgeApi.onCommandCompleted" + messageChannelSuffix,
+              getCodec());
+      channel.send(
+          new ArrayList<>(Collections.singletonList(sessionIdArg)),
           channelReply -> {
             if (channelReply instanceof List) {
               List<Object> listReply = (List<Object>) channelReply;
