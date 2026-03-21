@@ -4,7 +4,7 @@ buildscript {
         google()
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:8.13.2"
+        classpath "com.android.tools.build:gradle:8.9.2"
     }
 }
 
@@ -13,5 +13,18 @@ allprojects {
         google()
         mavenCentral()
         maven { url "https://jitpack.io" }
+    }
+}
+
+// Ensure Flutter plugin subprojects have compileSdk set
+subprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin("com.android.library")) {
+            project.android {
+                if (compileSdkVersion == null) {
+                    compileSdk 36
+                }
+            }
+        }
     }
 }
