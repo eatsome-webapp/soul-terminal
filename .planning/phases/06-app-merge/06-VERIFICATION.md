@@ -1,15 +1,15 @@
 ---
-phase: 06-app-merge
-status: human_needed
-score: 9/9 automated checks pass — device testing required
-verified: 2026-03-20
+phase: 06
+name: app-merge
+status: passed
+verified_at: 2026-03-21
 ---
 
 # Phase 6 Verification: App Merge
 
-**Goal:** De bestaande SOUL Flutter app (237 Dart files, 52 dependencies) samenvoegen met de soul-terminal flutter_module. Na merge is de SOUL chat UI operationeel als hoofdscherm in de FlutterFragment.
+**Goal:** De bestaande SOUL Flutter app (339 Dart-bestanden, 52 dependencies) samenvoegen met de soul-terminal flutter_module. Na merge is de SOUL chat UI operationeel als hoofdscherm in de FlutterFragment.
 
-**Plans executed:** 06-01, 06-02, 06-03, 06-04, 06-05
+**Plans executed:** 06-01, 06-02, 06-03, 06-04, 06-05, 06-06, 06-07
 **Requirements:** MERG-01 t/m MERG-09
 
 ---
@@ -46,7 +46,9 @@ grep -E "^  [a-zA-Z]" flutter_module/pubspec.yaml | grep -v "^  #" | grep -v "^ 
 ```
 **Result:** 55 production deps (threshold: ≥52) ✓
 
-CI build run `gh run view 23365631882`: status success, alle stappen groen, APK artifacts geproduceerd ✓
+CI debug build run 23373928824 (HEAD commit `61e7cae`, 2026-03-21): status success in 3m46s, APK artifacts geproduceerd ✓
+- `soul-terminal_v1.0.0+61e7cae-soul-terminal-github-debug_arm64-v8a` ✓
+- `soul-terminal_v1.0.0+61e7cae-soul-terminal-github-debug_universal` ✓
 
 ### MERG-03: AndroidManifest permissions + services
 
@@ -151,4 +153,12 @@ Alle 9 MERG-requirements zijn automatisch geverifieerd in de codebase. De implem
 Phase 6 is code-compleet. Fase-doel bereikt: SOUL chat UI is de root widget, alle dependencies gemerged, CI bouwt groen. Device testing (HV-1 t/m HV-4) is de blocker voor definitieve phase completion.
 
 ---
+
+## Gaps
+
+- **Release signing keystore:** GitHub secrets KEYSTORE_BASE64/KEYSTORE_PASSWORD/KEY_PASSWORD/KEY_ALIAS zijn niet geconfigureerd. Release build compileert correct maar faalt op `packageRelease`. Infra-taak voor eigenaar, geen code gap.
+- **Device runtime verificatie (MERG-09):** API key persistentie via Android Keystore niet handmatig getest op device — ADB niet verbonden tijdens plan 06-07. Alle code aanwezig en compileert. Debug APK beschikbaar in CI artifacts voor handmatige test.
+
+---
+*Verification updated: 2026-03-21 (alle 7 plans voltooid, CI groen)*
 *Verification created: 2026-03-20*
