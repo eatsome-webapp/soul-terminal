@@ -326,6 +326,14 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
 
 
 
+    /** Called from TermuxActivity touch listener to handle session swipe gestures. */
+    public void onTouchEvent(MotionEvent event) {
+        android.view.GestureDetector swipeDetector = mActivity.getSessionSwipeDetector();
+        if (swipeDetector != null) {
+            swipeDetector.onTouchEvent(event);
+        }
+    }
+
     @Override
     public boolean readControlKey() {
         return readExtraKeysSpecialButton(SpecialButton.CTRL) || mVirtualControlKeyDown;
