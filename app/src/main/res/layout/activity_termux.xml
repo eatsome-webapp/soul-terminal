@@ -28,7 +28,8 @@
             android:id="@+id/sheet_drag_handle"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:background="#0F0F23">
+            android:background="#0F0F23"
+            android:contentDescription="@string/desc_terminal_drag_handle">
             <View
                 android:layout_width="40dp"
                 android:layout_height="4dp"
@@ -63,7 +64,7 @@
                 android:layout_height="match_parent"
                 android:src="@drawable/ic_new_session"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="New session"
+                android:contentDescription="@string/desc_new_session"
                 app:tint="#E0E0E0" />
 
             <ImageButton
@@ -72,7 +73,7 @@
                 android:layout_height="match_parent"
                 android:src="@drawable/ic_settings"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Settings"
+                android:contentDescription="@string/desc_settings"
                 app:tint="#9E9E9E" />
 
         </LinearLayout>
@@ -101,6 +102,8 @@
                     android:focusableInTouchMode="true"
                     android:scrollbarThumbVertical="@drawable/terminal_scroll_shape"
                     android:scrollbars="vertical"
+                    android:contentDescription="@string/desc_terminal_output"
+                    android:accessibilityLiveRegion="polite"
                     tools:ignore="UnusedAttribute" />
 
                 <LinearLayout
@@ -141,7 +144,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/action_toggle_soft_keyboard" />
+                            android:text="@string/action_toggle_soft_keyboard"
+                            android:contentDescription="@string/desc_toggle_keyboard" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/toggle_soul_button"
@@ -149,7 +153,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="SOUL" />
+                            android:text="SOUL"
+                            android:contentDescription="@string/desc_toggle_soul" />
                     </LinearLayout>
                 </LinearLayout>
 
