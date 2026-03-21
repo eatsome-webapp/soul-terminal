@@ -2113,6 +2113,12 @@ public final class TerminalEmulator {
                     mSession.onDesktopNotification(textParameter);
                 }
                 break;
+            case 133: // OSC 133 — Shell prompt/command markers (FinalTerm/semantic prompt)
+                // D = command finished (shell prompt ready). A/B/C are informational.
+                if ("D".equals(textParameter) || textParameter.startsWith("D;")) {
+                    mSession.onCommandFinished();
+                }
+                break;
             case 10: // Set foreground color.
             case 11: // Set background color.
             case 12: // Set cursor color.

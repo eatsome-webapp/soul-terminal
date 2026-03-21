@@ -32,4 +32,9 @@ public abstract class TerminalOutput {
     /** Called when an OSC 9 desktop notification escape sequence is received. */
     public abstract void onDesktopNotification(String body);
 
+    /** Called when OSC 133;D is received (command finished, shell prompt ready). */
+    public void onCommandFinished() {
+        // Default no-op — overridden by TerminalSession
+    }
+
 }

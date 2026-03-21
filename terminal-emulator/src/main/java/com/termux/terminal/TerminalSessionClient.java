@@ -28,6 +28,8 @@ public interface TerminalSessionClient {
 
     void onDesktopNotification(@NonNull TerminalSession session, String body);
 
+    default void onCommandFinished(@NonNull TerminalSession session) {}
+
     void setTerminalShellPid(@NonNull TerminalSession session, int pid);
 
 

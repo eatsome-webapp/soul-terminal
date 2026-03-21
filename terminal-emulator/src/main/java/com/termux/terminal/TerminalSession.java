@@ -290,6 +290,11 @@ public final class TerminalSession extends TerminalOutput {
     }
 
     @Override
+    public void onCommandFinished() {
+        mClient.onCommandFinished(this);
+    }
+
+    @Override
     public void onColorsChanged() {
         mClient.onColorsChanged(this);
     }
