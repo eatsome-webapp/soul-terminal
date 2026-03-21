@@ -22,10 +22,10 @@ Een native terminal die naadloos integreert met SOUL — zodat Claude Code, de A
 - [x] Terminal quick wins: scrollback 20k, Claude Code extra keys, SOUL kleurthema — Validated in Phase 5: Terminal Quick Wins
 - [x] App merge: SOUL Flutter app (191 source files) gemerged in flutter_module — Validated in Phase 6: App Merge
 - [x] Bottom sheet terminal: CoordinatorLayout + BottomSheet met 4 states — Validated in Phase 7: Bottom Sheet Layout
+- [x] Session management: TabLayout tab bar, process namen, swipe, Pigeon API — Validated in Phase 8: Session Management
 
 ### Active
-- [ ] Pigeon bridge: terminal/sessie/output APIs
-- [ ] Session management UI (tab bar in sheet)
+- [ ] Pigeon bridge: terminal/sessie/output APIs (uitgebreid in Phase 8, consumer in Phase 9)
 - [ ] SOUL terminal awareness (AI kan terminal gebruiken)
 - [ ] Onboarding flow (eerste start → werkende dev environment)
 - [ ] UX polish (path tap-copy, native permission dialogs, landscape)
@@ -76,4 +76,4 @@ Een native terminal die naadloos integreert met SOUL — zodat Claude Code, de A
 | Pigeon bridge i.p.v. cmd-proxy | In-process communicatie, geen HTTP/token overhead, veiliger | ✓ Validated Phase 3 |
 
 ---
-*Last updated: 2026-03-21 after Phase 7: Bottom Sheet Layout completed*
+*Last updated: 2026-03-21 after Phase 8: Session Management completed*
