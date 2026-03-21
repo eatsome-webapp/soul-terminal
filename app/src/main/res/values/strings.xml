@@ -235,4 +235,15 @@
     <!-- Donate Preference -->
     <string name="donate_preference_title">Donate</string>
 
+    <!-- Accessibility descriptions -->
+    <string name="desc_terminal_drag_handle">Terminal openen</string>
+    <string name="desc_terminal_output">Terminal output</string>
+    <string name="desc_new_session">Nieuwe sessie</string>
+    <string name="desc_settings">Instellingen</string>
+    <string name="desc_toggle_keyboard">Toetsenbord wisselen</string>
+    <string name="desc_toggle_soul">SOUL AI wisselen</string>
+    <string name="announce_terminal_opened">Terminal geopend</string>
+    <string name="announce_terminal_closed">Terminal gesloten</string>
+    <string name="announce_terminal_half">Terminal half geopend</string>
+
 </resources>
