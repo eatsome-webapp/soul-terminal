@@ -23,11 +23,11 @@ Een native terminal die naadloos integreert met SOUL — zodat Claude Code, de A
 - [x] App merge: SOUL Flutter app (191 source files) gemerged in flutter_module — Validated in Phase 6: App Merge
 - [x] Bottom sheet terminal: CoordinatorLayout + BottomSheet met 4 states — Validated in Phase 7: Bottom Sheet Layout
 - [x] Session management: TabLayout tab bar, process namen, swipe, Pigeon API — Validated in Phase 8: Session Management
+- [x] Onboarding flow: setup wizard, package installatie, API key, HyperOS battery, OSC 133 config — Validated in Phase 10: Onboarding Flow
 
 ### Active
 - [ ] Pigeon bridge: terminal/sessie/output APIs (uitgebreid in Phase 8, consumer in Phase 9)
 - [ ] SOUL terminal awareness (AI kan terminal gebruiken)
-- [ ] Onboarding flow (eerste start → werkende dev environment)
 - [ ] UX polish (path tap-copy, native permission dialogs, landscape)
 
 ### Out of Scope
@@ -76,4 +76,4 @@ Een native terminal die naadloos integreert met SOUL — zodat Claude Code, de A
 | Pigeon bridge i.p.v. cmd-proxy | In-process communicatie, geen HTTP/token overhead, veiliger | ✓ Validated Phase 3 |
 
 ---
-*Last updated: 2026-03-21 after Phase 8: Session Management completed*
+*Last updated: 2026-03-21 after Phase 10: Onboarding Flow completed*
