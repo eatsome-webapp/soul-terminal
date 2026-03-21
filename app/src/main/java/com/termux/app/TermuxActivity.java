@@ -670,13 +670,16 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             @SuppressLint("RtlHardcoded")
             @Override
             public void handleOnBackPressed() {
-                if (getDrawer().isDrawerOpen(Gravity.LEFT)) {
-                    getDrawer().closeDrawers();
+                DrawerLayout drawer = getDrawer();
+                if (drawer != null && drawer.isDrawerOpen(Gravity.LEFT)) {
+                    drawer.closeDrawers();
                     return;
                 }
                 int state = mBottomSheetBehavior.getState();
                 if (state == BottomSheetBehavior.STATE_EXPANDED
-                        || state == BottomSheetBehavior.STATE_HALF_EXPANDED) {
+                        || state == BottomSheetBehavior.STATE_HALF_EXPANDED
+                        || state == BottomSheetBehavior.STATE_DRAGGING
+                        || state == BottomSheetBehavior.STATE_SETTLING) {
                     mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 } else {
                     finishActivityIfNotFinishing();
