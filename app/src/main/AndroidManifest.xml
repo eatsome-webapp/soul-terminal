@@ -264,6 +264,11 @@
             android:name="com.sec.android.support.multiwindow"
             android:value="true" />
 
+        <!-- Required for Flutter embedding v2 (add-to-app) -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+
     </application>
 
 </manifest>
