@@ -11,11 +11,19 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.graphics.Color;
+import android.graphics.RenderEffect;
+import android.graphics.Shader;
+import android.graphics.drawable.ColorDrawable;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -69,6 +77,7 @@ import java.util.List;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -165,6 +174,35 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             mProcessNamePollHandler.postDelayed(this, 2000);
         }
     };
+
+    public static final int HAPTIC_TICK = 0;
+    public static final int HAPTIC_CLICK = 1;
+
+    @SuppressLint("MissingPermission")
+    public void triggerHaptic(int type) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // API 29+: predefined effects
+            Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            if (vibrator == null) return;
+            int effectId = (type == HAPTIC_TICK)
+                ? VibrationEffect.EFFECT_TICK
+                : VibrationEffect.EFFECT_CLICK;
+            vibrator.vibrate(VibrationEffect.createPredefined(effectId));
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // API 26-28: one-shot vibration
+            Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            if (vibrator == null) return;
+            vibrator.vibrate(VibrationEffect.createOneShot(
+                type == HAPTIC_TICK ? 10L : 20L,
+                VibrationEffect.DEFAULT_AMPLITUDE
+            ));
+        } else {
+            // API 24-25: view-based fallback
+            if (mTerminalView != null) {
+                mTerminalView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            }
+        }
+    }
 
     /**
      * The terminal extra keys view.
