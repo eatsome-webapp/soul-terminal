@@ -4,19 +4,69 @@ publish_to: 'none'
 version: 1.0.0
 
 environment:
-  sdk: '>=3.4.0 <4.0.0'
+  sdk: ^3.11.1
 
 dependencies:
   flutter:
     sdk: flutter
   pigeon: ^22.7.0
+  flutter_riverpod: ^3.3.1
+  riverpod_annotation: ^4.0.2
+  anthropic_sdk_dart: ^1.3.2
+  drift: ^2.31.0
+  sqlite3_flutter_libs: ^0.5.0
+  flutter_markdown_plus: ^1.0.7
+  markdown: ^7.3.0
+  flutter_highlight: ^0.7.0
+  highlight: ^0.7.0
+  dynamic_color: ^1.8.1
+  share_plus: ^10.0.0
+  flutter_secure_storage: ^10.0.0
+  envied: ^1.3.3
+  go_router: ^17.1.0
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+  logger: ^2.5.0
+  mcp_dart: ^2.1.0
+  path_provider: ^2.1.0
+  uuid: ^4.5.0
+  connectivity_plus: ^6.0.0
+  glob: ^2.1.3
+  google_fonts: ^6.2.1
+  intl: ^0.20.2
+  objectbox: ^5.2.0
+  objectbox_flutter_libs: any
+  http: ^1.4.0
+  url_launcher: ^6.3.0
+  flutter_foreground_task: ^9.2.1
+  flutter_local_notifications: ^19.0.0
+  flutter_contacts: ^1.1.9+2
+  device_calendar_plus: ^0.3.4
+  notification_listener_service: ^0.3.5
+  permission_handler: ^11.3.0
+  device_info_plus: ^11.3.0
+  sentry_flutter: ^9.0.0
+  diff_match_patch: ^0.4.1
+  yaml: ^3.1.0
+  xterm: ^4.0.0
+  web_socket_channel: ^3.0.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  build_runner: ^2.4.0
+  drift_dev: ^2.31.0
+  freezed: ^3.2.5
+  json_serializable: ^6.8.0
+  riverpod_generator: ^4.0.3
+  envied_generator: ^1.3.3
+  flutter_lints: ^6.0.0
+  objectbox_generator: any
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/config/default_intervention_config.yaml
 
 module:
   androidX: true
