@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'core/di/providers.dart';
 import 'core/router/app_router.dart';
+import 'services/database/daos/settings_dao.dart';
 import 'core/sentry_config.dart';
 import 'core/theme/soul_theme.dart';
 import 'generated/terminal_bridge.g.dart';
@@ -75,17 +76,25 @@ Future<void> main() async {
     _logger.e('Failed to start foreground service: $error');
   }
 
-  // Determine initial route: existing users with projects go to conversation list,
-  // new users go to /chat/new where SOUL speaks first (demo mode).
+  // Check if setup wizard has been completed
+  final settingsDao = container.read(settingsDaoProvider);
+  final isSetupComplete = await settingsDao.getBool(SettingsKeys.setupCompleted) ?? false;
+
+  // Determine initial route: first-time users see setup wizard, returning users
+  // go to conversation list or /chat/new based on existing projects.
   String initialLocation;
-  try {
-    final projectDao = container.read(projectDaoProvider);
-    final activeProject = await projectDao.getActiveProject();
-    final hasProjects = activeProject != null;
-    initialLocation = (hasProjects && savedKey.isNotEmpty) ? '/' : '/chat/new';
-  } catch (error) {
-    _logger.e('Failed to check projects: $error');
-    initialLocation = '/chat/new';
+  if (!isSetupComplete) {
+    initialLocation = '/setup-wizard';
+  } else {
+    try {
+      final projectDao = container.read(projectDaoProvider);
+      final activeProject = await projectDao.getActiveProject();
+      final hasProjects = activeProject != null;
+      initialLocation = (hasProjects && savedKey.isNotEmpty) ? '/' : '/chat/new';
+    } catch (error) {
+      _logger.e('Failed to check projects: $error');
+      initialLocation = '/chat/new';
+    }
   }
 
   await SentryConfig.init(
