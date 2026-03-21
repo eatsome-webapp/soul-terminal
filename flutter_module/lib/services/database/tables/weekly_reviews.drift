@@ -1,0 +1,8 @@
+CREATE TABLE weekly_reviews (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  week_start TEXT NOT NULL,
+  content TEXT NOT NULL,
+  metrics_summary TEXT,
+  momentum_score REAL,
+  created_at INTEGER NOT NULL
+);

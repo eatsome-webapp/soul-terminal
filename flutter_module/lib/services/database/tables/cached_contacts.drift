@@ -1,0 +1,8 @@
+CREATE TABLE cached_contacts (
+  id TEXT NOT NULL PRIMARY KEY,
+  display_name TEXT NOT NULL,
+  phones TEXT,
+  emails TEXT,
+  last_synced INTEGER NOT NULL
+);
+
