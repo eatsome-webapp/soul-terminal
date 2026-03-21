@@ -6,6 +6,7 @@ import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.res.Configuration;
 import androidx.core.content.ContextCompat;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -170,6 +171,12 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     /** Prompt interceptor for y/n dialog detection. */
     private com.termux.app.terminal.PromptInterceptor mPromptInterceptor;
 
+    /** Whether the current orientation is landscape. */
+    private boolean mIsLandscape = false;
+
+    /** OnBackPressedCallback registered in setupBottomSheet, kept to prevent stacking. */
+    private OnBackPressedCallback mSheetBackCallback;
+
     private final Runnable mProcessNamePoller = new Runnable() {
         @Override
         public void run() {
@@ -300,6 +307,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         super.onCreate(savedInstanceState);
 
+        mIsLandscape = (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
+
         setContentView(R.layout.activity_termux);
 
         // Load termux shared preferences
@@ -313,7 +322,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         setMargins();
         setupFlutterFragment();
-        setupBottomSheet();
+        if (!mIsLandscape) {
+            setupBottomSheet();
+        }
         mPromptInterceptor = new com.termux.app.terminal.PromptInterceptor(this);
         setupSessionTabBar();
 
@@ -461,6 +472,69 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         } catch (Exception e) {
             // ignore.
         }
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        boolean wasLandscape = mIsLandscape;
+        mIsLandscape = (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE);
+
+        if (wasLandscape == mIsLandscape) return; // no orientation change
+
+        // Re-inflate layout — Android picks layout-land/ for landscape automatically
+        setContentView(R.layout.activity_termux);
+
+        // Rebind all view references
+        rebindViewsAfterLayoutChange();
+
+        if (!mIsLandscape) {
+            setupBottomSheet();
+        }
+        setupSessionTabBar();
+
+        // Re-attach FlutterFragment
+        FlutterFragment flutterFragment = (FlutterFragment) getSupportFragmentManager()
+            .findFragmentByTag(FLUTTER_FRAGMENT_TAG);
+        if (flutterFragment == null) {
+            flutterFragment = FlutterFragment.withCachedEngine(TermuxApplication.FLUTTER_ENGINE_ID).build();
+            getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.flutter_container, flutterFragment, FLUTTER_FRAGMENT_TAG)
+                .commit();
+        }
+
+        if (mTerminalView != null) {
+            mTerminalView.updateSize();
+        }
+
+        Logger.logDebug(LOG_TAG, "Layout changed to " + (mIsLandscape ? "landscape" : "portrait"));
+    }
+
+    private void rebindViewsAfterLayoutChange() {
+        mTerminalView = findViewById(R.id.terminal_view);
+        if (mTerminalView != null && mTermuxTerminalViewClient != null) {
+            mTerminalView.setTerminalViewClient(mTermuxTerminalViewClient);
+        }
+        if (mTerminalView != null && mTermuxTerminalSessionActivityClient != null) {
+            TerminalSession currentSession = getCurrentSession();
+            if (currentSession != null) {
+                mTerminalView.attachSession(currentSession);
+            }
+        }
+        // Re-bind terminal view touch listener for session swipe
+        if (mTerminalView != null) {
+            mTerminalView.setOnTouchListener((v, event) -> {
+                if (mTermuxTerminalViewClient != null) {
+                    mTermuxTerminalViewClient.onTouchEvent(event);
+                }
+                return false;
+            });
+        }
+    }
+
+    public boolean isLandscape() {
+        return mIsLandscape;
     }
 
     @Override
@@ -694,7 +768,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     private void setSoulToggleButtonView() {
         findViewById(R.id.toggle_soul_button).setOnClickListener(v -> {
             getDrawer().closeDrawers();
-            if (mBottomSheetBehavior != null) {
+            if (!isLandscape() && mBottomSheetBehavior != null) {
                 int state = mBottomSheetBehavior.getState();
                 if (state == BottomSheetBehavior.STATE_COLLAPSED || state == BottomSheetBehavior.STATE_HIDDEN) {
                     mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
@@ -726,6 +800,11 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     }
 
     private void setupBottomSheet() {
+        if (mSheetBackCallback != null) {
+            mSheetBackCallback.remove();
+            mSheetBackCallback = null;
+        }
+
         View sheetContainer = findViewById(R.id.terminal_sheet_container);
         mBottomSheetBehavior = BottomSheetBehavior.from(sheetContainer);
         mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -767,7 +846,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         });
 
         // Back button handling
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+        mSheetBackCallback = new OnBackPressedCallback(true) {
             @SuppressLint("RtlHardcoded")
             @Override
             public void handleOnBackPressed() {
@@ -786,7 +865,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                     finishActivityIfNotFinishing();
                 }
             }
-        });
+        };
+        getOnBackPressedDispatcher().addCallback(this, mSheetBackCallback);
 
         // Velocity-based fling on drag handle
         View dragHandle = findViewById(R.id.sheet_drag_handle);
@@ -819,6 +899,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     }
 
     private void applyBlurForOffset(float slideOffset) {
+        if (mIsLandscape) return; // no blur in landscape (no bottom sheet)
         // slideOffset: -1.0 = hidden, 0.0 = collapsed (peek), 1.0 = fully expanded
         float clamped = Math.max(0f, Math.min(1f, slideOffset));
         View flutterContainer = findViewById(R.id.flutter_container);
