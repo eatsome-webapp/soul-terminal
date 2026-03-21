@@ -314,6 +314,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         setMargins();
         setupFlutterFragment();
         setupBottomSheet();
+        mPromptInterceptor = new com.termux.app.terminal.PromptInterceptor(this);
         setupSessionTabBar();
 
         if (savedInstanceState != null) {
@@ -449,6 +450,10 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             // Do not leave service and session clients with references to activity.
             mTermuxService.unsetTermuxTerminalSessionClient();
             mTermuxService = null;
+        }
+
+        if (mPromptInterceptor != null) {
+            mPromptInterceptor.teardown();
         }
 
         try {
@@ -749,7 +754,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
             @Override
             public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                // No-op — terminal resizes only on state settle, not during animation
+                applyBlurForOffset(slideOffset);
             }
         });
 
@@ -782,6 +787,35 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                 }
             }
         });
+    }
+
+    private void applyBlurForOffset(float slideOffset) {
+        // slideOffset: -1.0 = hidden, 0.0 = collapsed (peek), 1.0 = fully expanded
+        float clamped = Math.max(0f, Math.min(1f, slideOffset));
+        View flutterContainer = findViewById(R.id.flutter_container);
+        if (flutterContainer == null) return;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            float blurRadius = clamped * 10f; // 0-10px progressive
+            applyBlurEffect(flutterContainer, blurRadius);
+        } else {
+            // Fallback: semi-transparent dark scrim
+            int alpha = (int) (clamped * 0x80); // 0x00 to 0x80
+            flutterContainer.setForeground(
+                new ColorDrawable(Color.argb(alpha, 0, 0, 0))
+            );
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private void applyBlurEffect(View target, float radius) {
+        if (radius <= 0f) {
+            target.setRenderEffect(null);
+        } else {
+            target.setRenderEffect(
+                RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.CLAMP)
+            );
+        }
     }
 
     private void setupSessionTabBar() {
@@ -1325,6 +1359,10 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
     public com.termux.bridge.SoulBridgeController getSoulBridgeController() {
         return mSoulBridgeController;
+    }
+
+    public com.termux.app.terminal.PromptInterceptor getPromptInterceptor() {
+        return mPromptInterceptor;
     }
 
     public void onCommandFinished(@NonNull com.termux.terminal.TerminalSession session) {
