@@ -200,6 +200,15 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
   }
 
   Widget _buildInstallingStep(SetupWizardState state, SetupWizard notifier) {
+    final scrollController = ScrollController();
+
+    // Auto-scroll to bottom when new log entries arrive
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (scrollController.hasClients) {
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+      }
+    });
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -230,14 +239,18 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
                       ),
                     )
                   : ListView.builder(
+                      controller: scrollController,
                       itemCount: state.installLog.length,
                       itemBuilder: (context, index) {
-                        return Text(
-                          state.installLog[index],
-                          style: const TextStyle(
-                            color: _textPrimary,
-                            fontFamily: 'monospace',
-                            fontSize: 13,
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 1),
+                          child: Text(
+                            state.installLog[index],
+                            style: const TextStyle(
+                              color: _textPrimary,
+                              fontFamily: 'monospace',
+                              fontSize: 13,
+                            ),
                           ),
                         );
                       },
@@ -264,7 +277,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
             ),
             const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: notifier.startInstallation,
+              onPressed: notifier.retryInstallation,
               style: ElevatedButton.styleFrom(backgroundColor: _accent),
               child: const Text('Opnieuw proberen'),
             ),
@@ -274,6 +287,12 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
               onPressed: notifier.startInstallation,
               style: ElevatedButton.styleFrom(backgroundColor: _accent),
               child: const Text('Start installatie'),
+            ),
+          if (state.installSuccess)
+            ElevatedButton(
+              onPressed: notifier.proceedFromInstall,
+              style: ElevatedButton.styleFrom(backgroundColor: _accent),
+              child: const Text('Doorgaan'),
             ),
         ],
       ),

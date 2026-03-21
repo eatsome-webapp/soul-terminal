@@ -7,6 +7,7 @@ import '../../core/di/providers.dart';
 import '../../generated/system_bridge.g.dart';
 import '../../generated/terminal_bridge.g.dart';
 import '../../services/auth/api_key_service.dart';
+import '../../services/awareness/soul_awareness_service.dart';
 import '../../services/database/daos/settings_dao.dart';
 
 part 'setup_wizard_provider.g.dart';
@@ -127,35 +128,53 @@ class SetupWizard extends _$SetupWizard {
 
     state = state.copyWith(
       isInstalling: true,
-      installLog: [],
+      installLog: ['Installatie starten...'],
       clearInstallError: true,
     );
 
+    // Initialize awareness session for output streaming
+    final awareness = ref.read(soulAwarenessProvider.notifier);
     try {
-      final terminalApi = TerminalBridgeApi();
+      await awareness.initialize();
+      addInstallLog('Terminal sessie aangemaakt');
+    } catch (e) {
+      state = state.copyWith(
+        isInstalling: false,
+        installError: 'Kon terminal sessie niet aanmaken: $e',
+      );
+      return;
+    }
 
-      // Create a session to install in
-      final sessionId = await terminalApi.createSession();
-      _logger.i('Created install session: $sessionId');
+    // Listen to output stream for real-time progress
+    final subscription = awareness.outputStream.listen((line) {
+      if (line.trim().isNotEmpty) {
+        addInstallLog(line.trim());
+      }
+    });
+
+    try {
+      final bridge = TerminalBridgeApi();
+      final sessionId = ref.read(soulAwarenessProvider).awarenessSessionId;
 
       if (profile == SetupProfile.claudeCode) {
-        // Step 1: Install dependencies via pkg
-        addInstallLog('Installeren: nodejs git gh...');
-        await terminalApi.runCommand(sessionId, 'pkg', ['install', '-y', 'nodejs', 'git', 'gh']);
+        addInstallLog('Packages installeren: nodejs, git, gh...');
+        await bridge.sendInput(sessionId!, 'pkg install -y nodejs git gh && echo "SOUL_PKG_DONE"\n');
+        await _waitForMarker('SOUL_PKG_DONE', timeout: const Duration(minutes: 5));
+        addInstallLog('Packages geïnstalleerd');
 
-        // Wait a moment for pkg to start
-        await Future.delayed(const Duration(seconds: 2));
-
-        // Step 2: Install Claude Code via npm
-        addInstallLog('Installeren: @anthropic-ai/claude-code...');
-        await terminalApi.runCommand(sessionId, 'npm', ['install', '-g', '@anthropic-ai/claude-code']);
+        addInstallLog('Claude Code installeren via npm...');
+        await bridge.sendInput(sessionId, 'npm install -g @anthropic-ai/claude-code && echo "SOUL_NPM_DONE"\n');
+        await _waitForMarker('SOUL_NPM_DONE', timeout: const Duration(minutes: 5));
+        addInstallLog('Claude Code geïnstalleerd');
       } else if (profile == SetupProfile.python) {
-        addInstallLog('Installeren: python git...');
-        await terminalApi.runCommand(sessionId, 'pkg', ['install', '-y', 'python', 'git']);
+        addInstallLog('Packages installeren: python, pip, git...');
+        await bridge.sendInput(sessionId!, 'pkg install -y python pip git && echo "SOUL_PKG_DONE"\n');
+        await _waitForMarker('SOUL_PKG_DONE', timeout: const Duration(minutes: 5));
+        addInstallLog('Packages geïnstalleerd');
       }
 
-      addInstallLog('Installatie voltooid.');
       state = state.copyWith(isInstalling: false, installSuccess: true);
+      addInstallLog('Installatie voltooid!');
       _advanceToNextStep();
     } catch (error) {
       _logger.e('Installation failed: $error');
@@ -163,6 +182,40 @@ class SetupWizard extends _$SetupWizard {
         isInstalling: false,
         installError: 'Installatie mislukt: $error',
       );
+    } finally {
+      await subscription.cancel();
+    }
+  }
+
+  void retryInstallation() {
+    state = state.copyWith(installError: null, installLog: []);
+    startInstallation();
+  }
+
+  void proceedFromInstall() {
+    _advanceToNextStep();
+  }
+
+  /// Wait for a marker string in the output stream, with timeout.
+  /// Used instead of runCommand() because OSC 133 is not yet configured.
+  Future<void> _waitForMarker(String marker, {Duration timeout = const Duration(minutes: 5)}) async {
+    final completer = Completer<void>();
+    final awareness = ref.read(soulAwarenessProvider.notifier);
+    late final StreamSubscription<String> sub;
+    sub = awareness.outputStream.listen((line) {
+      if (line.contains(marker)) {
+        sub.cancel();
+        if (!completer.isCompleted) completer.complete();
+      }
+    });
+    try {
+      await completer.future.timeout(timeout, onTimeout: () {
+        sub.cancel();
+        addInstallLog('Installatie timeout — probeer later handmatig');
+      });
+    } catch (e) {
+      sub.cancel();
+      rethrow;
     }
   }
 
@@ -173,10 +226,20 @@ class SetupWizard extends _$SetupWizard {
   Future<String?> validateApiKey(String key) async {
     state = state.copyWith(isLoading: true);
     try {
-      final error = await ApiKeyService().validateAndSaveKey(key);
+      // Format check first
+      if (!key.startsWith('sk-ant-') || key.length < 20) {
+        state = state.copyWith(isLoading: false);
+        return 'Ongeldig formaat — key moet beginnen met sk-ant-';
+      }
+      // Validate via API + save
+      final apiKeyService = ApiKeyService();
+      final error = await apiKeyService.validateAndSaveKey(key);
       if (error != null) {
+        state = state.copyWith(isLoading: false);
         return error;
       }
+      // Update the apiKeyNotifier so the rest of the app sees the key
+      ref.read(apiKeyNotifierProvider.notifier).setKey(key);
       state = state.copyWith(apiKeyValid: true, isLoading: false);
       _advanceToNextStep();
       return null;
