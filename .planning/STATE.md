@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T10:58:21.901Z"
+last_updated: "2026-03-21T12:20:48.958Z"
 progress:
   total_phases: 11
   completed_phases: 8
-  total_plans: 30
+  total_plans: 33
   completed_plans: 30
 ---
 
@@ -18,12 +18,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Een native terminal die naadloos integreert met SOUL — terminal + AI brain in één app.
-**Current focus:** Phase 08 — session-management
+**Current focus:** Phase 09 — soul-terminal-awareness
 
 ## Current Position
 
-Phase: 08 (session-management) — COMPLETE
-Plan: 3 of 3 — DONE
+Phase: 09 (soul-terminal-awareness) — EXECUTING
+Plan: 1 of 3
 
 ## v1.1 Phase Overview
 
