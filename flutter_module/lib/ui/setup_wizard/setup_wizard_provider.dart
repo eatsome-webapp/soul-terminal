@@ -280,23 +280,34 @@ class SetupWizard extends _$SetupWizard {
   }
 
   Future<void> writeShellConfig() async {
+    state = state.copyWith(isLoading: true);
+    final bridge = TerminalBridgeApi();
+    const homePath = '/data/data/com.soul.terminal/files/home';
+
     try {
-      const oscConfig = '\n# SOUL Terminal: OSC 133 command tracking\n'
-          'precmd() { printf "\\033]133;D\\007"; }\n'
-          'preexec() { printf "\\033]133;C\\007"; }\n';
+      // Bash: PROMPT_COMMAND for OSC 133 completion markers
+      const bashConfig = '\n# SOUL Terminal: OSC 133 command completion markers\n'
+          'PROMPT_COMMAND=\'printf "\\033]133;D\\007"\'\n';
+      await bridge.writeShellConfig('$homePath/.bashrc', bashConfig);
+      _logger.i('OSC 133 config written to .bashrc');
 
-      final terminalApi = TerminalBridgeApi();
+      // Zsh: precmd hook for OSC 133 completion markers
+      const zshConfig = '\n# SOUL Terminal: OSC 133 command completion markers\n'
+          'precmd() { printf "\\033]133;D\\007"; }\n';
+      await bridge.writeShellConfig('$homePath/.zshrc', zshConfig);
+      _logger.i('OSC 133 config written to .zshrc');
 
-      final homeDir = '/data/data/com.termux/files/home';
-      await terminalApi.writeShellConfig('$homeDir/.bashrc', oscConfig);
-      await terminalApi.writeShellConfig('$homeDir/.zshrc', oscConfig);
-
-      state = state.copyWith(shellConfigDone: true);
-      _logger.i('Shell config written successfully');
-      _advanceToNextStep();
+      state = state.copyWith(isLoading: false, shellConfigDone: true);
     } catch (error) {
       _logger.e('Failed to write shell config: $error');
+      // Non-fatal: user can configure manually later
+      state = state.copyWith(isLoading: false, shellConfigDone: true);
+      addInstallLog('Shell configuratie kon niet automatisch geschreven worden. Voeg handmatig toe aan .bashrc: PROMPT_COMMAND=\'printf "\\033]133;D\\007"\'');
     }
+  }
+
+  void proceedFromShellConfig() {
+    _advanceToNextStep();
   }
 
   Future<void> completeSetup() async {
