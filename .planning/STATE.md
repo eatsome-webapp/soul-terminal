@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T10:35:00.000Z"
+last_updated: "2026-03-21T11:20:00.000Z"
 progress:
   total_phases: 11
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 27
-  completed_plans: 25
+  completed_plans: 27
 ---
 
 # Project State
@@ -18,13 +18,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Een native terminal die naadloos integreert met SOUL — terminal + AI brain in één app.
-**Current focus:** Phase 07 — bottom-sheet-layout
+**Current focus:** Phase 08 — session-management
 
 ## Current Position
 
-Phase: 07 (bottom-sheet-layout) — EXECUTING
-Plan: 1 of 3 — COMPLETE (07-01: CoordinatorLayout + BottomSheet)
-Next: Plan 2 of 3
+Phase: 07 (bottom-sheet-layout) — COMPLETE
+Phase: 08 (session-management) — NEXT
+Next: Plan 08-01
 
 ## v1.1 Phase Overview
 
@@ -89,6 +89,13 @@ Next: Plan 2 of 3
 - setupBottomSheet() in TermuxActivity: sheet init + IME inset listener + OnBackPressedCallback
 - getBottomSheetBehavior() public accessor beschikbaar voor Phase 8/9
 - onSaveInstanceState slaat "sheet_state" op; onCreate herstelt na process death
+
+### From 07-03
+
+- Back button callback: null-safe `getDrawer()` check + STATE_DRAGGING/SETTLING treated as non-collapsed
+- BottomSheetCallback calls `mTerminalView.updateSize()` on all stable states (not DRAGGING/SETTLING) to debounce PTY resize
+- TermuxActivityRootView.onGlobalLayout() stubbed — old IME workaround replaced by WindowInsetsCompat on sheet container
+- Phase 07 COMPLETE — all 6 LAYT requirements delivered (LAYT-01..06)
 
 ### From 07-02
 
