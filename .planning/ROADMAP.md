@@ -119,7 +119,7 @@
 
 ### Phase 7 — Bottom Sheet Layout
 
-**Status:** Pending
+**Status:** In Progress (plan 07-01 complete — CoordinatorLayout + BottomSheet structure done)
 **Requirements:** LAYT-01, LAYT-02, LAYT-03, LAYT-04, LAYT-05, LAYT-06 (6 requirements)
 
 **What:** CoordinatorLayout refactor van `TermuxActivity`. Flutter (SOUL chat) wordt het fullscreen hoofdscherm; de terminal schuift omhoog als een persistent BottomSheet. Legt de visuele architectuur voor alle volgende fasen.

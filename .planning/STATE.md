@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T09:55:08.543Z"
+last_updated: "2026-03-21T10:35:00.000Z"
 progress:
   total_phases: 11
   completed_phases: 6
@@ -23,7 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 07 (bottom-sheet-layout) — EXECUTING
-Plan: 2 of 3
+Plan: 1 of 3 — COMPLETE (07-01: CoordinatorLayout + BottomSheet)
+Next: Plan 2 of 3
 
 ## v1.1 Phase Overview
 
@@ -77,6 +78,17 @@ Plan: 2 of 3
 - NDK build tasks moeten expliciet afhangen van downloadBootstraps (release build volgorde issue)
 - Release build signing vereist KEYSTORE_BASE64 secret configuratie in GitHub repo
 - Debug CI build GROEN: soul-terminal_v1.0.0+047fa33-soul-terminal-github-debug_arm64-v8a.apk
+
+### From 07-01
+
+- CoordinatorLayout is root van activity_termux.xml (id: activity_termux_root_view — zelfde ID voor minimale downstream impact)
+- flutter_container is fullscreen achtergrond (match_parent, altijd visible, geen toggle meer)
+- terminal_sheet_container: LinearLayout met BottomSheetBehavior — peekHeight=48dp, halfExpandedRatio=0.4, hideable=true, fitToContents=false
+- sheet_drag_handle: 48dp FrameLayout (#0F0F23) + pill View (#6C63FF) als eerste child van sheet
+- TermuxActivityRootView klasse bestaat nog als Java file maar is niet meer gerefereerd vanuit TermuxActivity
+- setupBottomSheet() in TermuxActivity: sheet init + IME inset listener + OnBackPressedCallback
+- getBottomSheetBehavior() public accessor beschikbaar voor Phase 8/9
+- onSaveInstanceState slaat "sheet_state" op; onCreate herstelt na process death
 
 ### From 07-02
 
