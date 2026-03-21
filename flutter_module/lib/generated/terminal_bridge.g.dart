@@ -201,6 +201,75 @@ class TerminalBridgeApi {
       return (pigeonVar_replyList[0]! as List<Object?>).cast<SessionInfo>();
     }
   }
+
+  /// Close a terminal session by index. Switches to adjacent session.
+  Future<void> closeSession(int id) async {
+    final String pigeonVar_channelName = 'dev.flutter.pigeon.flutter_module.TerminalBridgeApi.closeSession$pigeonVar_messageChannelSuffix';
+    final BasicMessageChannel<Object?> pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final List<Object?>? pigeonVar_replyList =
+        await pigeonVar_channel.send(<Object?>[id]) as List<Object?>?;
+    if (pigeonVar_replyList == null) {
+      throw _createConnectionError(pigeonVar_channelName);
+    } else if (pigeonVar_replyList.length > 1) {
+      throw PlatformException(
+        code: pigeonVar_replyList[0]! as String,
+        message: pigeonVar_replyList[1] as String?,
+        details: pigeonVar_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
+
+  /// Switch to a terminal session by index.
+  Future<void> switchSession(int id) async {
+    final String pigeonVar_channelName = 'dev.flutter.pigeon.flutter_module.TerminalBridgeApi.switchSession$pigeonVar_messageChannelSuffix';
+    final BasicMessageChannel<Object?> pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final List<Object?>? pigeonVar_replyList =
+        await pigeonVar_channel.send(<Object?>[id]) as List<Object?>?;
+    if (pigeonVar_replyList == null) {
+      throw _createConnectionError(pigeonVar_channelName);
+    } else if (pigeonVar_replyList.length > 1) {
+      throw PlatformException(
+        code: pigeonVar_replyList[0]! as String,
+        message: pigeonVar_replyList[1] as String?,
+        details: pigeonVar_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
+
+  /// Rename a terminal session by index.
+  Future<void> renameSession(int id, String name) async {
+    final String pigeonVar_channelName = 'dev.flutter.pigeon.flutter_module.TerminalBridgeApi.renameSession$pigeonVar_messageChannelSuffix';
+    final BasicMessageChannel<Object?> pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final List<Object?>? pigeonVar_replyList =
+        await pigeonVar_channel.send(<Object?>[id, name]) as List<Object?>?;
+    if (pigeonVar_replyList == null) {
+      throw _createConnectionError(pigeonVar_channelName);
+    } else if (pigeonVar_replyList.length > 1) {
+      throw PlatformException(
+        code: pigeonVar_replyList[0]! as String,
+        message: pigeonVar_replyList[1] as String?,
+        details: pigeonVar_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
 }
 
 /// Flutter API: Java calls these methods, Dart implements them.
@@ -213,6 +282,9 @@ abstract class SoulBridgeApi {
 
   /// Called when the active session changes.
   void onSessionChanged(SessionInfo info);
+
+  /// Called when the session list changes (add/remove/rename).
+  void onSessionListChanged(List<SessionInfo> sessions);
 
   static void setUp(SoulBridgeApi? api, {BinaryMessenger? binaryMessenger, String messageChannelSuffix = ''}) {
     final String messageChannelSuffixValue = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
@@ -255,6 +327,29 @@ abstract class SoulBridgeApi {
           assert(arg_info != null, 'Argument for dev.flutter.pigeon.flutter_module.SoulBridgeApi.onSessionChanged was null, expected non-null SessionInfo.');
           try {
             api.onSessionChanged(arg_info!);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }
+        });
+      }
+    }
+    {
+      final BasicMessageChannel<Object?> pigeonVar_channel = BasicMessageChannel<Object?>(
+        'dev.flutter.pigeon.flutter_module.SoulBridgeApi.onSessionListChanged$messageChannelSuffixValue',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          assert(message != null, 'Argument for dev.flutter.pigeon.flutter_module.SoulBridgeApi.onSessionListChanged was null.');
+          final List<Object?> args = (message as List<Object?>?)!;
+          final List<SessionInfo?>? arg_sessions = (args[0] as List<Object?>?)?.cast<SessionInfo?>();
+          assert(arg_sessions != null, 'Argument for dev.flutter.pigeon.flutter_module.SoulBridgeApi.onSessionListChanged was null, expected non-null List<SessionInfo>.');
+          try {
+            api.onSessionListChanged(arg_sessions!.cast<SessionInfo>());
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
