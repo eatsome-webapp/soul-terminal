@@ -7,6 +7,6 @@
     "verifier": true,
     "parallelization": true,
     "branching_strategy": "none",
-    "_auto_chain_active": false
+    "_auto_chain_active": true
   }
 }
