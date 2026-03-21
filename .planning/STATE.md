@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T05:58:10.810Z"
+last_updated: "2026-03-21T06:11:05.081Z"
 progress:
   total_phases: 11
   completed_phases: 5
   total_plans: 24
-  completed_plans: 22
+  completed_plans: 23
 ---
 
 # Project State
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 06 (app-merge) — EXECUTING
-Plan: 6 of 7 (06-01, 06-02, 06-03, 06-04, 06-05 completed)
+Plan: 7 of 7 (06-01, 06-02, 06-03, 06-04, 06-05, 06-06 completed)
 
 ## v1.1 Phase Overview
 
@@ -64,3 +64,8 @@ Plan: 6 of 7 (06-01, 06-02, 06-03, 06-04, 06-05 completed)
 - `RenderEffect` blur API 31+ — al beschikbaar in bestaande dependencies
 - ProviderScope refactoring (MERG-04) is de zwaarste merge taak
 - Pigeon moet ^26.x zijn voor compatibiliteit met drift_dev ^2.31.0 (analyzer constraint conflict)
+
+### From 06-06
+- UncontrolledProviderScope pattern: ProviderContainer aangemaakt in main() vóór runApp(), store override vóór eerste widget render
+- SoulBridgeApi geïmplementeerd in root SoulApp widget — langste lifecycle, altijd actief
+- Init-volgorde: ObjectBox → ProviderContainer → API key → OpenClaw → Notifications → ForegroundService → route check → SentryConfig.init(runApp)

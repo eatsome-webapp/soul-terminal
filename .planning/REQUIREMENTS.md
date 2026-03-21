@@ -18,7 +18,7 @@ Requirements for milestone v1.1: Van terminal naar AI coding omgeving.
 
 - [x] **MERG-01**: SOUL app Dart code (339 files) gekopieerd naar soul-terminal flutter_module
 - [x] **MERG-02**: pubspec.yaml gemerged (52 deps incl. ObjectBox, Drift, foreground_task)
-- [ ] **MERG-03**: AndroidManifest.xml gemerged (permissies, services, boot receiver)
+- [x] **MERG-03**: AndroidManifest.xml gemerged (permissies, services, boot receiver)
 - [x] **MERG-04**: ProviderScope gerefactored voor FlutterFragment context (niet main.dart)
 - [x] **MERG-05**: Database pad geunificeerd (Drift + ObjectBox werken in com.soul.terminal context)
 - [x] **MERG-06**: Foreground service coëxistentie met Termux's eigen service
@@ -115,7 +115,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TERM-07 | Phase 5 — Terminal Quick Wins | Pending |
 | MERG-01 | Phase 6 — App Merge | Complete |
 | MERG-02 | Phase 6 — App Merge | Complete |
-| MERG-03 | Phase 6 — App Merge | Pending |
+| MERG-03 | Phase 6 — App Merge | Complete |
 | MERG-04 | Phase 6 — App Merge | Complete |
 | MERG-05 | Phase 6 — App Merge | Complete |
 | MERG-06 | Phase 6 — App Merge | Complete |
