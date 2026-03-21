@@ -12,6 +12,7 @@ import '../../ui/shell/app_shell.dart';
 import '../../ui/settings/settings_screen.dart';
 import '../../ui/vessels/vessel_settings_screen.dart';
 import '../../ui/projects/project_dashboard_screen.dart';
+import '../../ui/setup_wizard/setup_wizard_screen.dart';
 
 GoRouter createAppRouter({String initialLocation = '/'}) => GoRouter(
       initialLocation: initialLocation,
@@ -86,6 +87,10 @@ GoRouter createAppRouter({String initialLocation = '/'}) => GoRouter(
         GoRoute(
           path: '/onboarding',
           builder: (context, state) => const OnboardingScreen(),
+        ),
+        GoRoute(
+          path: '/setup-wizard',
+          builder: (context, state) => const SetupWizardScreen(),
         ),
         GoRoute(
           path: '/settings',
