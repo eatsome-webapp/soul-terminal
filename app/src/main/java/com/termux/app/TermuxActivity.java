@@ -101,6 +101,7 @@ import com.termux.shared.termux.shell.command.runner.terminal.TermuxSession;
 import io.flutter.embedding.android.FlutterFragment;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.embedding.engine.FlutterEngineCache;
+import io.flutter.embedding.engine.dart.DartExecutor;
 
 /**
  * A terminal emulator activity.
@@ -772,12 +773,24 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                 .shouldAttachEngineToActivity(true)
                 .build();
 
+            // Use commitNow() so the fragment is attached synchronously —
+            // plugins receive Activity context before Dart code runs.
             getSupportFragmentManager()
                 .beginTransaction()
                 .add(R.id.flutter_container, flutterFragment, FLUTTER_FRAGMENT_TAG)
-                .commit();
+                .commitNow();
 
-            Logger.logDebug(LOG_TAG, "FlutterFragment added to flutter_container");
+            // Execute Dart entrypoint AFTER fragment attachment so platform
+            // channel plugins (flutter_secure_storage, etc.) have Activity context.
+            FlutterEngine engine = FlutterEngineCache.getInstance()
+                .get(TermuxApplication.FLUTTER_ENGINE_ID);
+            if (engine != null && !engine.getDartExecutor().isExecutingDart()) {
+                engine.getDartExecutor().executeDartEntrypoint(
+                    DartExecutor.DartEntrypoint.createDefault()
+                );
+            }
+
+            Logger.logDebug(LOG_TAG, "FlutterFragment added and Dart entrypoint executed");
         } else {
             Logger.logWarn(LOG_TAG, "FlutterEngine not yet cached, FlutterFragment not added");
         }

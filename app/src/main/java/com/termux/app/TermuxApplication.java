@@ -5,7 +5,7 @@ import android.content.Context;
 
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.embedding.engine.FlutterEngineCache;
-import io.flutter.embedding.engine.dart.DartExecutor;
+
 
 import com.termux.BuildConfig;
 import com.termux.shared.errors.Error;
@@ -85,11 +85,8 @@ public class TermuxApplication extends Application {
     private void preWarmFlutterEngine() {
         try {
             FlutterEngine flutterEngine = new FlutterEngine(this);
-            flutterEngine.getDartExecutor().executeDartEntrypoint(
-                DartExecutor.DartEntrypoint.createDefault()
-            );
             FlutterEngineCache.getInstance().put(FLUTTER_ENGINE_ID, flutterEngine);
-            Logger.logDebug(LOG_TAG, "FlutterEngine pre-warmed and cached");
+            Logger.logDebug(LOG_TAG, "FlutterEngine pre-warmed and cached (entrypoint deferred to Activity)");
         } catch (Exception e) {
             Logger.logError(LOG_TAG, "Failed to pre-warm FlutterEngine: " + e.getMessage());
         }
