@@ -243,9 +243,9 @@
 
 ### Phase 11 — UX Polish
 
-**Status:** In progress — plan 11-01 (path detection & long-press) complete
+**Status:** In progress — plans 11-01 + 11-02 complete
 **Requirements:** UXPL-01, UXPL-02, UXPL-03, UXPL-04, UXPL-05, UXPL-06, UXPL-07 (7 requirements)
-**Progress:** UXPL-01 COMPLETE — UXPL-02..07 pending
+**Progress:** UXPL-01, UXPL-02 COMPLETE — UXPL-03..07 pending
 
 **What:** Finale polish voor open source lancering. Parallel-safe — raakt geen gedeelde architectuur van andere fasen. Bevat accessibility, haptics, blur, landscape layout, en interactieve terminal output.
 
@@ -288,3 +288,4 @@ Coverage: 100%
 *v1.0 phases 1–4 marked complete. v1.1 phases 5–11 defined.*
 *2026-03-21: Phase 10 plans 10-01 + 10-02 complete. ONBR-01..05 delivered.*
 *2026-03-21: Phase 11 plan 11-01 complete. UXPL-01 delivered (path detection + long-press PopupMenu).*
+*2026-03-21: Phase 11 plan 11-02 complete. UXPL-02 delivered (y/n prompt interception via PromptInterceptor + AlertDialog).*

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T15:00:00.000Z"
+last_updated: "2026-03-21T15:30:00.000Z"
 progress:
   total_phases: 11
   completed_phases: 9
   total_plans: 40
-  completed_plans: 34
+  completed_plans: 35
 ---
 
 # Project State
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 11 (ux-polish) — EXECUTING
-Plan: 1 of 4 — COMPLETE (11-01 done, commit add45363)
+Plan: 3 of 4 — COMPLETE (11-03 done, commits e3d9640d, 06a33b9c, 8d5472b1, 33280a6e)
 
 ## v1.1 Phase Overview
 
@@ -153,3 +153,20 @@ Plan: 1 of 4 — COMPLETE (11-01 done, commit add45363)
 - Setup wizard .g.dart handmatig gegenereerd (cmd-proxy niet beschikbaar) — exact patroon van soul_awareness_service.g.dart gevolgd
 - terminalOnly skip logic: _advanceToNextStep() itereert stappen centraal, slaat `installing` over voor terminalOnly profiel
 - Xiaomi detectie via SystemBridgeApi().getDeviceInfo() in build() — async zonder blocking, sets isXiaomi flag
+
+### From 11-02
+
+- PromptInterceptor: 200ms debounce + mPromptDialogShowing guard — voorkomt dubbele dialogs bij snel scrollen
+- ANSI escape stripping vóór regex match op laatste non-empty transcript regel
+- AlertDialog "Ja"/"Nee" schrijft `y\n`/`n\n` via session.write() — slaat STATE_HIDDEN sheet check over
+- getPromptInterceptor() public accessor in TermuxActivity, teardown() in onDestroy()
+
+### From 11-03
+
+- triggerHaptic(HAPTIC_TICK/HAPTIC_CLICK) public helper: API 29+ predefined effects, 26-28 oneshot, pre-26 performHapticFeedback
+- applyBlurEffect @RequiresApi(S) split — roept setRenderEffect aan, los van applyBlurForOffset
+- onSlide callback niet meer no-op: roept applyBlurForOffset(slideOffset) aan
+- flutter_container blur 0-10px (API 31+) / dark scrim #00-#80000000 (pre-31) als sheet opent
+- GestureDetector op sheet_drag_handle: fling >1500dp/s snapped naar STATE_EXPANDED/COLLAPSED
+- OnTouchListener return false — BottomSheetBehavior blijft drag events ontvangen
+- UXPL-03, UXPL-04, UXPL-05 geleverd
