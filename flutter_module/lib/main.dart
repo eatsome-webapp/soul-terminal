@@ -19,6 +19,35 @@ final _logger = Logger();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  try {
+    await _initAndRun();
+  } catch (error, stackTrace) {
+    _logger.e('Fatal init error: $error\n$stackTrace');
+    // Show error on screen so it's visible for debugging
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          backgroundColor: const Color(0xFF1A0000),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'SOUL Init Error:\n\n$error\n\n$stackTrace',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _initAndRun() async {
   // Initialize ObjectBox store
   final store = await openStore();
 
@@ -30,9 +59,14 @@ Future<void> main() async {
 
   // Load Anthropic API key from secure storage and inject into provider.
   final apiKeyService = ApiKeyService();
-  final savedKey = await apiKeyService.getAnthropicKey() ?? '';
-  if (savedKey.isNotEmpty) {
-    container.read(apiKeyNotifierProvider.notifier).setKey(savedKey);
+  String savedKey = '';
+  try {
+    savedKey = await apiKeyService.getAnthropicKey() ?? '';
+    if (savedKey.isNotEmpty) {
+      container.read(apiKeyNotifierProvider.notifier).setKey(savedKey);
+    }
+  } catch (error) {
+    _logger.e('Failed to load API key: $error');
   }
 
   // Initialize OpenClaw client from saved credentials
@@ -77,24 +111,24 @@ Future<void> main() async {
   }
 
   // Check if setup wizard has been completed
-  final settingsDao = container.read(settingsDaoProvider);
-  final isSetupComplete = await settingsDao.getBool(SettingsKeys.setupCompleted) ?? false;
+  String initialLocation = '/setup-wizard';
+  try {
+    final settingsDao = container.read(settingsDaoProvider);
+    final isSetupComplete = await settingsDao.getBool(SettingsKeys.setupCompleted) ?? false;
 
-  // Determine initial route: first-time users see setup wizard, returning users
-  // go to conversation list or /chat/new based on existing projects.
-  String initialLocation;
-  if (!isSetupComplete) {
-    initialLocation = '/setup-wizard';
-  } else {
-    try {
-      final projectDao = container.read(projectDaoProvider);
-      final activeProject = await projectDao.getActiveProject();
-      final hasProjects = activeProject != null;
-      initialLocation = (hasProjects && savedKey.isNotEmpty) ? '/' : '/chat/new';
-    } catch (error) {
-      _logger.e('Failed to check projects: $error');
-      initialLocation = '/chat/new';
+    if (isSetupComplete) {
+      try {
+        final projectDao = container.read(projectDaoProvider);
+        final activeProject = await projectDao.getActiveProject();
+        final hasProjects = activeProject != null;
+        initialLocation = (hasProjects && savedKey.isNotEmpty) ? '/' : '/chat/new';
+      } catch (error) {
+        _logger.e('Failed to check projects: $error');
+        initialLocation = '/chat/new';
+      }
     }
+  } catch (error) {
+    _logger.e('Failed to check setup status: $error');
   }
 
   await SentryConfig.init(
