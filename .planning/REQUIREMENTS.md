@@ -58,10 +58,10 @@ Requirements for milestone v1.1: Van terminal naar AI coding omgeving.
 ### Onboarding
 
 - [x] **ONBR-01**: User ziet welkomstscherm bij eerste start met keuze: Claude Code / Python / Alleen terminal
-- [ ] **ONBR-02**: SOUL installeert gekozen packages op achtergrond met voortgang in chat
-- [ ] **ONBR-03**: User kan API key invoeren in SOUL chat, opgeslagen via Android Keystore
-- [ ] **ONBR-04**: User kan GitHub CLI authenticeren via SOUL chat flow
-- [ ] **ONBR-05**: User krijgt HyperOS battery/autostart instructies op Xiaomi devices
+- [x] **ONBR-02**: SOUL installeert gekozen packages op achtergrond met voortgang in chat
+- [x] **ONBR-03**: User kan API key invoeren in SOUL chat, opgeslagen via Android Keystore
+- [x] **ONBR-04**: User kan GitHub CLI authenticeren via SOUL chat flow
+- [x] **ONBR-05**: User krijgt HyperOS battery/autostart instructies op Xiaomi devices
 - [x] **ONBR-06**: Onboarding configureert .bashrc/.zshrc met OSC 133 prompt markers
 - [x] **ONBR-07**: User ziet "Je omgeving is klaar" na voltooiing
 
@@ -143,10 +143,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AWAR-07 | Phase 9 — SOUL Terminal Awareness | Pending |
 | AWAR-08 | Phase 9 — SOUL Terminal Awareness | Pending |
 | ONBR-01 | Phase 10 — Onboarding Flow | Complete |
-| ONBR-02 | Phase 10 — Onboarding Flow | Pending |
-| ONBR-03 | Phase 10 — Onboarding Flow | Pending |
-| ONBR-04 | Phase 10 — Onboarding Flow | Pending |
-| ONBR-05 | Phase 10 — Onboarding Flow | Pending |
+| ONBR-02 | Phase 10 — Onboarding Flow | Complete |
+| ONBR-03 | Phase 10 — Onboarding Flow | Complete |
+| ONBR-04 | Phase 10 — Onboarding Flow | Complete |
+| ONBR-05 | Phase 10 — Onboarding Flow | Complete |
 | ONBR-06 | Phase 10 — Onboarding Flow | Complete |
 | ONBR-07 | Phase 10 — Onboarding Flow | Complete |
 | UXPL-01 | Phase 11 — UX Polish | Pending |
