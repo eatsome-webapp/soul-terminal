@@ -13,9 +13,15 @@ import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.HapticFeedbackConstants;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 import android.widget.Toast;
+
+import java.io.File;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.termux.R;
 import com.termux.app.TermuxActivity;
@@ -72,6 +78,10 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
     private List<KeyboardShortcut> mSessionShortcuts;
 
     private static final String LOG_TAG = "TermuxTerminalViewClient";
+
+    private static final Pattern PATH_PATTERN = Pattern.compile(
+        "^((/[^\\s:,]+)|(\\.{1,2}/[^\\s:,]+)|(~/[^\\s:,]+))(:.*)?$"
+    );
 
     public TermuxTerminalViewClient(TermuxActivity activity, TermuxTerminalSessionActivityClient termuxTerminalSessionActivityClient) {
         this.mActivity = activity;
@@ -366,7 +376,80 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
 
     @Override
     public boolean onLongPress(MotionEvent event) {
-        return false;
+        TerminalSession session = mActivity.getCurrentSession();
+        if (session == null || session.getEmulator() == null) return false;
+
+        int[] columnAndRow = mActivity.getTerminalView().getColumnAndRow(event, true);
+        String word = session.getEmulator().getScreen().getWordAtLocation(columnAndRow[0], columnAndRow[1]);
+        if (word == null || word.isEmpty()) return false;
+
+        // Strip trailing : and , (common in compiler errors like src/main.dart:12:3)
+        String cleaned = word.replaceAll("[,:]+$", "");
+        // Also strip line:col suffix like :12:3
+        cleaned = cleaned.replaceAll(":[0-9]+(?::[0-9]+)?$", "");
+
+        Matcher matcher = PATH_PATTERN.matcher(cleaned);
+        if (!matcher.matches()) return false;
+
+        // Extract the path part (group 1)
+        String path = matcher.group(1);
+        if (path == null || path.isEmpty()) return false;
+
+        // Resolve ~ to HOME
+        String resolvedPath = path;
+        if (path.startsWith("~/")) {
+            String home = System.getenv("HOME");
+            if (home != null) {
+                resolvedPath = home + path.substring(1);
+            }
+        }
+
+        // Fire haptic since returning true skips TerminalView's own haptic
+        mActivity.getTerminalView().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+
+        // Show context menu
+        showPathContextMenu(path, resolvedPath);
+        return true;
+    }
+
+    private void showPathContextMenu(String displayPath, String resolvedPath) {
+        PopupMenu popup = new PopupMenu(mActivity, mActivity.getTerminalView());
+        popup.getMenu().add(0, 1, 0, "Kopieer pad");
+
+        boolean fileExists = new File(resolvedPath).exists();
+        if (fileExists) {
+            popup.getMenu().add(0, 2, 0, "Open");
+        }
+
+        popup.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case 1:
+                    ClipboardManager clipboard = (ClipboardManager) mActivity.getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (clipboard != null) {
+                        clipboard.setPrimaryClip(ClipData.newPlainText("path", displayPath));
+                        mActivity.showToast("Pad gekopieerd", true);
+                    }
+                    return true;
+                case 2:
+                    // Open file using system viewer via Intent
+                    try {
+                        android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW);
+                        android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(
+                            mActivity,
+                            mActivity.getPackageName() + ".fileprovider",
+                            new File(resolvedPath)
+                        );
+                        intent.setDataAndType(uri, "*/*");
+                        intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        mActivity.startActivity(intent);
+                    } catch (Exception e) {
+                        mActivity.showToast("Kan bestand niet openen", true);
+                    }
+                    return true;
+            }
+            return false;
+        });
+        popup.show();
     }
 
 
