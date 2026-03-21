@@ -666,12 +666,6 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
     private void setTermuxSessionsListView() {
         // ListView removed from drawer in 08-02 — session management is now via tab bar
-        ListView termuxSessionsListView = findViewById(R.id.terminal_sessions_list);
-        if (termuxSessionsListView == null) return;
-        mTermuxSessionListViewController = new TermuxSessionsListViewController(this, mTermuxService.getTermuxSessions());
-        termuxSessionsListView.setAdapter(mTermuxSessionListViewController);
-        termuxSessionsListView.setOnItemClickListener(mTermuxSessionListViewController);
-        termuxSessionsListView.setOnItemLongClickListener(mTermuxSessionListViewController);
     }
 
 
@@ -741,16 +735,6 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
     private void setNewSessionButtonView() {
         // new_session_button removed from drawer in 08-02 — new sessions via tab bar + button
-        View newSessionButton = findViewById(R.id.new_session_button);
-        if (newSessionButton == null) return;
-        newSessionButton.setOnClickListener(v -> mTermuxTerminalSessionActivityClient.addNewSession(false, null));
-        newSessionButton.setOnLongClickListener(v -> {
-            TextInputDialogUtils.textInput(TermuxActivity.this, R.string.title_create_named_session, null,
-                R.string.action_create_named_session_confirm, text -> mTermuxTerminalSessionActivityClient.addNewSession(false, text),
-                R.string.action_new_session_failsafe, text -> mTermuxTerminalSessionActivityClient.addNewSession(true, text),
-                -1, null, null);
-            return true;
-        });
     }
 
     private void setToggleKeyboardView() {

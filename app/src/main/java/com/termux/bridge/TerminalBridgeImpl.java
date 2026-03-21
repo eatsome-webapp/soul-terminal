@@ -212,7 +212,6 @@ public class TerminalBridgeImpl implements TerminalBridgeApi.HostApi {
         return mAwarenessTerminalSession;
     }
 
-    @Override
     public void writeShellConfig(@NonNull String filePath, @NonNull String content) {
         try {
             java.io.File file = new java.io.File(filePath);
