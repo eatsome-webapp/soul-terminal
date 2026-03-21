@@ -16,11 +16,11 @@ Requirements for milestone v1.1: Van terminal naar AI coding omgeving.
 
 ### App Merge
 
-- [ ] **MERG-01**: SOUL app Dart code (339 files) gekopieerd naar soul-terminal flutter_module
+- [x] **MERG-01**: SOUL app Dart code (339 files) gekopieerd naar soul-terminal flutter_module
 - [x] **MERG-02**: pubspec.yaml gemerged (52 deps incl. ObjectBox, Drift, foreground_task)
 - [ ] **MERG-03**: AndroidManifest.xml gemerged (permissies, services, boot receiver)
 - [ ] **MERG-04**: ProviderScope gerefactored voor FlutterFragment context (niet main.dart)
-- [ ] **MERG-05**: Database pad geunificeerd (Drift + ObjectBox werken in com.soul.terminal context)
+- [x] **MERG-05**: Database pad geunificeerd (Drift + ObjectBox werken in com.soul.terminal context)
 - [ ] **MERG-06**: Foreground service coëxistentie met Termux's eigen service
 - [ ] **MERG-07**: SOUL chat UI functioneel als hoofdscherm in FlutterFragment
 - [ ] **MERG-08**: CI/CD bouwt merged app succesvol (52 Flutter deps + Android)
@@ -113,11 +113,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TERM-05 | Phase 5 — Terminal Quick Wins | Pending |
 | TERM-06 | Phase 5 — Terminal Quick Wins | Pending |
 | TERM-07 | Phase 5 — Terminal Quick Wins | Pending |
-| MERG-01 | Phase 6 — App Merge | Pending |
+| MERG-01 | Phase 6 — App Merge | Complete |
 | MERG-02 | Phase 6 — App Merge | Complete |
 | MERG-03 | Phase 6 — App Merge | Pending |
 | MERG-04 | Phase 6 — App Merge | Pending |
-| MERG-05 | Phase 6 — App Merge | Pending |
+| MERG-05 | Phase 6 — App Merge | Complete |
 | MERG-06 | Phase 6 — App Merge | Pending |
 | MERG-07 | Phase 6 — App Merge | Pending |
 | MERG-08 | Phase 6 — App Merge | Pending |
