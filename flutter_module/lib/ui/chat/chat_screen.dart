@@ -26,6 +26,8 @@ import 'widgets/soft_approval_card.dart';
 import 'widgets/streaming_indicator.dart';
 import 'widgets/task_progress_card.dart';
 import 'widgets/task_result_card.dart';
+import 'widgets/terminal_command_indicator.dart';
+import '../../services/awareness/soul_awareness_service.dart';
 import 'widgets/vessel_task_stream_builder.dart';
 import 'widgets/agentic_session_header.dart';
 import 'widgets/tool_step_card.dart';
@@ -143,6 +145,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final claudeService = ref.read(claudeServiceProvider);
     final agenticState = ref.watch(agenticSessionProvider);
     final vesselManager = ref.watch(vesselManagerProvider);
+    // Watch awareness state for terminal command indicator
+    final awarenessState = ref.watch(soulAwarenessProvider);
 
     // Auto-scroll when streaming
     ref.listen(chatProvider(widget.conversationId), (prev, next) {
@@ -285,6 +289,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ErrorCard(
               errorType: chatState.errorType!,
               onRetry: () => chatNotifier.retryLastMessage(claudeService),
+            ),
+          if (awarenessState.state != AwarenessState.idle)
+            TerminalCommandIndicator(
+              commandName: awarenessState.currentCommand ?? '',
             ),
           MessageInput(
             onSend: (text) {
