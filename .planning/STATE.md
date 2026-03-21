@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T06:36:41.570Z"
+last_updated: "2026-03-21T09:55:08.543Z"
 progress:
   total_phases: 11
   completed_phases: 6
-  total_plans: 24
-  completed_plans: 24
+  total_plans: 27
+  completed_plans: 25
 ---
 
 # Project State
@@ -18,12 +18,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Een native terminal die naadloos integreert met SOUL — terminal + AI brain in één app.
-**Current focus:** Phase 07 — bottom-sheet-layout (volgende fase)
+**Current focus:** Phase 07 — bottom-sheet-layout
 
 ## Current Position
 
-Phase: 06 (app-merge) — COMPLETE
-Plan: 7 of 7 (06-01 t/m 06-07 completed)
+Phase: 07 (bottom-sheet-layout) — EXECUTING
+Plan: 2 of 3
 
 ## v1.1 Phase Overview
 
@@ -77,3 +77,10 @@ Plan: 7 of 7 (06-01 t/m 06-07 completed)
 - NDK build tasks moeten expliciet afhangen van downloadBootstraps (release build volgorde issue)
 - Release build signing vereist KEYSTORE_BASE64 secret configuratie in GitHub repo
 - Debug CI build GROEN: soul-terminal_v1.0.0+047fa33-soul-terminal-github-debug_arm64-v8a.apk
+
+### From 07-02
+
+- `NestedScrollingChild3` in TerminalView via `NestedScrollingChildHelper` — alle 15 methoden gedelegeerd
+- `startNestedScroll` in `onScroll()` bewaakt door `!scrolledWithFinger` (niet in ACTION_DOWN) — vroegste scroll-hook in GestureAndScaleRecognizer
+- TerminalView consumeert eigen scrolls — `startNestedScroll` signaleert alleen BottomSheetBehavior om niet te intercepten
+- `windowSoftInputMode="adjustPan"` op TermuxActivity voor correcte IME handling in bottom sheet

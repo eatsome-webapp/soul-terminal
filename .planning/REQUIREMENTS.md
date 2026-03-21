@@ -31,7 +31,7 @@ Requirements for milestone v1.1: Van terminal naar AI coding omgeving.
 - [ ] **LAYT-01**: User ziet Flutter (SOUL chat) als hoofdscherm bij app start
 - [ ] **LAYT-02**: User kan terminal omhoog slepen als bottom sheet via handle bar
 - [ ] **LAYT-03**: User kan sheet in 4 states gebruiken: hidden, collapsed (peek), half-expanded (40%), expanded (full)
-- [ ] **LAYT-04**: User kan keyboard gebruiken in terminal sheet zonder layout glitches
+- [x] **LAYT-04**: User kan keyboard gebruiken in terminal sheet zonder layout glitches
 - [ ] **LAYT-05**: User kan back button gebruiken om sheet te sluiten zonder app te sluiten
 - [ ] **LAYT-06**: Terminal process draait door ongeacht sheet state
 
@@ -125,7 +125,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LAYT-01 | Phase 7 — Bottom Sheet Layout | Pending |
 | LAYT-02 | Phase 7 — Bottom Sheet Layout | Pending |
 | LAYT-03 | Phase 7 — Bottom Sheet Layout | Pending |
-| LAYT-04 | Phase 7 — Bottom Sheet Layout | Pending |
+| LAYT-04 | Phase 7 — Bottom Sheet Layout | Complete |
 | LAYT-05 | Phase 7 — Bottom Sheet Layout | Pending |
 | LAYT-06 | Phase 7 — Bottom Sheet Layout | Pending |
 | SESS-01 | Phase 8 — Session Management | Pending |
