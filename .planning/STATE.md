@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T10:03:35.948Z"
+last_updated: "2026-03-21T10:36:27.428Z"
 progress:
   total_phases: 11
   completed_phases: 7
-  total_plans: 27
-  completed_plans: 27
+  total_plans: 30
+  completed_plans: 28
 ---
 
 # Project State
@@ -22,9 +22,8 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 
 ## Current Position
 
-Phase: 07 (bottom-sheet-layout) — COMPLETE
-Phase: 08 (session-management) — NEXT
-Next: Plan 08-01
+Phase: 08 (session-management) — EXECUTING
+Plan: 2 of 3
 
 ## v1.1 Phase Overview
 
@@ -103,3 +102,12 @@ Next: Plan 08-01
 - `startNestedScroll` in `onScroll()` bewaakt door `!scrolledWithFinger` (niet in ACTION_DOWN) — vroegste scroll-hook in GestureAndScaleRecognizer
 - TerminalView consumeert eigen scrolls — `startNestedScroll` signaleert alleen BottomSheetBehavior om niet te intercepten
 - `windowSoftInputMode="adjustPan"` op TermuxActivity voor correcte IME handling in bottom sheet
+
+### From 08-01
+
+- TabLayout in session_tab_bar_container (36dp) tussen drag handle en terminal content
+- TerminalViewClient interface heeft geen onTouchEvent — swipe detector via OnTouchListener op TerminalView
+- tabSelectedListener tijdelijk verwijderd tijdens removeAllTabs/addTab rebuild om recursieve switchToSession te voorkomen
+- termuxSessionListNotifyUpdated() roept alleen updateSessionTabs() aan — notifyDataSetChanged verwijderd
+- Drawer gelocked met LOCK_MODE_LOCKED_CLOSED in setupSessionTabBar() — conflicteert niet met horizontale swipe
+- getSessionTabLayout() en getSessionSwipeDetector() accessors beschikbaar voor Phase 8 plan 02/03
