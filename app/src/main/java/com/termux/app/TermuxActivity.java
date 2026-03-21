@@ -787,6 +787,35 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                 }
             }
         });
+
+        // Velocity-based fling on drag handle
+        View dragHandle = findViewById(R.id.sheet_drag_handle);
+        if (dragHandle != null) {
+            GestureDetector sheetFlingDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+                private static final float VELOCITY_THRESHOLD_DP = 1500f;
+
+                @Override
+                public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                    if (e1 == null || e2 == null) return false;
+                    float density = getResources().getDisplayMetrics().density;
+                    float threshold = VELOCITY_THRESHOLD_DP * density;
+                    if (velocityY < -threshold) {
+                        // Fling up — always expand to full screen
+                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                        return true;
+                    } else if (velocityY > threshold) {
+                        // Fling down — collapse to peek
+                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                        return true;
+                    }
+                    return false;
+                }
+            });
+            dragHandle.setOnTouchListener((v, event) -> {
+                sheetFlingDetector.onTouchEvent(event);
+                return false; // let BottomSheetBehavior handle drag too
+            });
+        }
     }
 
     private void applyBlurForOffset(float slideOffset) {
