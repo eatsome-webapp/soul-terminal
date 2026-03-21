@@ -167,6 +167,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     /** SoulBridgeController for debounced output streaming and command completion. */
     private com.termux.bridge.SoulBridgeController mSoulBridgeController;
 
+    /** Prompt interceptor for y/n dialog detection. */
+    private com.termux.app.terminal.PromptInterceptor mPromptInterceptor;
+
     private final Runnable mProcessNamePoller = new Runnable() {
         @Override
         public void run() {
@@ -736,6 +739,12 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                     }
                 }
                 Logger.logDebug(LOG_TAG, "Sheet state changed to: " + newState);
+                // Haptic feedback on settled states
+                if (newState == BottomSheetBehavior.STATE_EXPANDED
+                        || newState == BottomSheetBehavior.STATE_COLLAPSED
+                        || newState == BottomSheetBehavior.STATE_HALF_EXPANDED) {
+                    triggerHaptic(HAPTIC_TICK);
+                }
             }
 
             @Override
@@ -793,6 +802,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 mTermuxTerminalSessionActivityClient.switchToSession(tab.getPosition());
+                triggerHaptic(HAPTIC_CLICK);
             }
 
             @Override
