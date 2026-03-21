@@ -39,6 +39,11 @@ jobs:
           cd flutter_module
           flutter pub get
 
+      - name: Flutter codegen (build_runner)
+        run: |
+          cd flutter_module
+          dart run build_runner build --delete-conflicting-outputs
+
       - name: Debug Flutter module setup
         run: |
           echo "=== flutter_module/.android contents ==="
@@ -52,6 +57,8 @@ jobs:
 
       - name: Build APKs
         shell: bash {0}
+        env:
+          EXTRA_DART_DEFINES: "VOYAGE_API_KEY=${{ secrets.VOYAGE_API_KEY }},SENTRY_DSN=${{ secrets.SENTRY_DSN }}"
         run: |
           exit_on_error() { echo "$1"; exit 1; }
 
