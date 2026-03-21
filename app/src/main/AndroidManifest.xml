@@ -37,6 +37,8 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
 
     <application
         android:name=".app.TermuxApplication"
@@ -216,6 +218,27 @@
             </intent-filter>
         </service>
 
+
+        <!-- SOUL foreground service (flutter_foreground_task plugin) -->
+        <service
+            android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
+            android:foregroundServiceType="specialUse"
+            android:exported="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="AI assistant providing proactive briefings and contextual monitoring" />
+        </service>
+
+        <!-- SOUL notification listener (notification_listener_service plugin) -->
+        <service
+            android:label="SOUL Notifications"
+            android:name="notification.listener.service.NotificationListener"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
 
         <!-- This (or rather, value 2.1 or higher) is needed to make the Samsung Galaxy S8 mark the
         app with "This app is optimized to run in full screen." -->
