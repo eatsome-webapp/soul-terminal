@@ -377,6 +377,19 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
             notifyOfSessionChange();
         }
 
+        // Update selected tab to reflect the current session
+        if (mActivity.getSessionTabLayout() != null) {
+            int index = mActivity.getTermuxService() != null
+                ? mActivity.getTermuxService().getIndexOfSession(session) : -1;
+            if (index >= 0 && index < mActivity.getSessionTabLayout().getTabCount()) {
+                com.google.android.material.tabs.TabLayout.Tab tab =
+                    mActivity.getSessionTabLayout().getTabAt(index);
+                if (tab != null && !tab.isSelected()) {
+                    tab.select();
+                }
+            }
+        }
+
         // We call the following even when the session is already being displayed since config may
         // be stale, like current session not selected or scrolled to.
         checkAndScrollToSession(session);
@@ -541,6 +554,8 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
 
         final int indexOfSession = service.getIndexOfSession(session);
         if (indexOfSession < 0) return;
+
+        // Tab bar handles selection via setCurrentSession — no explicit scroll needed
         final ListView termuxSessionsListView = mActivity.findViewById(R.id.terminal_sessions_list);
         if (termuxSessionsListView == null) return;
 
