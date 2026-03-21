@@ -215,8 +215,9 @@
 
 ### Phase 10 — Onboarding Flow
 
-**Status:** Pending
+**Status:** In progress — plan 10-01 (infrastructure) complete, plan 10-02 (functional steps) complete, plan 10-03 pending
 **Requirements:** ONBR-01, ONBR-02, ONBR-03, ONBR-04, ONBR-05, ONBR-06, ONBR-07 (7 requirements)
+**Progress:** ONBR-01 (welcome/profile), ONBR-02 (package install streaming), ONBR-03 (API key validation), ONBR-04 (GitHub CLI), ONBR-05 (Xiaomi battery) COMPLETE — ONBR-06, ONBR-07 pending plan 10-03
 **Dependencies:** Phase 6 (merge voor SOUL chat als basis), Phase 9 (AWAR voor package installatie via terminal)
 
 **What:** Meerstaps onboarding wizard voor eerste start. HyperOS battery-instructies zijn kritiek voor het primaire testapparaat (Xiaomi 17 Ultra) — zonder dit werken achtergrond-sessies niet op het testdevice.
@@ -284,3 +285,4 @@ Coverage: 100%
 
 *Roadmap created: 2026-03-20*
 *v1.0 phases 1–4 marked complete. v1.1 phases 5–11 defined.*
+*2026-03-21: Phase 10 plans 10-01 + 10-02 complete. ONBR-01..05 delivered.*

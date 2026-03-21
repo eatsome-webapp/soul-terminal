@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T13:18:24.156Z"
+last_updated: "2026-03-21T14:30:00.000Z"
 progress:
   total_phases: 11
   completed_phases: 8
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 10 (onboarding-flow) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## v1.1 Phase Overview
 
@@ -129,6 +129,13 @@ Plan: 2 of 3
 - termuxSessionListNotifyUpdated() vuurt onSessionListChanged af — centrale hook voor alle sessiewijzigingen
 - Pigeon code handmatig gegenereerd (cmd-proxy token unavailable) — exact v22.7.0 patroon gevolgd
 - Phase 08 COMPLETE — alle 6 SESS requirements (SESS-01..06) geleverd
+
+### From 10-02
+
+- sendInput + echo marker polling voor terminal completion vóór OSC 133 (wizard install fase): `sendInput('cmd && echo SOUL_PKG_DONE')` + `_waitForMarker('SOUL_PKG_DONE')`
+- outputStream.listen subscription aangemaakt in startInstallation, gecancelled in finally
+- apiKeyNotifierProvider.notifier.setKey() direct na validateAndSaveKey — app ziet key zonder restart
+- proceedFromInstall() als public accessor voor _advanceToNextStep() na installSuccess
 
 ### From 10-01
 
