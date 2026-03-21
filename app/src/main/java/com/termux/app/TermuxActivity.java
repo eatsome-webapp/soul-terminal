@@ -735,6 +735,13 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         mNewSessionTabButton.setOnClickListener(v -> mTermuxTerminalSessionActivityClient.addNewSession(false, null));
 
+        ImageButton settingsTabButton = findViewById(R.id.settings_tab_button);
+        if (settingsTabButton != null) {
+            settingsTabButton.setOnClickListener(v -> {
+                startActivity(new Intent(this, com.termux.app.activities.SettingsActivity.class));
+            });
+        }
+
         mTabSelectedListener = new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {

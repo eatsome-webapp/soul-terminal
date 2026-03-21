@@ -66,6 +66,15 @@
                 android:contentDescription="New session"
                 app:tint="#E0E0E0" />
 
+            <ImageButton
+                android:id="@+id/settings_tab_button"
+                android:layout_width="36dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_settings"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Settings"
+                app:tint="#9E9E9E" />
+
         </LinearLayout>
 
         <RelativeLayout
