@@ -829,6 +829,16 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                         || newState == BottomSheetBehavior.STATE_HALF_EXPANDED) {
                     triggerHaptic(HAPTIC_TICK);
                 }
+                // TalkBack announcements
+                if (mTerminalView != null) {
+                    if (newState == BottomSheetBehavior.STATE_EXPANDED) {
+                        mTerminalView.announceForAccessibility(getString(R.string.announce_terminal_opened));
+                    } else if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
+                        mTerminalView.announceForAccessibility(getString(R.string.announce_terminal_closed));
+                    } else if (newState == BottomSheetBehavior.STATE_HALF_EXPANDED) {
+                        mTerminalView.announceForAccessibility(getString(R.string.announce_terminal_half));
+                    }
+                }
             }
 
             @Override
@@ -947,6 +957,11 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             public void onTabSelected(TabLayout.Tab tab) {
                 mTermuxTerminalSessionActivityClient.switchToSession(tab.getPosition());
                 triggerHaptic(HAPTIC_CLICK);
+                // TalkBack announcement
+                if (mSessionTabLayout != null) {
+                    String label = tab.getText() != null ? tab.getText().toString() : "onbekend";
+                    mSessionTabLayout.announceForAccessibility("Sessie " + label);
+                }
             }
 
             @Override
@@ -1006,6 +1021,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         for (int i = 0; i < sessions.size(); i++) {
             TabLayout.Tab tab = mSessionTabLayout.newTab();
             tab.setText(getSessionTabLabel(i, sessions.get(i)));
+            tab.setContentDescription(getSessionTabLabel(i, sessions.get(i)) + " sessie");
             mSessionTabLayout.addTab(tab, false);
             // Set long-click listener on the tab view for rename/close context menu
             View tabView = ((ViewGroup) mSessionTabLayout.getChildAt(0)).getChildAt(i);
