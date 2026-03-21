@@ -155,6 +155,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     /** Pigeon HostApi implementation. */
     private com.termux.bridge.TerminalBridgeImpl mTerminalBridgeImpl;
 
+    /** SoulBridgeController for debounced output streaming and command completion. */
+    private com.termux.bridge.SoulBridgeController mSoulBridgeController;
+
     private final Runnable mProcessNamePoller = new Runnable() {
         @Override
         public void run() {
@@ -952,6 +955,10 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         // Create FlutterApi instance for calling Flutter
         mSoulBridgeApi = new com.termux.bridge.TerminalBridgeApi.SoulBridgeApi(messenger);
 
+        // Activate SoulBridgeController for debounced output streaming
+        mSoulBridgeController = new com.termux.bridge.SoulBridgeController();
+        mSoulBridgeController.setup(messenger);
+
         Logger.logDebug(LOG_TAG, "Pigeon bridges registered");
     }
 
@@ -1266,6 +1273,17 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
     public BottomSheetBehavior<View> getBottomSheetBehavior() {
         return mBottomSheetBehavior;
+    }
+
+    public com.termux.bridge.SoulBridgeController getSoulBridgeController() {
+        return mSoulBridgeController;
+    }
+
+    public void onCommandFinished(@NonNull com.termux.terminal.TerminalSession session) {
+        if (mSoulBridgeController != null && mTermuxService != null) {
+            int index = mTermuxService.getIndexOfSession(session);
+            mSoulBridgeController.onCommandFinished((long) index);
+        }
     }
 
     public ExtraKeysView getExtraKeysView() {

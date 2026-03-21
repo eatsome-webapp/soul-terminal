@@ -1,10 +1,12 @@
 package com.termux.bridge;
 
+import android.app.AlertDialog;
 import android.os.Handler;
 import android.os.Looper;
 
 import androidx.annotation.NonNull;
 
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.termux.app.TermuxActivity;
 import com.termux.app.TermuxService;
 import com.termux.shared.termux.shell.command.runner.terminal.TermuxSession;
@@ -21,8 +23,15 @@ import java.util.List;
 public class TerminalBridgeImpl implements TerminalBridgeApi.HostApi {
 
     private static final String LOG_TAG = "TerminalBridgeImpl";
+
+    private static final String[] DESTRUCTIVE_SUBSTRINGS = {
+        "rm -rf", "dd if=", "mkfs", "git reset --hard",
+        "chmod -R 777", ":(){:|:&};:", "> /dev/sda"
+    };
+
     private final TermuxService mTermuxService;
     private TermuxActivity mActivity;
+    private TerminalSession mAwarenessTerminalSession;
 
     public TerminalBridgeImpl(@NonNull TermuxService termuxService) {
         mTermuxService = termuxService;
@@ -141,6 +150,143 @@ public class TerminalBridgeImpl implements TerminalBridgeApi.HostApi {
                 }
             });
         }
+    }
+
+    @Override
+    public void runCommand(@NonNull Long sessionId, @NonNull String executable, @NonNull List<String> args) {
+        TerminalSession session = getSessionByIndex(sessionId.intValue());
+        if (session == null) {
+            Logger.logWarn(LOG_TAG, "runCommand: no session at index " + sessionId);
+            return;
+        }
+
+        String commandString = buildCommandString(executable, args);
+
+        if (isDestructiveCommand(executable, args)) {
+            new Handler(Looper.getMainLooper()).post(() -> {
+                if (mActivity == null) return;
+                new AlertDialog.Builder(mActivity)
+                    .setTitle("Destructief commando")
+                    .setMessage("SOUL wil uitvoeren: " + executable + " " + String.join(" ", args) + "\nWeet je het zeker?")
+                    .setPositiveButton("Uitvoeren", (dialog, which) -> session.write(commandString))
+                    .setNegativeButton("Annuleren", null)
+                    .setCancelable(false)
+                    .show();
+            });
+        } else {
+            new Handler(Looper.getMainLooper()).post(() -> session.write(commandString));
+        }
+    }
+
+    @Override
+    public void sendInput(@NonNull Long sessionId, @NonNull String text) {
+        TerminalSession session = getSessionByIndex(sessionId.intValue());
+        if (session == null) {
+            Logger.logWarn(LOG_TAG, "sendInput: no session at index " + sessionId);
+            return;
+        }
+        new Handler(Looper.getMainLooper()).post(() -> session.write(text));
+    }
+
+    @Override
+    public void openTerminalSheet() {
+        new Handler(Looper.getMainLooper()).post(() -> {
+            if (mActivity != null && mActivity.getBottomSheetBehavior() != null) {
+                mActivity.getBottomSheetBehavior().setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
+            }
+        });
+    }
+
+    @NonNull
+    @Override
+    public Long createAwarenessSession() {
+        if (mTermuxService == null) return -1L;
+        TermuxSession termuxSession = mTermuxService.createTermuxSession(
+            null, null, null, null, false, "SOUL");
+        if (termuxSession == null) return -1L;
+        mAwarenessTerminalSession = termuxSession.getTerminalSession();
+        return (long) mTermuxService.getIndexOfSession(mAwarenessTerminalSession);
+    }
+
+    public TerminalSession getAwarenessSession() {
+        return mAwarenessTerminalSession;
+    }
+
+    private boolean isDestructiveCommand(String executable, List<String> args) {
+        String exec = executable.toLowerCase();
+
+        // rm with recursive + force
+        if ("rm".equals(exec)) {
+            boolean hasRecursive = false;
+            boolean hasForce = false;
+            for (String arg : args) {
+                if ("--recursive".equals(arg)) hasRecursive = true;
+                if ("--force".equals(arg)) hasForce = true;
+                if (arg.startsWith("-") && !arg.startsWith("--")) {
+                    String flags = arg.substring(1);
+                    if (flags.contains("r") || flags.contains("R")) hasRecursive = true;
+                    if (flags.contains("f")) hasForce = true;
+                }
+            }
+            if (hasRecursive && hasForce) return true;
+        }
+
+        // dd with if=
+        if ("dd".equals(exec)) {
+            for (String arg : args) {
+                if (arg.startsWith("if=")) return true;
+            }
+        }
+
+        // mkfs (any variant)
+        if ("mkfs".equals(exec) || exec.startsWith("mkfs.")) return true;
+
+        // git reset --hard
+        if ("git".equals(exec) && args.contains("reset") && args.contains("--hard")) return true;
+
+        // chmod -R 777
+        if ("chmod".equals(exec)) {
+            boolean hasR = args.contains("-R") || args.contains("--recursive");
+            boolean has777 = args.contains("777");
+            if (hasR && has777) return true;
+        }
+
+        // Shell with -c flag — scan inner command
+        if ("bash".equals(exec) || "sh".equals(exec) || "zsh".equals(exec)) {
+            int cIndex = args.indexOf("-c");
+            if (cIndex != -1 && cIndex + 1 < args.size()) {
+                String innerCommand = args.get(cIndex + 1);
+                for (String pattern : DESTRUCTIVE_SUBSTRINGS) {
+                    if (innerCommand.contains(pattern)) return true;
+                }
+            }
+        }
+
+        // Fork bomb detection
+        String allArgs = String.join(" ", args);
+        if (allArgs.contains("(){") && allArgs.contains("|") && allArgs.contains("&}")) return true;
+
+        return false;
+    }
+
+    private String buildCommandString(String executable, List<String> args) {
+        StringBuilder sb = new StringBuilder(executable);
+        for (String arg : args) {
+            sb.append(' ');
+            if (arg.contains(" ") || arg.contains("'") || arg.contains("\"")) {
+                sb.append('\'').append(arg.replace("'", "'\\''")).append('\'');
+            } else {
+                sb.append(arg);
+            }
+        }
+        sb.append('\n');
+        return sb.toString();
+    }
+
+    private TerminalSession getSessionByIndex(int index) {
+        if (index < 0 || index >= mTermuxService.getTermuxSessionsSize()) return null;
+        TermuxSession session = mTermuxService.getTermuxSession(index);
+        return session != null ? session.getTerminalSession() : null;
     }
 
     private TerminalSession getCurrentTerminalSession() {

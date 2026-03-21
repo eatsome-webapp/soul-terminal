@@ -129,6 +129,12 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
         if (!mActivity.isVisible()) return;
 
         if (mActivity.getCurrentSession() == changedSession) mActivity.getTerminalView().onScreenUpdated();
+
+        // Stream terminal output to Flutter via SoulBridgeController
+        com.termux.bridge.SoulBridgeController controller = mActivity.getSoulBridgeController();
+        if (controller != null) {
+            controller.onTerminalTextChanged(changedSession);
+        }
     }
 
     @Override
@@ -291,6 +297,11 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
         if (manager != null) {
             manager.notify(notificationId, builder.build());
         }
+    }
+
+    @Override
+    public void onCommandFinished(@NonNull TerminalSession session) {
+        mActivity.onCommandFinished(session);
     }
 
     @Override

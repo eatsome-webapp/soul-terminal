@@ -49,6 +49,11 @@ public class TermuxTerminalSessionClientBase implements TerminalSessionClient {
     }
 
     @Override
+    public void onCommandFinished(@NonNull TerminalSession session) {
+        // Default no-op
+    }
+
+    @Override
     public void setTerminalShellPid(@NonNull TerminalSession session, int pid) {
     }
 

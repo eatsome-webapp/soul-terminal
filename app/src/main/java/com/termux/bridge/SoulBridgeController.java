@@ -80,6 +80,17 @@ public class SoulBridgeController {
     }
 
     /**
+     * Notify Flutter that a command finished (OSC 133;D received).
+     * @param sessionId the session index, resolved by TermuxActivity
+     */
+    public void onCommandFinished(long sessionId) {
+        if (mSoulBridge == null) return;
+        new Handler(Looper.getMainLooper()).post(() ->
+            mSoulBridge.onCommandCompleted(sessionId, reply -> {})
+        );
+    }
+
+    /**
      * Clean up resources.
      */
     public void teardown() {
