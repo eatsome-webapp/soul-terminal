@@ -795,6 +795,15 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             TabLayout.Tab tab = mSessionTabLayout.newTab();
             tab.setText(getSessionTabLabel(i, sessions.get(i)));
             mSessionTabLayout.addTab(tab, false);
+            // Set long-click listener on the tab view for rename/close context menu
+            View tabView = ((ViewGroup) mSessionTabLayout.getChildAt(0)).getChildAt(i);
+            if (tabView != null) {
+                final int sessionIndex = i;
+                tabView.setOnLongClickListener(v -> {
+                    showSessionContextMenu(v, sessionIndex);
+                    return true;
+                });
+            }
         }
 
         TerminalSession currentTerminalSession = mTerminalView != null ? mTerminalView.getCurrentSession() : null;
@@ -842,6 +851,59 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             if (currentText == null || !currentText.toString().equals(newLabel)) {
                 tab.setText(newLabel);
             }
+        }
+    }
+
+    private void showSessionContextMenu(View anchor, int sessionIndex) {
+        PopupMenu popup = new PopupMenu(this, anchor);
+        popup.getMenu().add(0, 1, 0, "Hernoemen");
+        popup.getMenu().add(0, 2, 0, "Sluiten");
+        popup.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case 1:
+                    showRenameSessionDialog(sessionIndex);
+                    return true;
+                case 2:
+                    closeSessionAtIndex(sessionIndex);
+                    return true;
+            }
+            return false;
+        });
+        popup.show();
+    }
+
+    private void showRenameSessionDialog(int sessionIndex) {
+        TermuxSession termuxSession = mTermuxService != null ? mTermuxService.getTermuxSession(sessionIndex) : null;
+        if (termuxSession == null) return;
+
+        TerminalSession terminalSession = termuxSession.getTerminalSession();
+        EditText input = new EditText(this);
+        input.setText(terminalSession.mSessionName != null ? terminalSession.mSessionName : "");
+        input.setSelection(input.getText().length());
+
+        new AlertDialog.Builder(this)
+            .setTitle("Sessie hernoemen")
+            .setView(input)
+            .setPositiveButton("Opslaan", (dialog, which) -> {
+                String newName = input.getText().toString().trim();
+                terminalSession.mSessionName = newName.isEmpty() ? null : newName;
+                termuxSessionListNotifyUpdated();
+            })
+            .setNegativeButton(android.R.string.cancel, null)
+            .show();
+    }
+
+    private void closeSessionAtIndex(int sessionIndex) {
+        if (mTermuxService == null) return;
+
+        if (mTermuxService.getTermuxSessionsSize() <= 1) {
+            showToast("Kan laatste sessie niet sluiten", false);
+            return;
+        }
+
+        TermuxSession termuxSession = mTermuxService.getTermuxSession(sessionIndex);
+        if (termuxSession != null) {
+            termuxSession.getTerminalSession().finishIfRunning();
         }
     }
 
