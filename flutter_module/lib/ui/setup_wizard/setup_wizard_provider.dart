@@ -114,12 +114,7 @@ class SetupWizard extends _$SetupWizard {
 
   void selectProfile(SetupProfile profile) {
     state = state.copyWith(selectedProfile: profile);
-    if (profile == SetupProfile.terminalOnly) {
-      // Skip installing step for terminal-only profile
-      state = state.copyWith(currentStep: SetupWizardStep.apiKey);
-    } else {
-      state = state.copyWith(currentStep: SetupWizardStep.installing);
-    }
+    _advanceToNextStep();
   }
 
   Future<void> startInstallation() async {
@@ -310,49 +305,62 @@ class SetupWizard extends _$SetupWizard {
     _advanceToNextStep();
   }
 
-  Future<void> completeSetup() async {
-    final profile = state.selectedProfile;
+  /// Persists completion flag and profile to SettingsDao.
+  /// Called from _advanceToNextStep when transitioning to the complete step.
+  Future<void> _persistCompletion() async {
     final settingsDao = ref.read(settingsDaoProvider);
-
     await settingsDao.setBool(SettingsKeys.setupCompleted, true);
 
-    if (profile != null) {
-      final profileString = switch (profile) {
-        SetupProfile.claudeCode => 'claude_code',
-        SetupProfile.python => 'python',
-        SetupProfile.terminalOnly => 'terminal_only',
-      };
-      await settingsDao.setString(SettingsKeys.setupProfile, profileString);
+    // Store chosen profile for future reference
+    if (state.selectedProfile != null) {
+      await settingsDao.setString(
+        SettingsKeys.setupProfile,
+        state.selectedProfile!.name, // claudeCode, python, terminalOnly
+      );
     }
 
-    _logger.i('Setup completed with profile: ${state.selectedProfile}');
+    _logger.i('Setup wizard completed. Profile: ${state.selectedProfile?.name}');
+  }
+
+  /// Public method for the "Begin" button — only navigates, persistence already done.
+  void completeSetup() {
+    // No-op — persistence already happened in _persistCompletion().
+    // This method exists so the UI has a clean notifier call before navigating.
   }
 
   void _advanceToNextStep() {
-    final currentStep = state.currentStep;
-    final steps = SetupWizardStep.values;
-    final currentIndex = steps.indexOf(currentStep);
+    final current = state.currentStep;
+    SetupWizardStep? next;
 
-    SetupWizardStep nextStep = currentStep;
-
-    for (int i = currentIndex + 1; i < steps.length; i++) {
-      final candidate = steps[i];
-
-      // Skip xiaomiBattery if not a Xiaomi device
-      if (candidate == SetupWizardStep.xiaomiBattery && !state.isXiaomi) {
-        continue;
-      }
-
-      // Skip installing if terminalOnly profile
-      if (candidate == SetupWizardStep.installing &&
-          state.selectedProfile == SetupProfile.terminalOnly) {
-        continue;
-      }
-
-      nextStep = candidate;
-      break;
+    switch (current) {
+      case SetupWizardStep.welcome:
+        if (state.selectedProfile == SetupProfile.terminalOnly) {
+          next = SetupWizardStep.apiKey; // Skip installation
+        } else {
+          next = SetupWizardStep.installing;
+        }
+      case SetupWizardStep.installing:
+        next = SetupWizardStep.apiKey;
+      case SetupWizardStep.apiKey:
+        next = SetupWizardStep.githubAuth;
+      case SetupWizardStep.githubAuth:
+        if (state.isXiaomi) {
+          next = SetupWizardStep.xiaomiBattery;
+        } else {
+          next = SetupWizardStep.shellConfig;
+        }
+      case SetupWizardStep.xiaomiBattery:
+        next = SetupWizardStep.shellConfig;
+      case SetupWizardStep.shellConfig:
+        next = SetupWizardStep.complete;
+        // Persist completion before showing the screen (async, no state update here)
+        _persistCompletion();
+      case SetupWizardStep.complete:
+        return; // No next step
     }
 
-    state = state.copyWith(currentStep: nextStep);
+    if (next != null) {
+      state = state.copyWith(currentStep: next);
+    }
   }
 }

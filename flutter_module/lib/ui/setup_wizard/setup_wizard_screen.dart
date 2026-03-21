@@ -73,7 +73,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
       SetupWizardStep.githubAuth => _buildGithubStep(notifier),
       SetupWizardStep.xiaomiBattery => _buildXiaomiStep(notifier),
       SetupWizardStep.shellConfig => _buildShellConfigStep(state, notifier),
-      SetupWizardStep.complete => _buildCompleteStep(notifier),
+      SetupWizardStep.complete => _buildCompleteStep(state),
     };
   }
 
@@ -583,52 +583,56 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
     );
   }
 
-  Widget _buildCompleteStep(SetupWizard notifier) {
+  Widget _buildCompleteStep(SetupWizardState state) {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.check_circle_outline, size: 80, color: Color(0xFF4CAF50)),
-          const SizedBox(height: 24),
+          const Icon(
+            Icons.check_circle_outline,
+            size: 96,
+            color: _accent,
+          ),
+          const SizedBox(height: 32),
           const Text(
             'Je omgeving is klaar!',
             style: TextStyle(
-              color: _textPrimary,
               fontSize: 28,
               fontWeight: FontWeight.bold,
+              color: _textPrimary,
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
-          const Text(
-            'SOUL Terminal is geconfigureerd en klaar voor gebruik.',
-            style: TextStyle(color: _textSecondary, fontSize: 16),
+          const SizedBox(height: 16),
+          Text(
+            _completionSummary(state),
             textAlign: TextAlign.center,
+            style: const TextStyle(color: _textSecondary, fontSize: 16),
           ),
           const SizedBox(height: 48),
           ElevatedButton(
-            onPressed: () async {
-              await notifier.completeSetup();
-              if (mounted) {
-                context.go('/');
-              }
-            },
+            onPressed: () => context.go('/'),
             style: ElevatedButton.styleFrom(
               backgroundColor: _accent,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text(
-              'Begin',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            child: const Text('Begin', style: TextStyle(fontSize: 18, color: Colors.white)),
           ),
         ],
       ),
     );
+  }
+
+  String _completionSummary(SetupWizardState state) {
+    final parts = <String>[];
+    if (state.selectedProfile == SetupProfile.claudeCode) {
+      parts.add('Claude Code, Node.js, Git en GitHub CLI');
+    } else if (state.selectedProfile == SetupProfile.python) {
+      parts.add('Python en Git');
+    }
+    if (state.apiKeyValid) parts.add('API key geconfigureerd');
+    if (state.shellConfigDone) parts.add('Shell OSC 133 markers actief');
+    return parts.isEmpty ? 'Je terminal is klaar voor gebruik.' : '${parts.join(' • ')}';
   }
 }
