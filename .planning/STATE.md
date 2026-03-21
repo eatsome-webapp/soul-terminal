@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T06:11:05.081Z"
+last_updated: "2026-03-21T06:36:41.570Z"
 progress:
   total_phases: 11
   completed_phases: 6
@@ -66,11 +66,13 @@ Plan: 7 of 7 (06-01 t/m 06-07 completed)
 - Pigeon moet ^26.x zijn voor compatibiliteit met drift_dev ^2.31.0 (analyzer constraint conflict)
 
 ### From 06-06
+
 - UncontrolledProviderScope pattern: ProviderContainer aangemaakt in main() vóór runApp(), store override vóór eerste widget render
 - SoulBridgeApi geïmplementeerd in root SoulApp widget — langste lifecycle, altijd actief
 - Init-volgorde: ObjectBox → ProviderContainer → API key → OpenClaw → Notifications → ForegroundService → route check → SentryConfig.init(runApp)
 
 ### From 06-07
+
 - EXTRA_DART_DEFINES env var voor dart-defines in add-to-app CI context (niet --dart-define flags)
 - NDK build tasks moeten expliciet afhangen van downloadBootstraps (release build volgorde issue)
 - Release build signing vereist KEYSTORE_BASE64 secret configuratie in GitHub repo
