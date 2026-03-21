@@ -10,3 +10,11 @@
 -dontobfuscate
 #-renamesourcefileattribute SourceFile
 #-keepattributes SourceFile,LineNumberTable
+
+# Flutter embedding uses ReLinker optionally — suppress missing class warnings
+-dontwarn com.getkeepsafe.relinker.**
+-keep class com.getkeepsafe.relinker.** { *; }
+
+# Keep Flutter JNI and embedding classes
+-keep class io.flutter.** { *; }
+-dontwarn io.flutter.**
