@@ -56,6 +56,9 @@ abstract class TerminalBridgeApi {
 
   /// Create a dedicated SOUL awareness session. Returns session index.
   int createAwarenessSession();
+
+  /// Write content to a file path (for shell config). Uses Java FileOutputStream — no shell escaping needed.
+  void writeShellConfig(String filePath, String content);
 }
 
 /// Flutter API: Java calls these methods, Dart implements them.

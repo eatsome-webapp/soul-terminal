@@ -212,6 +212,19 @@ public class TerminalBridgeImpl implements TerminalBridgeApi.HostApi {
         return mAwarenessTerminalSession;
     }
 
+    @Override
+    public void writeShellConfig(@NonNull String filePath, @NonNull String content) {
+        try {
+            java.io.File file = new java.io.File(filePath);
+            // Append to existing file
+            java.io.FileOutputStream fos = new java.io.FileOutputStream(file, true);
+            fos.write(content.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            fos.close();
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Failed to write shell config: " + e.getMessage());
+        }
+    }
+
     private boolean isDestructiveCommand(String executable, List<String> args) {
         String exec = executable.toLowerCase();
 

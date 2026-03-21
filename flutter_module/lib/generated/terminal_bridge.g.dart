@@ -368,6 +368,29 @@ class TerminalBridgeApi {
       return (pigeonVar_replyList[0]! as int);
     }
   }
+
+  /// Write content to a file path (for shell config). Uses Java FileOutputStream — no shell escaping needed.
+  Future<void> writeShellConfig(String arg_filePath, String arg_content) async {
+    final String pigeonVar_channelName = 'dev.flutter.pigeon.flutter_module.TerminalBridgeApi.writeShellConfig$pigeonVar_messageChannelSuffix';
+    final BasicMessageChannel<Object?> pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final List<Object?>? pigeonVar_replyList =
+        await pigeonVar_channel.send(<Object?>[arg_filePath, arg_content]) as List<Object?>?;
+    if (pigeonVar_replyList == null) {
+      throw _createConnectionError(pigeonVar_channelName);
+    } else if (pigeonVar_replyList.length > 1) {
+      throw PlatformException(
+        code: pigeonVar_replyList[0]! as String,
+        message: pigeonVar_replyList[1] as String?,
+        details: pigeonVar_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
 }
 
 /// Flutter API: Java calls these methods, Dart implements them.
