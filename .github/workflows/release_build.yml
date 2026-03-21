@@ -31,6 +31,11 @@ jobs:
           cd flutter_module
           flutter pub get
 
+      - name: Flutter codegen (build_runner)
+        run: |
+          cd flutter_module
+          dart run build_runner build --delete-conflicting-outputs
+
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -51,6 +56,7 @@ jobs:
           STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          EXTRA_DART_DEFINES: "VOYAGE_API_KEY=${{ secrets.VOYAGE_API_KEY }},SENTRY_DSN=${{ secrets.SENTRY_DSN }}"
         run: |
           exit_on_error() { echo "$1"; exit 1; }
 
