@@ -120,15 +120,6 @@
                             app:tint="?attr/termuxActivityDrawerImageTint" />
                     </LinearLayout>
 
-                    <ListView
-                        android:id="@+id/terminal_sessions_list"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_gravity="top"
-                        android:layout_weight="1"
-                        android:choiceMode="singleChoice"
-                        android:longClickable="true" />
-
                     <LinearLayout
                         style="?android:attr/buttonBarStyle"
                         android:layout_width="match_parent"
@@ -142,14 +133,6 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="@string/action_toggle_soft_keyboard" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/new_session_button"
-                            style="?android:attr/buttonBarButtonStyle"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/action_new_session" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/toggle_soul_button"
