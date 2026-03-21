@@ -6,9 +6,9 @@ status: unknown
 last_updated: "2026-03-21T06:11:05.081Z"
 progress:
   total_phases: 11
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 24
-  completed_plans: 23
+  completed_plans: 24
 ---
 
 # Project State
@@ -18,12 +18,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Een native terminal die naadloos integreert met SOUL — terminal + AI brain in één app.
-**Current focus:** Phase 06 — app-merge
+**Current focus:** Phase 07 — bottom-sheet-layout (volgende fase)
 
 ## Current Position
 
-Phase: 06 (app-merge) — EXECUTING
-Plan: 7 of 7 (06-01, 06-02, 06-03, 06-04, 06-05, 06-06 completed)
+Phase: 06 (app-merge) — COMPLETE
+Plan: 7 of 7 (06-01 t/m 06-07 completed)
 
 ## v1.1 Phase Overview
 
@@ -69,3 +69,9 @@ Plan: 7 of 7 (06-01, 06-02, 06-03, 06-04, 06-05, 06-06 completed)
 - UncontrolledProviderScope pattern: ProviderContainer aangemaakt in main() vóór runApp(), store override vóór eerste widget render
 - SoulBridgeApi geïmplementeerd in root SoulApp widget — langste lifecycle, altijd actief
 - Init-volgorde: ObjectBox → ProviderContainer → API key → OpenClaw → Notifications → ForegroundService → route check → SentryConfig.init(runApp)
+
+### From 06-07
+- EXTRA_DART_DEFINES env var voor dart-defines in add-to-app CI context (niet --dart-define flags)
+- NDK build tasks moeten expliciet afhangen van downloadBootstraps (release build volgorde issue)
+- Release build signing vereist KEYSTORE_BASE64 secret configuratie in GitHub repo
+- Debug CI build GROEN: soul-terminal_v1.0.0+047fa33-soul-terminal-github-debug_arm64-v8a.apk
