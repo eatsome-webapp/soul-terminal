@@ -648,12 +648,19 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                 if (newState == BottomSheetBehavior.STATE_EXPANDED && mTerminalView != null) {
                     mTerminalView.requestFocus();
                 }
+                // Re-enable terminal size updates when sheet settles
+                if (newState != BottomSheetBehavior.STATE_DRAGGING
+                        && newState != BottomSheetBehavior.STATE_SETTLING) {
+                    if (mTerminalView != null) {
+                        mTerminalView.updateSize();
+                    }
+                }
                 Logger.logDebug(LOG_TAG, "Sheet state changed to: " + newState);
             }
 
             @Override
             public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                // No-op for now
+                // No-op — terminal resizes only on state settle, not during animation
             }
         });
 
