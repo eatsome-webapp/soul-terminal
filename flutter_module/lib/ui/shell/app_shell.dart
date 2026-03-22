@@ -59,8 +59,10 @@ class _AppShellState extends ConsumerState<AppShell> {
     final activeProjectId = ref.watch(activeProjectProvider);
     final projectsAsync = ref.watch(activeProjectsProvider);
 
+    final isTerminalTab = widget.navigationShell.currentIndex == 3;
+
     return Scaffold(
-      appBar: AppBar(
+      appBar: isTerminalTab ? null : AppBar(
         title: projectsAsync.when(
           data: (projects) {
             final activeProject = projects

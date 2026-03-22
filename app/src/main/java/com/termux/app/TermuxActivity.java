@@ -27,6 +27,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -323,10 +325,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         // Restore terminal visibility state after activity recreation
         if (mTerminalVisible && !mIsLandscape) {
-            View flutterContainer = findViewById(R.id.flutter_container);
-            if (flutterContainer != null) {
-                flutterContainer.setVisibility(View.INVISIBLE);
-            }
+            applyTerminalLayout(true);
         }
 
         if (!mIsLandscape) {
@@ -508,10 +507,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         // Restore terminal/flutter visibility state after layout re-inflate
         if (!mIsLandscape && mTerminalVisible) {
-            View flutterContainer = findViewById(R.id.flutter_container);
-            if (flutterContainer != null) {
-                flutterContainer.setVisibility(View.INVISIBLE);
-            }
+            applyTerminalLayout(true);
         }
 
         if (mTerminalView != null) {
@@ -824,38 +820,73 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         getOnBackPressedDispatcher().addCallback(this, mSheetBackCallback);
     }
 
+    /** Height of Flutter's NavigationBar in dp — used to shrink flutter_container. */
+    private static final int FLUTTER_NAV_BAR_HEIGHT_DP = 80;
+
     /**
      * Show or hide the native terminal.
-     * Terminal container is ALWAYS visible (behind Flutter) so TerminalView always has
-     * non-zero dimensions. We toggle Flutter container between VISIBLE (covers terminal)
-     * and INVISIBLE (reveals terminal, preserves Flutter layout dimensions).
+     * Terminal container is ALWAYS visible behind Flutter. When terminal is active,
+     * flutter_container shrinks to just the NavigationBar (80dp at bottom) so the
+     * user can still navigate between tabs. Terminal gets bottom padding to stay
+     * above the nav bar.
      */
     public void setTerminalVisible(boolean visible) {
+        applyTerminalLayout(visible);
+
+        // Notify Flutter of visibility change (for AppBar hiding + back press sync)
+        if (mSoulBridgeApi != null) {
+            mSoulBridgeApi.onTerminalVisibilityChanged(visible, reply -> {});
+        }
+    }
+
+    /**
+     * Apply the correct layout for terminal visible/hidden state.
+     * Extracted so it can be called from onCreate/onConfigurationChanged without
+     * re-notifying Flutter.
+     */
+    private void applyTerminalLayout(boolean visible) {
         View flutterContainer = findViewById(R.id.flutter_container);
+        View sheetContainer = findViewById(R.id.terminal_sheet_container);
         if (flutterContainer == null) return;
 
         mTerminalVisible = visible;
+        float density = getResources().getDisplayMetrics().density;
+        int navBarHeightPx = (int) (FLUTTER_NAV_BAR_HEIGHT_DP * density);
+
+        CoordinatorLayout.LayoutParams params =
+            (CoordinatorLayout.LayoutParams) flutterContainer.getLayoutParams();
 
         if (visible) {
-            // Hide Flutter to reveal terminal underneath
-            flutterContainer.setVisibility(View.INVISIBLE);
+            // Shrink Flutter to just the NavigationBar at the bottom
+            params.height = navBarHeightPx;
+            params.gravity = Gravity.BOTTOM;
+            flutterContainer.setLayoutParams(params);
+
+            // Terminal: add bottom padding so content stays above nav bar
+            if (sheetContainer != null) {
+                sheetContainer.setPadding(0, 0, 0, navBarHeightPx);
+            }
+
             if (mTerminalView != null) {
                 mTerminalView.requestFocus();
                 mTerminalView.updateSize();
                 mTerminalView.invalidate();
             }
             triggerHaptic(HAPTIC_TICK);
-            Logger.logDebug(LOG_TAG, "Terminal revealed (Flutter invisible)");
+            Logger.logDebug(LOG_TAG, "Terminal revealed, Flutter shrunk to nav bar");
         } else {
-            // Show Flutter on top to cover terminal
-            flutterContainer.setVisibility(View.VISIBLE);
-            triggerHaptic(HAPTIC_TICK);
-            Logger.logDebug(LOG_TAG, "Flutter shown (terminal behind)");
-        }
+            // Restore Flutter to full screen
+            params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            params.gravity = Gravity.NO_GRAVITY;
+            flutterContainer.setLayoutParams(params);
 
-        // Notify Flutter of visibility change (for back press sync)
-        if (mSoulBridgeApi != null) {
-            mSoulBridgeApi.onTerminalVisibilityChanged(visible, reply -> {});
+            // Remove terminal bottom padding
+            if (sheetContainer != null) {
+                sheetContainer.setPadding(0, 0, 0, 0);
+            }
+
+            triggerHaptic(HAPTIC_TICK);
+            Logger.logDebug(LOG_TAG, "Flutter restored to full screen");
         }
     }
 
