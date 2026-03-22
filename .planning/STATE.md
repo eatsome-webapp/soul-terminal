@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-22T12:53:53.479Z"
+last_updated: "2026-03-22T12:55:00.676Z"
 progress:
   total_phases: 12
   completed_phases: 10
   total_plans: 46
-  completed_plans: 39
+  completed_plans: 40
 ---
 
 # Project State
@@ -186,3 +186,11 @@ Plan: 2 of 6
 - readInstalledVersionFromFile() statisch + puur File I/O — geen Pigeon bridge, veilig in background isolate
 - Manifest cache: `/data/data/com.soul.terminal/cache/profile-packs/manifest-cache.json`
 - checkForUpdates() slaat profileId over als localVersion == null (niet geïnstalleerd)
+
+### From 12-01
+
+- Profile pack build: timestamp marker → apt-get install → delta capture (newer than marker) → zip met SYMLINKS.txt → metadata.json sidecar
+- metadata.json sidecar pattern: build script schrijft sha256/size/filename, workflow leest via jq — geen fragiele stdout parsing
+- profile_pack_build.yml: QEMU aarch64 via docker/setup-qemu-action@v3, bootstrap downloaden via gh release download, softprops/action-gh-release@v2
+- manifest.json schemaVersion 2: manifestUrl (top-level), maintainer + repository per profile voor community profiles
+- ProfileManifest.manifestUrl field; ProfileEntry.maintainer + repository met optional defaults ('') — backward compatible met v1
