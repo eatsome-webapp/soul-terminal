@@ -10,7 +10,6 @@ import '../../services/auth/api_key_service.dart';
 import '../../services/awareness/soul_awareness_service.dart';
 import '../../services/database/daos/settings_dao.dart';
 import '../../services/profile_pack/profile_pack_service.dart';
-import '../../services/profile_pack/profile_manifest.dart';
 
 part 'setup_wizard_provider.g.dart';
 
