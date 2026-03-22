@@ -58,8 +58,8 @@
 
 **Goal:** SOUL Terminal transformeren van een rebranded Termux naar een volwaardige AI coding omgeving — Flutter als hoofdscherm, terminal als bottom sheet, SOUL kan zelfstandig terminal gebruiken, en een onboarding flow die nieuwe gebruikers meteen productief maakt.
 
-**Phases:** 5–11
-**Requirements:** 47 (TERM-04..07, MERG-01..09, LAYT-01..06, SESS-01..06, AWAR-01..08, ONBR-01..07, UXPL-01..07)
+**Phases:** 5–12
+**Requirements:** 57 (TERM-04..07, MERG-01..09, LAYT-01..06, SESS-01..06, AWAR-01..08, ONBR-01..07, UXPL-01..07, PROF-01..10)
 
 ---
 
@@ -267,6 +267,45 @@
 
 ---
 
+### Phase 12 — Profile Pack System
+
+**Status:** Pending
+**Requirements:** PROF-01, PROF-02, PROF-03, PROF-04, PROF-05, PROF-06, PROF-07, PROF-08, PROF-09, PROF-10 (10 requirements)
+**Dependencies:** Phase 10 (onboarding flow — setup wizard als basis)
+
+**What:** Compleet profile pack ecosysteem dat de 10-15 minuten installatie vervangt door een <60 sec download+extract, met auto-update, lazy install, en pluggable profielen voor open-source community.
+
+**3-tier architectuur:**
+- **Tier 1 (Fast):** Pre-built profile packs via GitHub Actions. Download zip → SHA verify → extract over $PREFIX. Doel: <60 seconden.
+- **Tier 2 (Lazy):** Skip installatie bij setup. Detecteer ontbrekende tools bij eerste gebruik → inline "Wil je X installeren?" prompt.
+- **Tier 3 (Fallback):** Verbeterde pkg install met geschatte tijd, parallelle installatie, en betere UX.
+- **Auto-update:** Dagelijkse manifest check (alleen ~1KB), notificatie bij nieuwe versie, handmatige download+install.
+- **Open-source:** Pluggable manifest, community profiles, configureerbare update-frequentie.
+
+**Tasks:**
+- GitHub Actions workflow: bouw profile packs in Termux Docker container, publiceer als Release asset
+- manifest.json vullen met echte URL/sha256/sizeBytes na eerste pack build
+- Setup wizard: profile pack als primary path, pkg install als fallback
+- Lazy install service: detecteer ontbrekende binaries, toon install prompt
+- Background update checker in soul_background_handler.dart (24u interval)
+- Update-beschikbaar UI: badge/banner in settings, tap → download + install
+- Wire getInterruptedInstallation() in main.dart app startup
+- ProfilePackService: update flow (vergelijk versies, download, verify, extract)
+- Settings UI: update-check frequentie (dagelijks/wekelijks/nooit)
+- Manifest schema v2: support voor community/third-party profile URLs
+
+**Success criteria:**
+1. GitHub Actions bouwt claude-code profile pack en publiceert als Release met SHA-256
+2. Nieuwe user selecteert "Claude Code" → pack download + extract in <60 sec (niet 10-15 min)
+3. User die "Terminal Only" kiest en later `claude` typt → prompt "Claude Code niet geïnstalleerd. Installeren?"
+4. Bij mislukte pack download → automatische fallback naar pkg install met geschatte tijd
+5. 24u na installatie: app heeft manifest gecheckt, geen onnodige downloads
+6. User ziet "Update beschikbaar" in settings → tikt → download + install succesvol
+7. App crash tijdens installatie → herstart detecteert interrupted install → biedt retry/cleanup
+8. Community developer kan eigen profiel toevoegen aan manifest fork
+
+---
+
 ## Coverage
 
 | Phase | Requirements | Count |
@@ -278,7 +317,8 @@
 | Phase 9 | AWAR-01, AWAR-02, AWAR-03, AWAR-04, AWAR-05, AWAR-06, AWAR-07, AWAR-08 | 8 |
 | Phase 10 | ONBR-01, ONBR-02, ONBR-03, ONBR-04, ONBR-05, ONBR-06, ONBR-07 | 7 |
 | Phase 11 | UXPL-01, UXPL-02, UXPL-03, UXPL-04, UXPL-05, UXPL-06, UXPL-07 | 7 |
-| **Total** | | **47 / 47** |
+| Phase 12 | PROF-01, PROF-02, PROF-03, PROF-04, PROF-05, PROF-06, PROF-07, PROF-08, PROF-09, PROF-10 | 10 |
+| **Total** | | **57 / 57** |
 
 Coverage: 100%
 
