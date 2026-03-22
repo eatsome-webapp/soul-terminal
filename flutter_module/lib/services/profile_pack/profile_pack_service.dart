@@ -173,6 +173,32 @@ class ProfilePackService {
     return updates;
   }
 
+  /// Perform a profile pack update: fetch manifest, download, verify, extract.
+  /// PROF-10: extraction targets $PREFIX only, never home directory.
+  /// Returns null on success, error message on failure.
+  Future<String?> performUpdate(
+    String profileId,
+    void Function(double progress)? onProgress,
+  ) async {
+    try {
+      final manifest = await fetchManifest();
+      final profile = manifest.profiles.where((p) => p.id == profileId).firstOrNull;
+
+      if (profile == null || !profile.isAvailable) {
+        return 'Profiel "$profileId" niet beschikbaar voor update';
+      }
+
+      final zipPath = await downloadPack(profile, onProgress ?? (_) {});
+      await installPack(profile, zipPath);
+
+      _logger.i('Profile $profileId updated to ${profile.version}');
+      return null;
+    } catch (e) {
+      _logger.e('Profile update failed for $profileId: $e');
+      return 'Update mislukt: $e';
+    }
+  }
+
   /// Read installed profile version directly from marker file.
   /// Works in any isolate (no Pigeon bridge needed).
   static String? readInstalledVersionFromFile(String profileId) {
