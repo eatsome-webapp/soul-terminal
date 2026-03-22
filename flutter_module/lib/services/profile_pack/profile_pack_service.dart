@@ -12,6 +12,7 @@ class ProfilePackService {
   static const _manifestUrl =
       'https://raw.githubusercontent.com/eatsome-webapp/soul-terminal/master/profile-packs/manifest.json';
   static const _downloadDir = '/data/data/com.soul.terminal/cache/profile-packs';
+  static const _manifestCachePath = '/data/data/com.soul.terminal/cache/profile-packs/manifest-cache.json';
 
   final _logger = Logger();
   final _bridge = ProfilePackBridgeApi();
@@ -93,5 +94,80 @@ class ProfilePackService {
   /// Check for interrupted installation (crash recovery).
   Future<String?> getInterruptedInstallation() async {
     return _bridge.getInterruptedInstallation();
+  }
+
+  /// Cache manifest to local file for offline/background access.
+  Future<void> cacheManifest(ProfileManifest manifest) async {
+    try {
+      final file = File(_manifestCachePath);
+      final dir = file.parent;
+      if (!dir.existsSync()) dir.createSync(recursive: true);
+      // Re-serialize from the parsed model
+      final json = {
+        'schemaVersion': manifest.schemaVersion,
+        'profiles': manifest.profiles.map((p) => <String, dynamic>{
+          'id': p.id,
+          'name': p.name,
+          'description': p.description,
+          'icon': p.icon,
+          'version': p.version,
+          'minBootstrapVersion': p.minBootstrapVersion,
+          'arch': p.arch,
+          'sizeBytes': p.sizeBytes,
+          'sha256': p.sha256,
+          'url': p.url,
+        }).toList(),
+      };
+      await file.writeAsString(jsonEncode(json));
+      _logger.i('Manifest cached to $_manifestCachePath');
+    } catch (e) {
+      _logger.e('Failed to cache manifest: $e');
+    }
+  }
+
+  /// Load manifest from local cache. Returns null if no cache exists.
+  Future<ProfileManifest?> loadCachedManifest() async {
+    try {
+      final file = File(_manifestCachePath);
+      if (!file.existsSync()) return null;
+      final content = await file.readAsString();
+      final json = jsonDecode(content) as Map<String, dynamic>;
+      return ProfileManifest.fromJson(json);
+    } catch (e) {
+      _logger.e('Failed to load cached manifest: $e');
+      return null;
+    }
+  }
+
+  /// Check which installed profiles have updates available.
+  /// Returns a map of profileId -> remoteVersion for profiles with updates.
+  Future<Map<String, String>> checkForUpdates() async {
+    final manifest = await fetchManifest();
+    await cacheManifest(manifest);
+
+    final updates = <String, String>{};
+    for (final profile in manifest.profiles) {
+      if (!profile.isAvailable) continue;
+      final localVersion = await getInstalledVersion(profile.id);
+      if (localVersion == null) continue; // Not installed, skip
+      if (ProfileEntry.isNewer(profile.version, localVersion)) {
+        updates[profile.id] = profile.version;
+        _logger.i('Update available for ${profile.id}: $localVersion -> ${profile.version}');
+      }
+    }
+    return updates;
+  }
+
+  /// Read installed profile version directly from marker file.
+  /// Works in any isolate (no Pigeon bridge needed).
+  static String? readInstalledVersionFromFile(String profileId) {
+    try {
+      final markerPath = '/data/data/com.soul.terminal/files/usr/.soul-profile-$profileId';
+      final file = File(markerPath);
+      if (!file.existsSync()) return null;
+      return file.readAsStringSync().trim();
+    } catch (e) {
+      return null;
+    }
   }
 }
