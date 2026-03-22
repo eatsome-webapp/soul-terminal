@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-22T12:58:24.898Z"
+last_updated: "2026-03-22T13:01:59.289Z"
 progress:
   total_phases: 12
   completed_phases: 10
   total_plans: 46
-  completed_plans: 41
+  completed_plans: 42
 ---
 
 # Project State
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 12 (profile-pack-system) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6 (12-05 complete)
 
 ## v1.1 Phase Overview
 
@@ -200,3 +200,10 @@ Plan: 4 of 6
 - _installViaProfilePack: Stopwatch start na manifest fetch, log pack name + version vóór download, elapsed seconds op completion
 - _installViaPkg: pkg update -y vóór pkg install, [N/M] step counters, time estimates, timeout 10min per stap (was 5min)
 - Fallback catch: twee log regels ("Snelle installatie niet beschikbaar" + "Terugvallen op handmatige installatie via pkg...")
+
+### From 12-05
+
+- OSC 777 soul-cnf pattern: bash=`command_not_found_handle` (geen r), zsh=`command_not_found_handler` (met r)
+- checkForCommandNotFound() in SoulBridgeController (co-located met output streaming), TermuxActivity heeft thin delegate
+- LazyInstallService: broadcast StreamController + 10s dedup set — handleCommandNotFound() suppressed bij pending
+- Pigeon onCommandNotFound handmatig toegevoegd: pigeons/terminal_bridge.dart + .g.dart setUp() + Java SoulBridgeApi
