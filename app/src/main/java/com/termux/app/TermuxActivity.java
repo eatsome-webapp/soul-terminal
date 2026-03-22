@@ -289,8 +289,10 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         Logger.logDebug(LOG_TAG, "onCreate");
         mIsOnResumeAfterOnCreate = true;
 
-        if (savedInstanceState != null)
+        if (savedInstanceState != null) {
             mIsActivityRecreated = savedInstanceState.getBoolean(ARG_ACTIVITY_RECREATED, false);
+            mTerminalVisible = savedInstanceState.getBoolean("terminal_visible", false);
+        }
 
         // Delete ReportInfo serialized object files from cache older than 14 days
         ReportActivity.deleteReportInfoFilesOlderThanXDays(this, 14, false);
@@ -318,6 +320,15 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         setMargins();
         setupFlutterFragment();
+
+        // Restore terminal visibility state after activity recreation
+        if (mTerminalVisible && !mIsLandscape) {
+            View flutterContainer = findViewById(R.id.flutter_container);
+            if (flutterContainer != null) {
+                flutterContainer.setVisibility(View.INVISIBLE);
+            }
+        }
+
         if (!mIsLandscape) {
             setupTerminalOverlay();
         }
@@ -493,6 +504,14 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                 .beginTransaction()
                 .replace(R.id.flutter_container, flutterFragment, FLUTTER_FRAGMENT_TAG)
                 .commit();
+        }
+
+        // Restore terminal/flutter visibility state after layout re-inflate
+        if (!mIsLandscape && mTerminalVisible) {
+            View flutterContainer = findViewById(R.id.flutter_container);
+            if (flutterContainer != null) {
+                flutterContainer.setVisibility(View.INVISIBLE);
+            }
         }
 
         if (mTerminalView != null) {
@@ -785,17 +804,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             mSheetBackCallback = null;
         }
 
-        View sheetContainer = findViewById(R.id.terminal_sheet_container);
-
-        // IME insets handling on terminal container
-        ViewCompat.setOnApplyWindowInsetsListener(sheetContainer, (view, insets) -> {
-            int imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-            int navBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
-            view.setPadding(0, 0, 0, Math.max(imeHeight, navBarHeight));
-            return insets;
-        });
-
-        // Back button handling: hide terminal overlay, return to Flutter
+        // Back button handling: hide terminal, return to Flutter
         mSheetBackCallback = new OnBackPressedCallback(true) {
             @SuppressLint("RtlHardcoded")
             @Override
@@ -817,46 +826,31 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
     /**
      * Show or hide the native terminal.
-     * Swaps visibility between flutter_container and terminal_sheet_container —
-     * only one is visible at a time, no overlay/margin hacks needed.
+     * Terminal container is ALWAYS visible (behind Flutter) so TerminalView always has
+     * non-zero dimensions. We toggle Flutter container between VISIBLE (covers terminal)
+     * and INVISIBLE (reveals terminal, preserves Flutter layout dimensions).
      */
     public void setTerminalVisible(boolean visible) {
-        View sheetContainer = findViewById(R.id.terminal_sheet_container);
         View flutterContainer = findViewById(R.id.flutter_container);
-        if (sheetContainer == null || flutterContainer == null) return;
+        if (flutterContainer == null) return;
 
         mTerminalVisible = visible;
 
         if (visible) {
-            flutterContainer.setVisibility(View.GONE);
-            sheetContainer.setVisibility(View.VISIBLE);
+            // Hide Flutter to reveal terminal underneath
+            flutterContainer.setVisibility(View.INVISIBLE);
             if (mTerminalView != null) {
                 mTerminalView.requestFocus();
-                // Re-attach session after GONE→VISIBLE so updateSize() gets real dimensions
-                sheetContainer.getViewTreeObserver().addOnGlobalLayoutListener(
-                    new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
-                        @Override
-                        public void onGlobalLayout() {
-                            sheetContainer.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                            if (mTerminalView != null) {
-                                TerminalSession session = getCurrentSession();
-                                if (session != null) {
-                                    mTerminalView.attachSession(null);
-                                    mTerminalView.attachSession(session);
-                                }
-                                mTerminalView.invalidate();
-                            }
-                        }
-                    }
-                );
+                mTerminalView.updateSize();
+                mTerminalView.invalidate();
             }
             triggerHaptic(HAPTIC_TICK);
-            Logger.logDebug(LOG_TAG, "Terminal shown, Flutter hidden");
+            Logger.logDebug(LOG_TAG, "Terminal revealed (Flutter invisible)");
         } else {
-            sheetContainer.setVisibility(View.GONE);
+            // Show Flutter on top to cover terminal
             flutterContainer.setVisibility(View.VISIBLE);
             triggerHaptic(HAPTIC_TICK);
-            Logger.logDebug(LOG_TAG, "Terminal hidden, Flutter shown");
+            Logger.logDebug(LOG_TAG, "Flutter shown (terminal behind)");
         }
 
         // Notify Flutter of visibility change (for back press sync)
