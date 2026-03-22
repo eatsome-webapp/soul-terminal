@@ -55,7 +55,9 @@ public class SoulBridgeController {
                     if (i > startIndex) lastLines.append("\n");
                     lastLines.append(lines[i]);
                 }
-                mSoulBridge.onTerminalOutput(lastLines.toString(), reply -> {});
+                String outputText = lastLines.toString();
+                checkForCommandNotFound(outputText);
+                mSoulBridge.onTerminalOutput(outputText, reply -> {});
             } catch (Exception e) {
                 Logger.logError(LOG_TAG, "Failed to stream terminal output: " + e.getMessage());
             }
@@ -88,6 +90,34 @@ public class SoulBridgeController {
         new Handler(Looper.getMainLooper()).post(() ->
             mSoulBridge.onCommandCompleted(sessionId, reply -> {})
         );
+    }
+
+    /**
+     * Parse terminal output for OSC 777 soul-cnf escape sequences.
+     * Format: ESC]777;soul-cnf;COMMAND BEL
+     * Called automatically during terminal output streaming.
+     */
+    public void checkForCommandNotFound(String output) {
+        if (output == null || !output.contains("soul-cnf")) return;
+
+        // Pattern: \033]777;soul-cnf;COMMAND\007
+        int startIdx = output.indexOf("\033]777;soul-cnf;");
+        while (startIdx >= 0) {
+            int cmdStart = startIdx + "\033]777;soul-cnf;".length();
+            int cmdEnd = output.indexOf("\007", cmdStart);
+            if (cmdEnd < 0) break;
+
+            String command = output.substring(cmdStart, cmdEnd).trim();
+            if (!command.isEmpty() && mSoulBridge != null) {
+                Logger.logInfo(LOG_TAG, "Command not found detected: " + command);
+                final String commandFinal = command;
+                new Handler(Looper.getMainLooper()).post(() ->
+                    mSoulBridge.onCommandNotFound(commandFinal, reply -> {})
+                );
+            }
+
+            startIdx = output.indexOf("\033]777;soul-cnf;", cmdEnd);
+        }
     }
 
     /**

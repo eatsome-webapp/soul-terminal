@@ -80,4 +80,7 @@ abstract class SoulBridgeApi {
 
   /// Called when the native terminal visibility changes (e.g. back press hides it).
   void onTerminalVisibilityChanged(bool visible);
+
+  /// Called when a command is not found (OSC 777 soul-cnf escape sequence detected).
+  void onCommandNotFound(String command);
 }

@@ -1446,6 +1446,17 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         }
     }
 
+    /**
+     * Parse terminal output for OSC 777 soul-cnf escape sequences and forward
+     * the missing command to Flutter via Pigeon onCommandNotFound.
+     * Delegates to SoulBridgeController where the output stream is managed.
+     */
+    public void checkForCommandNotFound(String output) {
+        if (mSoulBridgeController != null) {
+            mSoulBridgeController.checkForCommandNotFound(output);
+        }
+    }
+
     public ExtraKeysView getExtraKeysView() {
         return mExtraKeysView;
     }

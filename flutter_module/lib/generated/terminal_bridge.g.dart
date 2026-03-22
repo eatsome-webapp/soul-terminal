@@ -413,6 +413,9 @@ abstract class SoulBridgeApi {
   /// Called when the native terminal visibility changes (e.g. back press hides it).
   void onTerminalVisibilityChanged(bool visible);
 
+  /// Called when a command is not found (OSC 777 soul-cnf escape sequence detected).
+  void onCommandNotFound(String command);
+
   static void setUp(SoulBridgeApi? api, {BinaryMessenger? binaryMessenger, String messageChannelSuffix = ''}) {
     final String messageChannelSuffixValue = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
     {
@@ -523,6 +526,29 @@ abstract class SoulBridgeApi {
           assert(arg_visible != null, 'Argument for dev.flutter.pigeon.flutter_module.SoulBridgeApi.onTerminalVisibilityChanged was null, expected non-null bool.');
           try {
             api.onTerminalVisibilityChanged(arg_visible!);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }
+        });
+      }
+    }
+    {
+      final BasicMessageChannel<Object?> pigeonVar_channel = BasicMessageChannel<Object?>(
+        'dev.flutter.pigeon.flutter_module.SoulBridgeApi.onCommandNotFound$messageChannelSuffixValue',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          assert(message != null, 'Argument for dev.flutter.pigeon.flutter_module.SoulBridgeApi.onCommandNotFound was null.');
+          final List<Object?> args = (message as List<Object?>?)!;
+          final String? arg_command = (args[0] as String?);
+          assert(arg_command != null, 'Argument for dev.flutter.pigeon.flutter_module.SoulBridgeApi.onCommandNotFound was null, expected non-null String.');
+          try {
+            api.onCommandNotFound(arg_command!);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);

@@ -661,6 +661,31 @@ public class TerminalBridgeApi {
             }
           });
     }
+
+    /** Called when a command is not found (OSC 777 soul-cnf escape sequence detected). */
+    public void onCommandNotFound(
+        @NonNull String commandArg, @NonNull Reply<Object> callback) {
+      BasicMessageChannel<Object> channel =
+          new BasicMessageChannel<>(
+              binaryMessenger,
+              "dev.flutter.pigeon.flutter_module.SoulBridgeApi.onCommandNotFound" + messageChannelSuffix,
+              getCodec());
+      channel.send(
+          new ArrayList<>(Collections.singletonList(commandArg)),
+          channelReply -> {
+            if (channelReply instanceof List) {
+              List<Object> listReply = (List<Object>) channelReply;
+              if (listReply.size() > 1) {
+                callback.reply(
+                    new FlutterError((String) listReply.get(0), (String) listReply.get(1), listReply.get(2)));
+              } else {
+                callback.reply(null);
+              }
+            } else {
+              callback.reply(new FlutterError("channel-error", "Unable to establish connection on channel.", ""));
+            }
+          });
+    }
   }
 
   @NonNull
