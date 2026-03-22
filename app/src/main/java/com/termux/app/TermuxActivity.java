@@ -841,14 +841,24 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             sheetContainer.setVisibility(View.VISIBLE);
             if (mTerminalView != null) {
                 mTerminalView.requestFocus();
-                // Wait for layout pass after GONE→VISIBLE before updating terminal size
+                // Wait for layout pass after GONE→VISIBLE, then re-attach session.
+                // attachSession() calls updateSize() which needs non-zero dimensions.
+                // When container starts GONE, the initial attachSession gets 0x0 and
+                // mEmulator stays null, so we must re-attach after layout.
                 sheetContainer.getViewTreeObserver().addOnGlobalLayoutListener(
                     new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
                         @Override
                         public void onGlobalLayout() {
                             sheetContainer.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                             if (mTerminalView != null) {
-                                mTerminalView.updateSize();
+                                TerminalSession session = getCurrentSession();
+                                if (session != null) {
+                                    // Force re-attach by clearing current session first
+                                    mTerminalView.attachSession(null);
+                                    mTerminalView.attachSession(session);
+                                } else {
+                                    mTerminalView.updateSize();
+                                }
                                 mTerminalView.invalidate();
                             }
                         }
