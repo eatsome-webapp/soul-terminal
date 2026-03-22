@@ -135,7 +135,8 @@ class SetupWizard extends _$SetupWizard {
       return;
     } catch (e) {
       _logger.w('Profile pack install failed, falling back to pkg: $e');
-      addInstallLog('Snelle installatie niet beschikbaar, handmatige installatie...');
+      addInstallLog('Snelle installatie niet beschikbaar');
+      addInstallLog('Terugvallen op handmatige installatie via pkg...');
     }
 
     // Fallback: traditional pkg install
