@@ -815,36 +815,24 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         getOnBackPressedDispatcher().addCallback(this, mSheetBackCallback);
     }
 
-    /** Bottom margin in dp for the terminal overlay (to keep Flutter NavigationBar visible). */
-    private static final int TERMINAL_BOTTOM_MARGIN_DP = 80;
-
     /**
-     * Show or hide the native terminal overlay.
-     * When visible, terminal covers the Flutter body but leaves 80dp at the bottom
-     * for the Flutter NavigationBar to remain tappable.
+     * Show or hide the native terminal.
+     * Swaps visibility between flutter_container and terminal_sheet_container —
+     * only one is visible at a time, no overlay/margin hacks needed.
      */
     public void setTerminalVisible(boolean visible) {
         View sheetContainer = findViewById(R.id.terminal_sheet_container);
-        if (sheetContainer == null) return;
+        View flutterContainer = findViewById(R.id.flutter_container);
+        if (sheetContainer == null || flutterContainer == null) return;
 
         mTerminalVisible = visible;
 
         if (visible) {
-            // Set bottom margin to keep Flutter NavigationBar accessible
-            float density = getResources().getDisplayMetrics().density;
-            int bottomMarginPx = (int) (TERMINAL_BOTTOM_MARGIN_DP * density);
-            androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams params =
-                (androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) sheetContainer.getLayoutParams();
-            params.bottomMargin = bottomMarginPx;
-            sheetContainer.setLayoutParams(params);
-
+            flutterContainer.setVisibility(View.GONE);
             sheetContainer.setVisibility(View.VISIBLE);
             if (mTerminalView != null) {
                 mTerminalView.requestFocus();
-                // Wait for layout pass after GONE→VISIBLE, then re-attach session.
-                // attachSession() calls updateSize() which needs non-zero dimensions.
-                // When container starts GONE, the initial attachSession gets 0x0 and
-                // mEmulator stays null, so we must re-attach after layout.
+                // Re-attach session after GONE→VISIBLE so updateSize() gets real dimensions
                 sheetContainer.getViewTreeObserver().addOnGlobalLayoutListener(
                     new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
                         @Override
@@ -853,11 +841,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                             if (mTerminalView != null) {
                                 TerminalSession session = getCurrentSession();
                                 if (session != null) {
-                                    // Force re-attach by clearing current session first
                                     mTerminalView.attachSession(null);
                                     mTerminalView.attachSession(session);
-                                } else {
-                                    mTerminalView.updateSize();
                                 }
                                 mTerminalView.invalidate();
                             }
@@ -866,11 +851,12 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                 );
             }
             triggerHaptic(HAPTIC_TICK);
-            Logger.logDebug(LOG_TAG, "Terminal overlay shown");
+            Logger.logDebug(LOG_TAG, "Terminal shown, Flutter hidden");
         } else {
             sheetContainer.setVisibility(View.GONE);
+            flutterContainer.setVisibility(View.VISIBLE);
             triggerHaptic(HAPTIC_TICK);
-            Logger.logDebug(LOG_TAG, "Terminal overlay hidden");
+            Logger.logDebug(LOG_TAG, "Terminal hidden, Flutter shown");
         }
 
         // Notify Flutter of visibility change (for back press sync)
