@@ -1,5 +1,6 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "manifestUrl": "https://raw.githubusercontent.com/eatsome-webapp/soul-terminal/master/profile-packs/manifest.json",
   "profiles": [
     {
       "id": "claude-code",
@@ -11,7 +12,9 @@
       "arch": "aarch64",
       "sizeBytes": 0,
       "sha256": "",
-      "url": ""
+      "url": "",
+      "maintainer": "eatsome-webapp",
+      "repository": "https://github.com/eatsome-webapp/soul-terminal"
     },
     {
       "id": "python",
@@ -23,7 +26,9 @@
       "arch": "aarch64",
       "sizeBytes": 0,
       "sha256": "",
-      "url": ""
+      "url": "",
+      "maintainer": "eatsome-webapp",
+      "repository": "https://github.com/eatsome-webapp/soul-terminal"
     }
   ]
 }

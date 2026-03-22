@@ -1,13 +1,20 @@
 /// Data model for profile pack manifest.
 class ProfileManifest {
   final int schemaVersion;
+  final String manifestUrl;
   final List<ProfileEntry> profiles;
 
-  const ProfileManifest({required this.schemaVersion, required this.profiles});
+  const ProfileManifest({
+    required this.schemaVersion,
+    required this.manifestUrl,
+    required this.profiles,
+  });
 
   factory ProfileManifest.fromJson(Map<String, dynamic> json) {
+    final manifestUrl = json['manifestUrl'] as String? ?? '';
     return ProfileManifest(
       schemaVersion: json['schemaVersion'] as int,
+      manifestUrl: manifestUrl,
       profiles: (json['profiles'] as List)
           .map((entry) => ProfileEntry.fromJson(entry as Map<String, dynamic>))
           .toList(),
@@ -26,6 +33,8 @@ class ProfileEntry {
   final int sizeBytes;
   final String sha256;
   final String url;
+  final String maintainer;
+  final String repository;
 
   const ProfileEntry({
     required this.id,
@@ -38,6 +47,8 @@ class ProfileEntry {
     required this.sizeBytes,
     required this.sha256,
     required this.url,
+    this.maintainer = '',
+    this.repository = '',
   });
 
   factory ProfileEntry.fromJson(Map<String, dynamic> json) {
@@ -52,6 +63,8 @@ class ProfileEntry {
       sizeBytes: json['sizeBytes'] as int? ?? 0,
       sha256: json['sha256'] as String? ?? '',
       url: json['url'] as String? ?? '',
+      maintainer: json['maintainer'] as String? ?? '',
+      repository: json['repository'] as String? ?? '',
     );
   }
 
