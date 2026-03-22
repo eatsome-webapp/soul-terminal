@@ -154,6 +154,8 @@ class SetupWizard extends _$SetupWizard {
       throw Exception('Profiel "$profileId" niet beschikbaar als pack');
     }
 
+    addInstallLog('Profile pack gevonden: ${pack.name} v${pack.version}');
+    final stopwatch = Stopwatch()..start();
     addInstallLog('Downloaden (${pack.sizeMb} MB)...');
     final zipPath = await packService.downloadPack(pack, (progress) {
       // Update last log line with progress percentage
@@ -168,7 +170,9 @@ class SetupWizard extends _$SetupWizard {
     addInstallLog('Verificatie...');
     await packService.installPack(pack, zipPath);
 
-    addInstallLog('Installatie voltooid!');
+    stopwatch.stop();
+    final seconds = stopwatch.elapsed.inSeconds;
+    addInstallLog('Installatie voltooid in ${seconds}s!');
     state = state.copyWith(isInstalling: false, installSuccess: true);
     _advanceToNextStep();
   }
