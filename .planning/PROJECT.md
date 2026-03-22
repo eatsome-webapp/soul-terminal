@@ -24,6 +24,7 @@ Een native terminal die naadloos integreert met SOUL — zodat Claude Code, de A
 - [x] Bottom sheet terminal: CoordinatorLayout + BottomSheet met 4 states — Validated in Phase 7: Bottom Sheet Layout
 - [x] Session management: TabLayout tab bar, process namen, swipe, Pigeon API — Validated in Phase 8: Session Management
 - [x] Onboarding flow: setup wizard, package installatie, API key, HyperOS battery, OSC 133 config — Validated in Phase 10: Onboarding Flow
+- [x] Profile pack system: CI pipeline, version management, 3-tier install, lazy install, background updates — Validated in Phase 12: Profile Pack System
 
 ### Active
 - [ ] Pigeon bridge: terminal/sessie/output APIs (uitgebreid in Phase 8, consumer in Phase 9)
@@ -76,4 +77,4 @@ Een native terminal die naadloos integreert met SOUL — zodat Claude Code, de A
 | Pigeon bridge i.p.v. cmd-proxy | In-process communicatie, geen HTTP/token overhead, veiliger | ✓ Validated Phase 3 |
 
 ---
-*Last updated: 2026-03-21 after Phase 10: Onboarding Flow completed*
+*Last updated: 2026-03-22 after Phase 12: Profile Pack System completed*
