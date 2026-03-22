@@ -841,7 +841,19 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             sheetContainer.setVisibility(View.VISIBLE);
             if (mTerminalView != null) {
                 mTerminalView.requestFocus();
-                mTerminalView.post(() -> mTerminalView.updateSize());
+                // Wait for layout pass after GONE→VISIBLE before updating terminal size
+                sheetContainer.getViewTreeObserver().addOnGlobalLayoutListener(
+                    new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            sheetContainer.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                            if (mTerminalView != null) {
+                                mTerminalView.updateSize();
+                                mTerminalView.invalidate();
+                            }
+                        }
+                    }
+                );
             }
             triggerHaptic(HAPTIC_TICK);
             Logger.logDebug(LOG_TAG, "Terminal overlay shown");
