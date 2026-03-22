@@ -40,6 +40,11 @@ class SettingsKeys {
 
   // Phase 12: Profile Pack System
   static const String interruptedProfileInstall = 'interrupted_profile_install';
+  static const String profileUpdateCheckFrequency = 'profile_update_check_frequency'; // daily, weekly, never
+  static const String profileUpdateLastCheck = 'profile_update_last_check'; // ISO 8601 timestamp
+  static const String profileUpdateAvailable = 'profile_update_available'; // true/false
+  static const String profileUpdateRemoteVersion = 'profile_update_remote_version'; // e.g. 2026.03.23-r1
+  static const String profileUpdateProfileId = 'profile_update_profile_id'; // e.g. claude-code
 
   // Phase 11: Vessel onboarding (chronological order of use)
   static String vesselFirstConnected(String vesselId) => 'vessel_first_connected_$vesselId';
