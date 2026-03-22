@@ -78,9 +78,9 @@ Requirements for milestone v1.1: Van terminal naar AI coding omgeving.
 ### Profile Pack System
 
 - [x] **PROF-01**: Profile packs worden gebouwd via GitHub Actions (pre-built zip met nodejs+git+gh+claude-code)
-- [ ] **PROF-02**: User installeert profiel via profile pack download+extract in <60 seconden (Tier 1 fast path)
+- [x] **PROF-02**: User installeert profiel via profile pack download+extract in <60 seconden (Tier 1 fast path)
 - [ ] **PROF-03**: User kan setup overslaan en tools worden on-demand geïnstalleerd bij eerste gebruik (Tier 2 lazy install)
-- [ ] **PROF-04**: Fallback pkg install toont geschatte tijd en paralleliseert waar mogelijk (Tier 3 improved fallback)
+- [x] **PROF-04**: Fallback pkg install toont geschatte tijd en paralleliseert waar mogelijk (Tier 3 improved fallback)
 - [ ] **PROF-05**: App checkt dagelijks op profile pack updates via manifest (background, opt-in)
 - [ ] **PROF-06**: User ziet notificatie wanneer update beschikbaar is en kan handmatig updaten
 - [x] **PROF-07**: Onderbroken installatie wordt gedetecteerd bij app start en hervat/opgeruimd (crash recovery)
@@ -171,9 +171,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UXPL-07 | Phase 11 — UX Polish | Pending |
 
 | PROF-01 | Phase 12 — Profile Pack System | Complete |
-| PROF-02 | Phase 12 — Profile Pack System | Pending |
+| PROF-02 | Phase 12 — Profile Pack System | Complete |
 | PROF-03 | Phase 12 — Profile Pack System | Pending |
-| PROF-04 | Phase 12 — Profile Pack System | Pending |
+| PROF-04 | Phase 12 — Profile Pack System | Complete |
 | PROF-05 | Phase 12 — Profile Pack System | Pending |
 | PROF-06 | Phase 12 — Profile Pack System | Pending |
 | PROF-07 | Phase 12 — Profile Pack System | Complete |

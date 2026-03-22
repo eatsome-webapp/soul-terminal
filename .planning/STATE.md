@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-22T12:55:00.676Z"
+last_updated: "2026-03-22T12:58:24.898Z"
 progress:
   total_phases: 12
   completed_phases: 10
   total_plans: 46
-  completed_plans: 40
+  completed_plans: 41
 ---
 
 # Project State
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 12 (profile-pack-system) — EXECUTING
-Plan: 2 of 6
+Plan: 4 of 6
 
 ## v1.1 Phase Overview
 
@@ -194,3 +194,9 @@ Plan: 2 of 6
 - profile_pack_build.yml: QEMU aarch64 via docker/setup-qemu-action@v3, bootstrap downloaden via gh release download, softprops/action-gh-release@v2
 - manifest.json schemaVersion 2: manifestUrl (top-level), maintainer + repository per profile voor community profiles
 - ProfileManifest.manifestUrl field; ProfileEntry.maintainer + repository met optional defaults ('') — backward compatible met v1
+
+### From 12-04
+
+- _installViaProfilePack: Stopwatch start na manifest fetch, log pack name + version vóór download, elapsed seconds op completion
+- _installViaPkg: pkg update -y vóór pkg install, [N/M] step counters, time estimates, timeout 10min per stap (was 5min)
+- Fallback catch: twee log regels ("Snelle installatie niet beschikbaar" + "Terugvallen op handmatige installatie via pkg...")
