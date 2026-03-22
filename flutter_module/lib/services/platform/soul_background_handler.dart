@@ -19,6 +19,9 @@ import '../success/momentum_calculator.dart';
 import '../success/streak_service.dart';
 import '../success/weekly_review_engine.dart';
 import '../monitoring/ci_monitor_service.dart';
+import '../profile_pack/profile_pack_service.dart';
+import '../profile_pack/profile_manifest.dart';
+import '../database/daos/settings_dao.dart';
 import 'local_notification_service.dart';
 
 /// Top-level callback -- MUST be top-level or static.
@@ -56,6 +59,7 @@ class SoulBackgroundHandler extends TaskHandler {
   late ProjectStateExtractor _projectStateExtractor;
   late CiMonitorService _ciMonitorService;
   DateTime? _lastStucknessCheck;
+  DateTime? _lastProfileUpdateCheck;
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
@@ -266,6 +270,94 @@ class SoulBackgroundHandler extends TaskHandler {
       await _ciMonitorService.checkAllProjects();
     } catch (error) {
       _logger.e('CI monitoring check failed: $error');
+    }
+
+    // Phase 12: Profile pack update check (rate-limited to daily/weekly)
+    try {
+      final now = DateTime.now();
+      if (_lastProfileUpdateCheck == null ||
+          now.difference(_lastProfileUpdateCheck!).inHours >= 1) {
+        await _checkProfileUpdates();
+        _lastProfileUpdateCheck = now;
+      }
+    } catch (error) {
+      _logger.e('Profile update check failed: $error');
+    }
+  }
+
+  /// Check for profile pack updates.
+  /// Reads frequency preference from settings, fetches manifest if due,
+  /// compares versions, and stores update-available flag.
+  /// Uses direct File I/O for version markers (no Pigeon — runs in background isolate).
+  Future<void> _checkProfileUpdates() async {
+    final settingsDao = _backgroundDb.settingsDao;
+
+    // Check frequency preference
+    final frequency = await settingsDao.getString(SettingsKeys.profileUpdateCheckFrequency) ?? 'daily';
+    if (frequency == 'never') {
+      _logger.d('Profile update check disabled by user');
+      return;
+    }
+
+    // Check if enough time has passed since last check
+    final lastCheckStr = await settingsDao.getString(SettingsKeys.profileUpdateLastCheck);
+    if (lastCheckStr != null) {
+      final lastCheck = DateTime.tryParse(lastCheckStr);
+      if (lastCheck != null) {
+        final hoursSinceCheck = DateTime.now().difference(lastCheck).inHours;
+        final requiredHours = frequency == 'weekly' ? 168 : 24; // 7 days or 1 day
+        if (hoursSinceCheck < requiredHours) {
+          _logger.d('Profile update check not due yet ($hoursSinceCheck hrs < $requiredHours hrs)');
+          return;
+        }
+      }
+    }
+
+    _logger.i('Running profile update check...');
+
+    try {
+      final packService = ProfilePackService();
+      final manifest = await packService.fetchManifest();
+      await packService.cacheManifest(manifest);
+
+      // Check each installed profile for updates
+      bool foundUpdate = false;
+      for (final profile in manifest.profiles) {
+        if (!profile.isAvailable) continue;
+
+        final localVersion = ProfilePackService.readInstalledVersionFromFile(profile.id);
+        if (localVersion == null) continue; // Not installed
+
+        if (ProfileEntry.isNewer(profile.version, localVersion)) {
+          _logger.i('Update available for ${profile.id}: $localVersion -> ${profile.version}');
+          await settingsDao.setBool(SettingsKeys.profileUpdateAvailable, true);
+          await settingsDao.setString(SettingsKeys.profileUpdateRemoteVersion, profile.version);
+          await settingsDao.setString(SettingsKeys.profileUpdateProfileId, profile.id);
+          foundUpdate = true;
+
+          // Notify main isolate
+          FlutterForegroundTask.sendDataToMain({
+            'type': 'profile_update_available',
+            'profileId': profile.id,
+            'currentVersion': localVersion,
+            'remoteVersion': profile.version,
+          });
+          break; // Only report first update found
+        }
+      }
+
+      if (!foundUpdate) {
+        await settingsDao.setBool(SettingsKeys.profileUpdateAvailable, false);
+      }
+
+      // Update last check timestamp
+      await settingsDao.setString(
+        SettingsKeys.profileUpdateLastCheck,
+        DateTime.now().toIso8601String(),
+      );
+    } catch (e) {
+      _logger.e('Profile update check failed: $e');
+      // Don't update lastCheck on failure — retry next cycle
     }
   }
 
