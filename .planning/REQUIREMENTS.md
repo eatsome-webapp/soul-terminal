@@ -84,7 +84,7 @@ Requirements for milestone v1.1: Van terminal naar AI coding omgeving.
 - [ ] **PROF-05**: App checkt dagelijks op profile pack updates via manifest (background, opt-in)
 - [ ] **PROF-06**: User ziet notificatie wanneer update beschikbaar is en kan handmatig updaten
 - [ ] **PROF-07**: Onderbroken installatie wordt gedetecteerd bij app start en hervat/opgeruimd (crash recovery)
-- [ ] **PROF-08**: Profile systeem is pluggable — community kan eigen profielen toevoegen via manifest
+- [x] **PROF-08**: Profile systeem is pluggable — community kan eigen profielen toevoegen via manifest
 - [ ] **PROF-09**: User kan update-check frequentie instellen (dagelijks/wekelijks/nooit)
 - [ ] **PROF-10**: Profile pack updates overschrijven bestaande $PREFIX bestanden zonder dataverlies in home directory
 
@@ -177,7 +177,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROF-05 | Phase 12 — Profile Pack System | Pending |
 | PROF-06 | Phase 12 — Profile Pack System | Pending |
 | PROF-07 | Phase 12 — Profile Pack System | Pending |
-| PROF-08 | Phase 12 — Profile Pack System | Pending |
+| PROF-08 | Phase 12 — Profile Pack System | Complete |
 | PROF-09 | Phase 12 — Profile Pack System | Pending |
 | PROF-10 | Phase 12 — Profile Pack System | Pending |
 

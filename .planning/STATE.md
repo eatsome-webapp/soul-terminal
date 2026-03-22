@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-21T14:50:11.783Z"
+last_updated: "2026-03-22T12:53:53.479Z"
 progress:
-  total_phases: 11
+  total_phases: 12
   completed_phases: 10
-  total_plans: 40
-  completed_plans: 37
+  total_plans: 46
+  completed_plans: 39
 ---
 
 # Project State
@@ -18,12 +18,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Een native terminal die naadloos integreert met SOUL — terminal + AI brain in één app.
-**Current focus:** Phase 11 — ux-polish
+**Current focus:** Phase 12 — profile-pack-system
 
 ## Current Position
 
-Phase: 11 (ux-polish) — COMPLETE
-Plan: 4 of 4 — COMPLETE (11-04 done, commits b1c524c3, efeb8258, 24834662, bef71746, c8d26fad)
+Phase: 12 (profile-pack-system) — EXECUTING
+Plan: 2 of 6
 
 ## v1.1 Phase Overview
 
@@ -179,3 +179,10 @@ Plan: 4 of 4 — COMPLETE (11-04 done, commits b1c524c3, efeb8258, 24834662, bef
 - GestureDetector op sheet_drag_handle: fling >1500dp/s snapped naar STATE_EXPANDED/COLLAPSED
 - OnTouchListener return false — BottomSheetBehavior blijft drag events ontvangen
 - UXPL-03, UXPL-04, UXPL-05 geleverd
+
+### From 12-02
+
+- ProfileEntry.compareVersions(): YYYY.MM.DD-rN format — string compare voor datum, int.tryParse voor revisie (r10 > r2)
+- readInstalledVersionFromFile() statisch + puur File I/O — geen Pigeon bridge, veilig in background isolate
+- Manifest cache: `/data/data/com.soul.terminal/cache/profile-packs/manifest-cache.json`
+- checkForUpdates() slaat profileId over als localVersion == null (niet geïnstalleerd)
