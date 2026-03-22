@@ -58,4 +58,26 @@ class ProfileEntry {
   bool get isAvailable => url.isNotEmpty && sha256.isNotEmpty;
 
   String get sizeMb => (sizeBytes / 1024 / 1024).toStringAsFixed(0);
+
+  /// Compare two version strings in format "YYYY.MM.DD-rN".
+  /// Returns negative if a < b, zero if equal, positive if a > b.
+  /// Handles: 2026.03.22-r1 < 2026.03.22-r2 < 2026.03.22-r10 < 2026.04.01-r1
+  static int compareVersions(String a, String b) {
+    final partsA = a.split('-r');
+    final partsB = b.split('-r');
+
+    // Compare date portion (string compare works for YYYY.MM.DD with zero-padding)
+    final dateCompare = partsA[0].compareTo(partsB[0]);
+    if (dateCompare != 0) return dateCompare;
+
+    // Compare revision number numerically
+    final revA = partsA.length > 1 ? int.tryParse(partsA[1]) ?? 0 : 0;
+    final revB = partsB.length > 1 ? int.tryParse(partsB[1]) ?? 0 : 0;
+    return revA.compareTo(revB);
+  }
+
+  /// Returns true if [remoteVersion] is newer than [localVersion].
+  static bool isNewer(String remoteVersion, String localVersion) {
+    return compareVersions(remoteVersion, localVersion) > 0;
+  }
 }
