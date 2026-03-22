@@ -96,6 +96,21 @@ class ProfilePackService {
     return _bridge.getInterruptedInstallation();
   }
 
+  /// Clean up an interrupted installation by removing the progress marker.
+  /// Call this when the user chooses "cleanup" instead of "retry".
+  Future<void> cleanupInterruptedInstallation() async {
+    try {
+      const markerPath = '/data/data/com.soul.terminal/files/usr/.soul-profile-installing';
+      final file = File(markerPath);
+      if (file.existsSync()) {
+        file.deleteSync();
+        _logger.i('Cleaned up interrupted installation marker');
+      }
+    } catch (e) {
+      _logger.e('Failed to clean up installation marker: $e');
+    }
+  }
+
   /// Cache manifest to local file for offline/background access.
   Future<void> cacheManifest(ProfileManifest manifest) async {
     try {
