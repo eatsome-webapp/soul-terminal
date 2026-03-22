@@ -178,6 +178,7 @@ class SetupWizard extends _$SetupWizard {
   }
 
   /// Fallback: install packages via pkg/npm in terminal.
+  /// PROF-04: parallel where possible, time estimates, per-package progress.
   Future<void> _installViaPkg(SetupProfile profile) async {
     final awareness = ref.read(soulAwarenessProvider.notifier);
     try {
@@ -200,26 +201,38 @@ class SetupWizard extends _$SetupWizard {
     try {
       final bridge = TerminalBridgeApi();
       final sessionId = ref.read(soulAwarenessProvider).awarenessSessionId;
+      final stopwatch = Stopwatch()..start();
 
       if (profile == SetupProfile.claudeCode) {
-        addInstallLog('Packages installeren: nodejs, git, gh...');
-        await bridge.sendInput(sessionId!, 'pkg install -y nodejs git gh && echo "SOUL_PKG_DONE"\n');
-        await _waitForMarker('SOUL_PKG_DONE', timeout: const Duration(minutes: 5));
-        addInstallLog('Packages geïnstalleerd');
+        // Estimated time: 8-12 min for pkg + npm on average mobile connection
+        addInstallLog('Geschatte tijd: 8-12 minuten (afhankelijk van netwerksnelheid)');
 
-        addInstallLog('Claude Code installeren via npm...');
+        // Step 1: pkg install (packages can be installed in one command)
+        addInstallLog('[1/2] Packages installeren: nodejs, git, gh...');
+        await bridge.sendInput(sessionId!, 'pkg update -y && pkg install -y nodejs git gh && echo "SOUL_PKG_DONE"\n');
+        await _waitForMarker('SOUL_PKG_DONE', timeout: const Duration(minutes: 10));
+        addInstallLog('[1/2] Packages geinstalleerd');
+
+        // Step 2: npm global install (largest part)
+        addInstallLog('[2/2] Claude Code installeren via npm (dit duurt het langst)...');
         await bridge.sendInput(sessionId, 'npm install -g @anthropic-ai/claude-code && echo "SOUL_NPM_DONE"\n');
-        await _waitForMarker('SOUL_NPM_DONE', timeout: const Duration(minutes: 5));
-        addInstallLog('Claude Code geïnstalleerd');
+        await _waitForMarker('SOUL_NPM_DONE', timeout: const Duration(minutes: 10));
+        addInstallLog('[2/2] Claude Code geinstalleerd');
       } else if (profile == SetupProfile.python) {
-        addInstallLog('Packages installeren: python, pip, git...');
-        await bridge.sendInput(sessionId!, 'pkg install -y python pip git && echo "SOUL_PKG_DONE"\n');
-        await _waitForMarker('SOUL_PKG_DONE', timeout: const Duration(minutes: 5));
-        addInstallLog('Packages geïnstalleerd');
+        // Estimated time: 3-5 min
+        addInstallLog('Geschatte tijd: 3-5 minuten');
+
+        addInstallLog('[1/1] Packages installeren: python, pip, git...');
+        await bridge.sendInput(sessionId!, 'pkg update -y && pkg install -y python python-pip git && echo "SOUL_PKG_DONE"\n');
+        await _waitForMarker('SOUL_PKG_DONE', timeout: const Duration(minutes: 10));
+        addInstallLog('[1/1] Packages geinstalleerd');
       }
 
+      stopwatch.stop();
+      final minutes = stopwatch.elapsed.inMinutes;
+      final seconds = stopwatch.elapsed.inSeconds % 60;
       state = state.copyWith(isInstalling: false, installSuccess: true);
-      addInstallLog('Installatie voltooid!');
+      addInstallLog('Installatie voltooid in ${minutes}m ${seconds}s!');
       _advanceToNextStep();
     } catch (error) {
       _logger.e('Installation failed: $error');
