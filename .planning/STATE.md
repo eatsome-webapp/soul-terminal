@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: — Foundation
 status: unknown
-last_updated: "2026-03-22T13:01:59.289Z"
+last_updated: "2026-03-22T13:06:42.195Z"
 progress:
   total_phases: 12
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 46
-  completed_plans: 42
+  completed_plans: 43
 ---
 
 # Project State
@@ -18,12 +18,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Een native terminal die naadloos integreert met SOUL — terminal + AI brain in één app.
-**Current focus:** Phase 12 — profile-pack-system
+**Current focus:** Phase 12 — profile-pack-system COMPLETE
 
 ## Current Position
 
-Phase: 12 (profile-pack-system) — EXECUTING
-Plan: 5 of 6 (12-05 complete)
+Phase: 12 (profile-pack-system) — COMPLETE
+Plan: 6 of 6 (12-06 complete — all plans done)
 
 ## v1.1 Phase Overview
 
@@ -207,3 +207,12 @@ Plan: 5 of 6 (12-05 complete)
 - checkForCommandNotFound() in SoulBridgeController (co-located met output streaming), TermuxActivity heeft thin delegate
 - LazyInstallService: broadcast StreamController + 10s dedup set — handleCommandNotFound() suppressed bij pending
 - Pigeon onCommandNotFound handmatig toegevoegd: pigeons/terminal_bridge.dart + .g.dart setUp() + Java SoulBridgeApi
+
+### From 12-06
+
+- Background update check: outer hourly guard + inner daily/weekly SettingsDao gate — vermijdt settings lezen elke 15min
+- _checkProfileUpdates() gebruikt File I/O (readInstalledVersionFromFile) — geen Pigeon, veilig in background isolate
+- profileUpdateAvailable flag in SettingsDao + sendDataToMain 'profile_update_available' voor main isolate notificatie
+- Failed check update lastCheck niet — retry volgende cyclus
+- performUpdate() returned String? (null=success) — cleaner voor UI callers met SnackBar feedback
+- Phase 12 COMPLETE — alle PROF requirements geleverd (PROF-01..10)
