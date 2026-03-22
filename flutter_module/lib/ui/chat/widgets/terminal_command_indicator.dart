@@ -79,6 +79,6 @@ class TerminalCommandIndicator extends StatelessWidget {
 
   Future<void> _openTerminalSheet() async {
     final bridge = TerminalBridgeApi();
-    await bridge.openTerminalSheet();
+    await bridge.setTerminalVisible(true);
   }
 }

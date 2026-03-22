@@ -51,8 +51,9 @@ abstract class TerminalBridgeApi {
   /// Send raw text input to a specific terminal session.
   void sendInput(int sessionId, String text);
 
-  /// Open the terminal bottom sheet to half-expanded state.
-  void openTerminalSheet();
+  /// Show or hide the native terminal overlay.
+  /// When visible, terminal covers the Flutter body area (NavigationBar stays visible).
+  void setTerminalVisible(bool visible);
 
   /// Create a dedicated SOUL awareness session. Returns session index.
   int createAwarenessSession();
@@ -76,4 +77,7 @@ abstract class SoulBridgeApi {
 
   /// Called when a command finishes (OSC 133 prompt marker detected).
   void onCommandCompleted(int sessionId);
+
+  /// Called when the native terminal visibility changes (e.g. back press hides it).
+  void onTerminalVisibilityChanged(bool visible);
 }

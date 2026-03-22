@@ -6,7 +6,6 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.termux.app.TermuxActivity;
 import com.termux.app.TermuxService;
 import com.termux.shared.termux.shell.command.runner.terminal.TermuxSession;
@@ -189,10 +188,10 @@ public class TerminalBridgeImpl implements TerminalBridgeApi.HostApi {
     }
 
     @Override
-    public void openTerminalSheet() {
+    public void setTerminalVisible(@NonNull Boolean visible) {
         new Handler(Looper.getMainLooper()).post(() -> {
-            if (mActivity != null && mActivity.getBottomSheetBehavior() != null) {
-                mActivity.getBottomSheetBehavior().setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
+            if (mActivity != null) {
+                mActivity.setTerminalVisible(visible);
             }
         });
     }

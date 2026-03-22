@@ -257,7 +257,7 @@ class SetupWizard extends _$SetupWizard {
   Future<void> openTerminalForGithub() async {
     try {
       final terminalApi = TerminalBridgeApi();
-      await terminalApi.openTerminalSheet();
+      await terminalApi.setTerminalVisible(true);
       // Get or create awareness session for gh auth
       final sessionId = await terminalApi.createAwarenessSession();
       await terminalApi.sendInput(sessionId, 'gh auth login --web\n');

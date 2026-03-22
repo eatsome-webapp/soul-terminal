@@ -18,9 +18,6 @@ import android.os.IBinder;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.graphics.Color;
-import android.graphics.RenderEffect;
-import android.graphics.Shader;
-import android.graphics.drawable.ColorDrawable;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
@@ -78,7 +75,6 @@ import java.util.List;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -92,7 +88,6 @@ import android.view.MotionEvent;
 
 import android.widget.PopupMenu;
 
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.tabs.TabLayout;
 
 import com.termux.app.terminal.CommandPaletteAdapter;
@@ -149,10 +144,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
      */
     private TermuxAppSharedProperties mProperties;
 
-    /**
-     * The BottomSheetBehavior controlling the terminal sheet.
-     */
-    private BottomSheetBehavior<View> mBottomSheetBehavior;
+    // BottomSheetBehavior removed — terminal overlay is now controlled via setTerminalVisible().
 
     private TabLayout mSessionTabLayout;
     private ImageButton mNewSessionTabButton;
@@ -175,7 +167,10 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     /** Whether the current orientation is landscape. */
     private boolean mIsLandscape = false;
 
-    /** OnBackPressedCallback registered in setupBottomSheet, kept to prevent stacking. */
+    /** Whether the native terminal overlay is currently visible. */
+    private boolean mTerminalVisible = false;
+
+    /** OnBackPressedCallback registered in setupTerminalOverlay, kept to prevent stacking. */
     private OnBackPressedCallback mSheetBackCallback;
 
     private final Runnable mProcessNamePoller = new Runnable() {
@@ -324,15 +319,10 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         setMargins();
         setupFlutterFragment();
         if (!mIsLandscape) {
-            setupBottomSheet();
+            setupTerminalOverlay();
         }
         mPromptInterceptor = new com.termux.app.terminal.PromptInterceptor(this);
         setupSessionTabBar();
-
-        if (savedInstanceState != null) {
-            int savedState = savedInstanceState.getInt("sheet_state", BottomSheetBehavior.STATE_COLLAPSED);
-            mBottomSheetBehavior.setState(savedState);
-        }
 
         View content = findViewById(android.R.id.content);
         content.setOnApplyWindowInsetsListener((v, insets) -> {
@@ -490,7 +480,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         rebindViewsAfterLayoutChange();
 
         if (!mIsLandscape) {
-            setupBottomSheet();
+            setupTerminalOverlay();
         }
         setupSessionTabBar();
 
@@ -545,9 +535,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         super.onSaveInstanceState(savedInstanceState);
         saveTerminalToolbarTextInput(savedInstanceState);
         savedInstanceState.putBoolean(ARG_ACTIVITY_RECREATED, true);
-        if (mBottomSheetBehavior != null) {
-            savedInstanceState.putInt("sheet_state", mBottomSheetBehavior.getState());
-        }
+        savedInstanceState.putBoolean("terminal_visible", mTerminalVisible);
     }
 
 
@@ -753,13 +741,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     private void setSoulToggleButtonView() {
         findViewById(R.id.toggle_soul_button).setOnClickListener(v -> {
             getDrawer().closeDrawers();
-            if (!isLandscape() && mBottomSheetBehavior != null) {
-                int state = mBottomSheetBehavior.getState();
-                if (state == BottomSheetBehavior.STATE_COLLAPSED || state == BottomSheetBehavior.STATE_HIDDEN) {
-                    mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
-                } else {
-                    mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                }
+            if (!isLandscape()) {
+                setTerminalVisible(!mTerminalVisible);
             }
         });
     }
@@ -796,55 +779,15 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         }
     }
 
-    private void setupBottomSheet() {
+    private void setupTerminalOverlay() {
         if (mSheetBackCallback != null) {
             mSheetBackCallback.remove();
             mSheetBackCallback = null;
         }
 
         View sheetContainer = findViewById(R.id.terminal_sheet_container);
-        mBottomSheetBehavior = BottomSheetBehavior.from(sheetContainer);
-        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
-        mBottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-            @Override
-            public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                if (newState == BottomSheetBehavior.STATE_EXPANDED && mTerminalView != null) {
-                    mTerminalView.requestFocus();
-                }
-                // Re-enable terminal size updates when sheet settles
-                if (newState != BottomSheetBehavior.STATE_DRAGGING
-                        && newState != BottomSheetBehavior.STATE_SETTLING) {
-                    if (mTerminalView != null) {
-                        mTerminalView.updateSize();
-                    }
-                }
-                Logger.logDebug(LOG_TAG, "Sheet state changed to: " + newState);
-                // Haptic feedback on settled states
-                if (newState == BottomSheetBehavior.STATE_EXPANDED
-                        || newState == BottomSheetBehavior.STATE_COLLAPSED
-                        || newState == BottomSheetBehavior.STATE_HALF_EXPANDED) {
-                    triggerHaptic(HAPTIC_TICK);
-                }
-                // TalkBack announcements
-                if (mTerminalView != null) {
-                    if (newState == BottomSheetBehavior.STATE_EXPANDED) {
-                        mTerminalView.announceForAccessibility(getString(R.string.announce_terminal_opened));
-                    } else if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
-                        mTerminalView.announceForAccessibility(getString(R.string.announce_terminal_closed));
-                    } else if (newState == BottomSheetBehavior.STATE_HALF_EXPANDED) {
-                        mTerminalView.announceForAccessibility(getString(R.string.announce_terminal_half));
-                    }
-                }
-            }
-
-            @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                applyBlurForOffset(slideOffset);
-            }
-        });
-
-        // IME insets handling on sheet container
+        // IME insets handling on terminal container
         ViewCompat.setOnApplyWindowInsetsListener(sheetContainer, (view, insets) -> {
             int imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
             int navBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
@@ -852,7 +795,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             return insets;
         });
 
-        // Back button handling
+        // Back button handling: hide terminal overlay, return to Flutter
         mSheetBackCallback = new OnBackPressedCallback(true) {
             @SuppressLint("RtlHardcoded")
             @Override
@@ -862,77 +805,60 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                     drawer.closeDrawers();
                     return;
                 }
-                int state = mBottomSheetBehavior.getState();
-                if (state == BottomSheetBehavior.STATE_EXPANDED
-                        || state == BottomSheetBehavior.STATE_HALF_EXPANDED
-                        || state == BottomSheetBehavior.STATE_DRAGGING
-                        || state == BottomSheetBehavior.STATE_SETTLING) {
-                    mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                if (mTerminalVisible) {
+                    setTerminalVisible(false);
                 } else {
                     finishActivityIfNotFinishing();
                 }
             }
         };
         getOnBackPressedDispatcher().addCallback(this, mSheetBackCallback);
+    }
 
-        // Velocity-based fling on drag handle
-        View dragHandle = findViewById(R.id.sheet_drag_handle);
-        if (dragHandle != null) {
-            GestureDetector sheetFlingDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
-                private static final float VELOCITY_THRESHOLD_DP = 1500f;
+    /** Bottom margin in dp for the terminal overlay (to keep Flutter NavigationBar visible). */
+    private static final int TERMINAL_BOTTOM_MARGIN_DP = 80;
 
-                @Override
-                public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                    if (e1 == null || e2 == null) return false;
-                    float density = getResources().getDisplayMetrics().density;
-                    float threshold = VELOCITY_THRESHOLD_DP * density;
-                    if (velocityY < -threshold) {
-                        // Fling up — always expand to full screen
-                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                        return true;
-                    } else if (velocityY > threshold) {
-                        // Fling down — collapse to peek
-                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                        return true;
-                    }
-                    return false;
-                }
-            });
-            dragHandle.setOnTouchListener((v, event) -> {
-                sheetFlingDetector.onTouchEvent(event);
-                return false; // let BottomSheetBehavior handle drag too
-            });
+    /**
+     * Show or hide the native terminal overlay.
+     * When visible, terminal covers the Flutter body but leaves 80dp at the bottom
+     * for the Flutter NavigationBar to remain tappable.
+     */
+    public void setTerminalVisible(boolean visible) {
+        View sheetContainer = findViewById(R.id.terminal_sheet_container);
+        if (sheetContainer == null) return;
+
+        mTerminalVisible = visible;
+
+        if (visible) {
+            // Set bottom margin to keep Flutter NavigationBar accessible
+            float density = getResources().getDisplayMetrics().density;
+            int bottomMarginPx = (int) (TERMINAL_BOTTOM_MARGIN_DP * density);
+            androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams params =
+                (androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) sheetContainer.getLayoutParams();
+            params.bottomMargin = bottomMarginPx;
+            sheetContainer.setLayoutParams(params);
+
+            sheetContainer.setVisibility(View.VISIBLE);
+            if (mTerminalView != null) {
+                mTerminalView.requestFocus();
+                mTerminalView.post(() -> mTerminalView.updateSize());
+            }
+            triggerHaptic(HAPTIC_TICK);
+            Logger.logDebug(LOG_TAG, "Terminal overlay shown");
+        } else {
+            sheetContainer.setVisibility(View.GONE);
+            triggerHaptic(HAPTIC_TICK);
+            Logger.logDebug(LOG_TAG, "Terminal overlay hidden");
+        }
+
+        // Notify Flutter of visibility change (for back press sync)
+        if (mSoulBridgeApi != null) {
+            mSoulBridgeApi.onTerminalVisibilityChanged(visible, reply -> {});
         }
     }
 
-    private void applyBlurForOffset(float slideOffset) {
-        if (mIsLandscape) return; // no blur in landscape (no bottom sheet)
-        // slideOffset: -1.0 = hidden, 0.0 = collapsed (peek), 1.0 = fully expanded
-        float clamped = Math.max(0f, Math.min(1f, slideOffset));
-        View flutterContainer = findViewById(R.id.flutter_container);
-        if (flutterContainer == null) return;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            float blurRadius = clamped * 10f; // 0-10px progressive
-            applyBlurEffect(flutterContainer, blurRadius);
-        } else {
-            // Fallback: semi-transparent dark scrim
-            int alpha = (int) (clamped * 0x80); // 0x00 to 0x80
-            flutterContainer.setForeground(
-                new ColorDrawable(Color.argb(alpha, 0, 0, 0))
-            );
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.S)
-    private void applyBlurEffect(View target, float radius) {
-        if (radius <= 0f) {
-            target.setRenderEffect(null);
-        } else {
-            target.setRenderEffect(
-                RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.CLAMP)
-            );
-        }
+    public boolean isTerminalVisible() {
+        return mTerminalVisible;
     }
 
     private void setupSessionTabBar() {
@@ -1218,18 +1144,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         ));
 
         items.add(new CommandPaletteAdapter.PaletteItem(
-            "Toggle terminal sheet",
-            "Expand or collapse the terminal sheet",
-            () -> {
-                if (mBottomSheetBehavior != null) {
-                    int state = mBottomSheetBehavior.getState();
-                    if (state == BottomSheetBehavior.STATE_COLLAPSED || state == BottomSheetBehavior.STATE_HIDDEN) {
-                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
-                    } else {
-                        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                    }
-                }
-            }
+            "Toggle terminal",
+            "Show or hide the terminal overlay",
+            () -> setTerminalVisible(!mTerminalVisible)
         ));
 
         // Build dialog
@@ -1476,9 +1393,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         return mNavBarHeight;
     }
 
-    public BottomSheetBehavior<View> getBottomSheetBehavior() {
-        return mBottomSheetBehavior;
-    }
+    // getBottomSheetBehavior() removed — use setTerminalVisible() instead.
 
     public com.termux.bridge.SoulBridgeController getSoulBridgeController() {
         return mSoulBridgeController;

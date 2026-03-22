@@ -1,21 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logger/logger.dart';
 
 import '../../core/di/providers.dart';
+import '../../generated/terminal_bridge.g.dart';
 import '../../services/vessels/models/vessel_connection.dart';
 import '../../services/vessels/models/vessel_task.dart';
 import '../vessels/vessel_status_indicator.dart';
 
 /// App shell with Material 3 NavigationBar for top-level navigation.
-/// Three destinations: Conversations, Decisions, Profile.
-class AppShell extends ConsumerWidget {
+/// Four destinations: Conversations, Decisions, Profile, Terminal.
+class AppShell extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   const AppShell({super.key, required this.navigationShell});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  static final _log = Logger();
+  final _bridge = TerminalBridgeApi();
+  int _previousIndex = 0;
+
+  void _onDestinationSelected(int index) {
+    final isTerminal = index == 3;
+    final wasTerminal = _previousIndex == 3;
+
+    // Toggle native terminal overlay visibility
+    if (isTerminal && !wasTerminal) {
+      _bridge.setTerminalVisible(true).catchError((error) {
+        _log.e('Failed to show terminal: $error');
+      });
+    } else if (!isTerminal && wasTerminal) {
+      _bridge.setTerminalVisible(false).catchError((error) {
+        _log.e('Failed to hide terminal: $error');
+      });
+    }
+
+    _previousIndex = index;
+    widget.navigationShell.goBranch(
+      index,
+      initialLocation: index == widget.navigationShell.currentIndex,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
     final vesselManager = ref.watch(vesselManagerProvider);
     final hasOpenClaw =
         vesselManager.getConnectionStatus(VesselType.openClaw) != null;
@@ -98,15 +132,10 @@ class AppShell extends ConsumerWidget {
           ),
         ],
       ),
-      body: navigationShell,
+      body: widget.navigationShell,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (index) {
-          navigationShell.goBranch(
-            index,
-            initialLocation: index == navigationShell.currentIndex,
-          );
-        },
+        selectedIndex: widget.navigationShell.currentIndex,
+        onDestinationSelected: _onDestinationSelected,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.chat_outlined),

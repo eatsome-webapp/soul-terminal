@@ -21,19 +21,6 @@
         android:orientation="vertical"
         android:background="@color/black">
 
-        <FrameLayout
-            android:id="@+id/sheet_drag_handle"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="#0F0F23"
-            android:contentDescription="@string/desc_terminal_drag_handle">
-            <View
-                android:layout_width="40dp"
-                android:layout_height="4dp"
-                android:layout_gravity="center"
-                android:background="@drawable/sheet_drag_handle_pill" />
-        </FrameLayout>
-
         <LinearLayout
             android:id="@+id/session_tab_bar_container"
             android:layout_width="match_parent"

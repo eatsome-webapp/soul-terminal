@@ -201,6 +201,15 @@ class _SoulAppState extends State<SoulApp> implements SoulBridgeApi {
   }
 
   @override
+  void onTerminalVisibilityChanged(bool visible) {
+    _logger.d('Terminal visibility changed: $visible');
+    if (!visible) {
+      // Native terminal was hidden (e.g. back press) — navigate to Conversations
+      _router.go('/');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {

@@ -202,8 +202,8 @@ public class TerminalBridgeApi {
     /** Send raw text input to a specific terminal session. */
     void sendInput(@NonNull Long sessionId, @NonNull String text);
 
-    /** Open the terminal bottom sheet to half-expanded state. */
-    void openTerminalSheet();
+    /** Show or hide the native terminal overlay. */
+    void setTerminalVisible(@NonNull Boolean visible);
 
     /** Create a dedicated SOUL awareness session. Returns session index. */
     @NonNull
@@ -462,14 +462,16 @@ public class TerminalBridgeApi {
         BasicMessageChannel<Object> channel =
             new BasicMessageChannel<>(
                 binaryMessenger,
-                "dev.flutter.pigeon.flutter_module.TerminalBridgeApi.openTerminalSheet" + messageChannelSuffix,
+                "dev.flutter.pigeon.flutter_module.TerminalBridgeApi.setTerminalVisible" + messageChannelSuffix,
                 getCodec());
         if (api != null) {
           channel.setMessageHandler(
               (message, reply) -> {
                 ArrayList<Object> wrapped = new ArrayList<>();
+                ArrayList<Object> args = (ArrayList<Object>) message;
+                Boolean arg_visible = (Boolean) args.get(0);
                 try {
-                  api.openTerminalSheet();
+                  api.setTerminalVisible(arg_visible);
                   wrapped.add(0, null);
                 } catch (Throwable exception) {
                   ArrayList<Object> wrappedError = wrapError(exception);
@@ -620,6 +622,31 @@ public class TerminalBridgeApi {
               getCodec());
       channel.send(
           new ArrayList<>(Collections.singletonList(sessionIdArg)),
+          channelReply -> {
+            if (channelReply instanceof List) {
+              List<Object> listReply = (List<Object>) channelReply;
+              if (listReply.size() > 1) {
+                callback.reply(
+                    new FlutterError((String) listReply.get(0), (String) listReply.get(1), listReply.get(2)));
+              } else {
+                callback.reply(null);
+              }
+            } else {
+              callback.reply(new FlutterError("channel-error", "Unable to establish connection on channel.", ""));
+            }
+          });
+    }
+
+    /** Called when the native terminal visibility changes (e.g. back press hides it). */
+    public void onTerminalVisibilityChanged(
+        @NonNull Boolean visibleArg, @NonNull Reply<Object> callback) {
+      BasicMessageChannel<Object> channel =
+          new BasicMessageChannel<>(
+              binaryMessenger,
+              "dev.flutter.pigeon.flutter_module.SoulBridgeApi.onTerminalVisibilityChanged" + messageChannelSuffix,
+              getCodec());
+      channel.send(
+          new ArrayList<>(Collections.singletonList(visibleArg)),
           channelReply -> {
             if (channelReply instanceof List) {
               List<Object> listReply = (List<Object>) channelReply;

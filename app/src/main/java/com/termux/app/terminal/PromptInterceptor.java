@@ -6,7 +6,6 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.termux.app.TermuxActivity;
 import com.termux.shared.logger.Logger;
 import com.termux.terminal.TerminalSession;
@@ -48,9 +47,8 @@ public class PromptInterceptor {
     public void checkForPrompt(@NonNull TerminalSession session) {
         if (mPromptDialogShowing) return;
 
-        // Only intercept when sheet is visible (not hidden)
-        BottomSheetBehavior<?> sheetBehavior = mActivity.getBottomSheetBehavior();
-        if (sheetBehavior != null && sheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) {
+        // Only intercept when terminal overlay is visible
+        if (!mActivity.isTerminalVisible()) {
             return;
         }
 

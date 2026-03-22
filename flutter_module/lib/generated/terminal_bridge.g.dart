@@ -318,16 +318,16 @@ class TerminalBridgeApi {
     }
   }
 
-  /// Open the terminal bottom sheet to half-expanded state.
-  Future<void> openTerminalSheet() async {
-    final String pigeonVar_channelName = 'dev.flutter.pigeon.flutter_module.TerminalBridgeApi.openTerminalSheet$pigeonVar_messageChannelSuffix';
+  /// Show or hide the native terminal overlay.
+  Future<void> setTerminalVisible(bool visible) async {
+    final String pigeonVar_channelName = 'dev.flutter.pigeon.flutter_module.TerminalBridgeApi.setTerminalVisible$pigeonVar_messageChannelSuffix';
     final BasicMessageChannel<Object?> pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
     final List<Object?>? pigeonVar_replyList =
-        await pigeonVar_channel.send(null) as List<Object?>?;
+        await pigeonVar_channel.send(<Object?>[visible]) as List<Object?>?;
     if (pigeonVar_replyList == null) {
       throw _createConnectionError(pigeonVar_channelName);
     } else if (pigeonVar_replyList.length > 1) {
@@ -409,6 +409,9 @@ abstract class SoulBridgeApi {
 
   /// Called when a command finishes (OSC 133 prompt marker detected).
   void onCommandCompleted(int sessionId);
+
+  /// Called when the native terminal visibility changes (e.g. back press hides it).
+  void onTerminalVisibilityChanged(bool visible);
 
   static void setUp(SoulBridgeApi? api, {BinaryMessenger? binaryMessenger, String messageChannelSuffix = ''}) {
     final String messageChannelSuffixValue = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
@@ -497,6 +500,29 @@ abstract class SoulBridgeApi {
           assert(arg_sessionId != null, 'Argument for dev.flutter.pigeon.flutter_module.SoulBridgeApi.onCommandCompleted was null, expected non-null int.');
           try {
             api.onCommandCompleted(arg_sessionId!);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }
+        });
+      }
+    }
+    {
+      final BasicMessageChannel<Object?> pigeonVar_channel = BasicMessageChannel<Object?>(
+        'dev.flutter.pigeon.flutter_module.SoulBridgeApi.onTerminalVisibilityChanged$messageChannelSuffixValue',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          assert(message != null, 'Argument for dev.flutter.pigeon.flutter_module.SoulBridgeApi.onTerminalVisibilityChanged was null.');
+          final List<Object?> args = (message as List<Object?>?)!;
+          final bool? arg_visible = (args[0] as bool?);
+          assert(arg_visible != null, 'Argument for dev.flutter.pigeon.flutter_module.SoulBridgeApi.onTerminalVisibilityChanged was null, expected non-null bool.');
+          try {
+            api.onTerminalVisibilityChanged(arg_visible!);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
