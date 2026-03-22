@@ -356,6 +356,30 @@ class SetupWizard extends _$SetupWizard {
       await bridge.writeShellConfig('$homePath/.zshrc', zshConfig);
       _logger.i('OSC 133 config written to .zshrc');
 
+      // Lazy install: command_not_found_handle for SOUL profile pack prompt
+      const bashCnfConfig = '\n# SOUL Terminal: command not found handler for lazy install\n'
+          'command_not_found_handle() {\n'
+          '  printf \'\\033]777;soul-cnf;%s\\007\' "\$1"\n'
+          '  if [ -x "\$PREFIX/libexec/termux/command-not-found" ]; then\n'
+          '    "\$PREFIX/libexec/termux/command-not-found" "\$1"\n'
+          '  fi\n'
+          '  return 127\n'
+          '}\n';
+      await bridge.writeShellConfig('$homePath/.bashrc', bashCnfConfig);
+      _logger.i('command_not_found_handle written to .bashrc');
+
+      // Lazy install: command_not_found_handler for zsh
+      const zshCnfConfig = '\n# SOUL Terminal: command not found handler for lazy install\n'
+          'command_not_found_handler() {\n'
+          '  printf \'\\033]777;soul-cnf;%s\\007\' "\$1"\n'
+          '  if [ -x "\$PREFIX/libexec/termux/command-not-found" ]; then\n'
+          '    "\$PREFIX/libexec/termux/command-not-found" "\$1"\n'
+          '  fi\n'
+          '  return 127\n'
+          '}\n';
+      await bridge.writeShellConfig('$homePath/.zshrc', zshCnfConfig);
+      _logger.i('command_not_found_handler written to .zshrc');
+
       state = state.copyWith(isLoading: false, shellConfigDone: true);
     } catch (error) {
       _logger.e('Failed to write shell config: $error');
