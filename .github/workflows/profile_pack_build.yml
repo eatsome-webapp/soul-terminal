@@ -1,0 +1,201 @@
+name: Profile Pack Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Profile to build"
+        required: true
+        type: choice
+        options:
+          - claude-code
+          - python
+      version_tag:
+        description: "Version tag (e.g., 2026.03.22-r1)"
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Clone termux-packages
+        uses: actions/checkout@v6
+        with:
+          repository: eatsome-webapp/termux-packages
+          path: termux-packages
+
+      - name: Set profile packages
+        id: profile
+        run: |
+          case "${{ inputs.profile }}" in
+            claude-code)
+              echo "packages=nodejs git gh" >> "$GITHUB_OUTPUT"
+              echo "post_install=npm install -g @anthropic-ai/claude-code" >> "$GITHUB_OUTPUT"
+              ;;
+            python)
+              echo "packages=python python-pip git" >> "$GITHUB_OUTPUT"
+              echo "post_install=" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: Build profile pack in Docker
+        run: |
+          set -euo pipefail
+
+          PROFILE="${{ inputs.profile }}"
+          VERSION="${{ inputs.version_tag }}"
+          PACKAGES="${{ steps.profile.outputs.packages }}"
+          POST_INSTALL="${{ steps.profile.outputs.post_install }}"
+
+          # Use termux Docker builder to create a rootfs with packages installed
+          docker run --rm \
+            -v "$PWD/profile-packs:/output" \
+            -v "$PWD/termux-packages:/termux-packages" \
+            termux/package-builder:latest \
+            bash -c "
+              set -euo pipefail
+
+              # Setup Termux environment
+              cd /termux-packages
+              ./scripts/setup-termux.sh
+
+              # Snapshot base file list
+              find /data/data/com.termux/files/usr -type f -o -type l | sort > /tmp/base_files.txt
+              find /data/data/com.termux/files/usr -type l -printf '%l←%P\n' | sort > /tmp/base_symlinks.txt
+
+              # Install profile packages
+              apt-get update
+              apt-get install -y $PACKAGES
+
+              # Run post-install commands if any
+              if [ -n '$POST_INSTALL' ]; then
+                export HOME=/data/data/com.termux/files/home
+                export PATH=/data/data/com.termux/files/usr/bin:\$PATH
+                $POST_INSTALL
+              fi
+
+              # Snapshot full file list
+              find /data/data/com.termux/files/usr -type f -o -type l | sort > /tmp/full_files.txt
+              find /data/data/com.termux/files/usr -type l -printf '%l←%P\n' | sort > /tmp/full_symlinks.txt
+
+              # Calculate delta
+              comm -13 /tmp/base_files.txt /tmp/full_files.txt > /tmp/delta_files.txt
+              comm -13 /tmp/base_symlinks.txt /tmp/full_symlinks.txt > /tmp/delta_symlinks.txt
+
+              echo \"Delta: \$(wc -l < /tmp/delta_files.txt) files, \$(wc -l < /tmp/delta_symlinks.txt) symlinks\"
+
+              # Build zip with delta files
+              cd /data/data/com.termux/files/usr
+              PREFIX=/data/data/com.termux/files/usr
+
+              # Create SYMLINKS.txt from delta symlinks
+              cp /tmp/delta_symlinks.txt /tmp/SYMLINKS.txt
+
+              # Create zip: SYMLINKS.txt + delta files (paths relative to \$PREFIX)
+              {
+                echo /tmp/SYMLINKS.txt
+                # Only include regular files (not symlinks) in the zip
+                while IFS= read -r filepath; do
+                  if [ -f \"\$filepath\" ] && [ ! -L \"\$filepath\" ]; then
+                    echo \"\$filepath\"
+                  fi
+                done < /tmp/delta_files.txt
+              } > /tmp/zip_manifest.txt
+
+              cd \$PREFIX
+              # Create zip with relative paths
+              zip -@ /output/profile-pack.zip < <(
+                echo SYMLINKS.txt
+                while IFS= read -r filepath; do
+                  if [ -f \"\$filepath\" ] && [ ! -L \"\$filepath\" ]; then
+                    echo \"\${filepath#\$PREFIX/}\"
+                  fi
+                done < /tmp/delta_files.txt
+              )
+              # Add SYMLINKS.txt
+              cp /tmp/SYMLINKS.txt \$PREFIX/SYMLINKS.txt
+              zip -u /output/profile-pack.zip SYMLINKS.txt
+              rm \$PREFIX/SYMLINKS.txt
+
+              echo 'Profile pack built successfully'
+            "
+
+      - name: Apply soul-remap
+        run: |
+          # Re-use the soul-remap patterns from bootstrap build
+          # Patch text files: com.termux -> com.soul.terminal
+          cd profile-packs
+          mkdir -p extract
+          cd extract
+          unzip ../profile-pack.zip
+
+          # Text file path fixup
+          find . -type f \( -name "*.conf" -o -name "*.pc" -o -name "*.la" -o -name "*.sh" -o -name "*.cmake" \) \
+            -exec sed -i 's|/data/data/com.termux/files/usr|/data/data/com.soul.terminal/tu|g' {} +
+
+          # Rebuild zip
+          rm ../profile-pack.zip
+          zip -r ../profile-pack.zip .
+          cd ..
+          rm -rf extract
+
+      - name: Rename and checksum
+        id: checksum
+        run: |
+          PROFILE="${{ inputs.profile }}"
+          VERSION="${{ inputs.version_tag }}"
+          ARTIFACT="profile-pack-${PROFILE}-aarch64.zip"
+
+          mv profile-packs/profile-pack.zip "profile-packs/${ARTIFACT}"
+          SHA256=$(sha256sum "profile-packs/${ARTIFACT}" | cut -d' ' -f1)
+          SIZE=$(stat -c%s "profile-packs/${ARTIFACT}")
+
+          echo "artifact=${ARTIFACT}" >> "$GITHUB_OUTPUT"
+          echo "sha256=${SHA256}" >> "$GITHUB_OUTPUT"
+          echo "size=${SIZE}" >> "$GITHUB_OUTPUT"
+
+          echo "SHA-256: ${SHA256}"
+          echo "Size: ${SIZE} bytes"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PROFILE="${{ inputs.profile }}"
+          VERSION="${{ inputs.version_tag }}"
+          TAG="profile-pack-${PROFILE}-${VERSION}"
+          ARTIFACT="${{ steps.checksum.outputs.artifact }}"
+          SHA256="${{ steps.checksum.outputs.sha256 }}"
+          SIZE="${{ steps.checksum.outputs.size }}"
+
+          gh release create "${TAG}" \
+            --title "Profile Pack: ${PROFILE} ${VERSION}" \
+            --notes "$(cat <<EOF
+          ## Profile Pack: ${PROFILE}
+
+          **Version:** ${VERSION}
+          **Architecture:** aarch64
+          **Size:** $((SIZE / 1024 / 1024)) MB
+          **SHA-256:** \`${SHA256}\`
+
+          ### Update manifest.json
+          \`\`\`json
+          {
+            "id": "${PROFILE}",
+            "version": "${VERSION}",
+            "sizeBytes": ${SIZE},
+            "sha256": "${SHA256}",
+            "url": "https://github.com/eatsome-webapp/soul-terminal/releases/download/${TAG}/${ARTIFACT}"
+          }
+          \`\`\`
+          EOF
+          )" \
+            "profile-packs/${ARTIFACT}"
+
+          echo "Release created: ${TAG}"
+          echo "Update profile-packs/manifest.json with the values above"

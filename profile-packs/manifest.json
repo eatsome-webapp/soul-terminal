@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "id": "claude-code",
+      "name": "Claude Code",
+      "description": "Node.js, Git, GitHub CLI, Claude Code CLI",
+      "icon": "terminal",
+      "version": "2026.03.22-r1",
+      "minBootstrapVersion": "1",
+      "arch": "aarch64",
+      "sizeBytes": 0,
+      "sha256": "",
+      "url": ""
+    },
+    {
+      "id": "python",
+      "name": "Python",
+      "description": "Python, pip, Git",
+      "icon": "code",
+      "version": "2026.03.22-r1",
+      "minBootstrapVersion": "1",
+      "arch": "aarch64",
+      "sizeBytes": 0,
+      "sha256": "",
+      "url": ""
+    }
+  ]
+}

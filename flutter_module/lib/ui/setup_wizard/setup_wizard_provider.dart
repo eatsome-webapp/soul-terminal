@@ -9,6 +9,8 @@ import '../../generated/terminal_bridge.g.dart';
 import '../../services/auth/api_key_service.dart';
 import '../../services/awareness/soul_awareness_service.dart';
 import '../../services/database/daos/settings_dao.dart';
+import '../../services/profile_pack/profile_pack_service.dart';
+import '../../services/profile_pack/profile_manifest.dart';
 
 part 'setup_wizard_provider.g.dart';
 
@@ -127,7 +129,53 @@ class SetupWizard extends _$SetupWizard {
       clearInstallError: true,
     );
 
-    // Initialize awareness session for output streaming
+    // Try fast path: profile pack download
+    final profileId = profile == SetupProfile.claudeCode ? 'claude-code' : 'python';
+    try {
+      await _installViaProfilePack(profileId);
+      return;
+    } catch (e) {
+      _logger.w('Profile pack install failed, falling back to pkg: $e');
+      addInstallLog('Snelle installatie niet beschikbaar, handmatige installatie...');
+    }
+
+    // Fallback: traditional pkg install
+    await _installViaPkg(profile);
+  }
+
+  /// Fast path: download pre-built profile pack and extract.
+  Future<void> _installViaProfilePack(String profileId) async {
+    final packService = ProfilePackService();
+
+    addInstallLog('Manifest ophalen...');
+    final manifest = await packService.fetchManifest();
+    final pack = manifest.profiles.where((p) => p.id == profileId).firstOrNull;
+
+    if (pack == null || !pack.isAvailable) {
+      throw Exception('Profiel "$profileId" niet beschikbaar als pack');
+    }
+
+    addInstallLog('Downloaden (${pack.sizeMb} MB)...');
+    final zipPath = await packService.downloadPack(pack, (progress) {
+      // Update last log line with progress percentage
+      final percent = (progress * 100).toStringAsFixed(0);
+      final logs = [...state.installLog];
+      if (logs.isNotEmpty) {
+        logs[logs.length - 1] = 'Downloaden... $percent%';
+      }
+      state = state.copyWith(installLog: logs);
+    });
+
+    addInstallLog('Verificatie...');
+    await packService.installPack(pack, zipPath);
+
+    addInstallLog('Installatie voltooid!');
+    state = state.copyWith(isInstalling: false, installSuccess: true);
+    _advanceToNextStep();
+  }
+
+  /// Fallback: install packages via pkg/npm in terminal.
+  Future<void> _installViaPkg(SetupProfile profile) async {
     final awareness = ref.read(soulAwarenessProvider.notifier);
     try {
       await awareness.initialize();
@@ -140,7 +188,6 @@ class SetupWizard extends _$SetupWizard {
       return;
     }
 
-    // Listen to output stream for real-time progress
     final subscription = awareness.outputStream.listen((line) {
       if (line.trim().isNotEmpty) {
         addInstallLog(line.trim());

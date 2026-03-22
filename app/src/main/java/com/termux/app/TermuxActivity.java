@@ -1119,6 +1119,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         // Create FlutterApi instance for calling Flutter
         mSoulBridgeApi = new com.termux.bridge.TerminalBridgeApi.SoulBridgeApi(messenger);
 
+        // Register ProfilePackBridge
+        com.termux.bridge.ProfilePackBridgeApi.HostApi.setUp(messenger, new com.termux.bridge.ProfilePackBridgeImpl());
+
         // Activate SoulBridgeController for debounced output streaming
         mSoulBridgeController = new com.termux.bridge.SoulBridgeController();
         mSoulBridgeController.setup(messenger);
